@@ -1,0 +1,1 @@
+Option ExplicitnnnPublic job_id As LongnPublic job_category As StringnPublic job_status As StringnPublic asset_code As StringnPublic locker_ip As StringnPublic eval_date As DatenPublic job_desc As Stringnn

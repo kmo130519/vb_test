@@ -1,0 +1,1 @@
+Option ExplicitnnnPublic title As StringnnPublic initial_mtm As DoublenPublic initial_mtm_theory As DoublenPublic cash_flow As DoublenPublic current_mtm As DoublenPublic current_mtm_initial_deals As DoublenPublic current_mtm_theory As DoublenPublic current_mtm_theory_initial_deals As DoublennPublic fx_coversion_pl As Double

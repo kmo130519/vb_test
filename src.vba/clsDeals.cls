@@ -1,0 +1,1 @@
+Option ExplicitnnPublic trade_number As IntegernnPublic asset_code As StringnPublic fund_code As StringnPublic trade_date As DatenPublic trade_price As DoublenPublic qty As DoublenPublic broker As StringnPublic broker_fee As DoublenPublic broker_fee_curncy As StringnnPublic LIVE_YN As StringnPublic CONFIRM_YN As String

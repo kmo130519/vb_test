@@ -1,0 +1,1 @@
+Option ExplicitnnnPublic fixing_date As DatenPublic start_date As DatenPublic end_date As DatenPublic pay_date As DatenPublic rate_id As StringnPublic fixing_rate As DoublenPublic add_margin As Double

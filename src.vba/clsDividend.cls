@@ -1,0 +1,1 @@
+Option ExplicitnnPublic dividend_date As DatenPublic dividend As Doublen
