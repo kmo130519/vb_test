@@ -1,1 +1,255 @@
-Option Explicitnn'############################################################n' Class: clsCachen' This class contains information used for the cliquet simulation.n' The information is calculated beforehand to save costn'############################################################nnPrivate A1_() As DoublenPrivate A2_() As DoublenPrivate A3_() As DoublenPrivate K_0_() As DoublenPrivate K_1_() As DoublenPrivate K_2_() As DoublenPrivate K_3_() As DoublenPrivate K_4_() As DoublenPrivate A_() As DoublennPrivate fwd_rate_() As DoublennnPublic Sub initialize(heston_param As clsHestonParameter, time_step As clsTimeStep, rate_curve As clsRateCurve, Optional gamma_1 As Double = 0.5)nn    Dim inx As Integern    n    Dim gamma_2 As Doublen    nOn Error GoTo ErrorHandlern    n    ReDim A1_(0 To time_step.no_of_steps) As Doublen    ReDim A2_(0 To time_step.no_of_steps) As Doublen    ReDim A3_(0 To time_step.no_of_steps) As Doublen    ReDim A_(0 To time_step.no_of_steps) As Doublen        n    ReDim K_0_(0 To time_step.no_of_steps) As Doublen    ReDim K_1_(0 To time_step.no_of_steps) As Doublen    ReDim K_2_(0 To time_step.no_of_steps) As Doublen    ReDim K_3_(0 To time_step.no_of_steps) As Doublen    ReDim K_4_(0 To time_step.no_of_steps) As Doublen    ReDim K_Vega_(0 To time_step.no_of_steps) As Doublen    ReDim fwd_rate_(0 To time_step.no_of_steps - 1) As Doublen    n    Dim rho As Doublen    Dim lamda As Doublen    Dim eta As Doublen    Dim v_l As Doublen    Dim dt As Doublen    n    rho = heston_param.rhon    lamda = heston_param.lamdan    v_l = heston_param.v_longn    eta = heston_param.etan    n    gamma_2 = 1 - gamma_1n    n    If time_step.no_of_steps < 0 Thenn    n        Err.Raise vbObjectError + 1001, "clsCache.initialize", "The number of time steps is less than zero"n        n    End Ifn           n    'rate_curve.make_objn    n    For inx = 0 To time_step.no_of_stepsn    n        dt = time_step.dt(inx)n    n        A1_(inx) = Exp(-lamda * dt)n        A2_(inx) = eta ^ 2 * A1_(inx) / lamda * (1 - A1_(inx))n        A3_(inx) = v_l * eta ^ 2 / 2 / lamda * (1 - A1_(inx)) ^ 2n        n        K_0_(inx) = -rho * lamda * v_l / eta * dtn        K_1_(inx) = gamma_1 * dt * (lamda * rho / eta - 0.5) - rho / etan        K_2_(inx) = gamma_2 * dt * (lamda * rho / eta - 0.5) + rho / etan        K_3_(inx) = gamma_1 * dt * (1 - rho ^ 2)n        K_4_(inx) = gamma_2 * dt * (1 - rho ^ 2)n            n        n        A_(inx) = K_2_(inx) + 0.5 * K_4_(inx)n        n        If inx <= time_step.no_of_steps - 1 Thenn        n            fwd_rate_(inx) = rate_curve.get_fwd_rate(time_step.get_date(inx), time_step.get_date(inx + 1))n            n        End Ifn        n    Next inxn        n    Exit Subn    nErrorHandler:nn    Err.Raise vbObjectError + 1002, "clsCache.initialize :" & Chr(13) & Err.source, Err.description '1003 <-- Run errorn    Exit SubnnnEnd SubnnPublic Function A1(inx As Integer) As DoublennOn Error GoTo ErrorHandler:nn    A1 = A1_(inx)n    n    Exit Functionn    nErrorHandler:nn    Err.Raise vbObjectError + 1003, "clsCache.A1 :" & Chr(13) & Err.source, Err.description '1003 <-- Run errorn    Exit Functionnn    nEnd FunctionnnPublic Function A2(inx As Integer) As DoublennOn Error GoTo ErrorHandler:nn    A2 = A2_(inx)n    n    Exit Functionn        nErrorHandler:nn    Err.Raise vbObjectError + 1003, "clsCache.A2 :" & Chr(13) & Err.source, Err.description '1003 <-- Run errorn    Exit Functionnn    nEnd FunctionnnPublic Function A3(inx As Integer) As DoublennOn Error GoTo ErrorHandler:nn    A3 = A3_(inx)n    n    Exit Functionn        nErrorHandler:nn    Err.Raise vbObjectError + 1003, "clsCache.A3 :" & Chr(13) & Err.source, Err.description '1003 <-- Run errorn    Exit Functionnn    nEnd FunctionnnnPublic Function a(inx As Integer) As DoublennOn Error GoTo ErrorHandler:nn    a = A_(inx)n    n    Exit Functionn        nErrorHandler:nn    Err.Raise vbObjectError + 1003, "clsCache.A :" & Chr(13) & Err.source, Err.description '1003 <-- Run errorn    Exit Functionnn    nEnd FunctionnnPublic Function K_0(inx As Integer) As DoublennOn Error GoTo ErrorHandler:nn    K_0 = K_0_(inx)n    n    Exit Functionn    nErrorHandler:nn    Err.Raise vbObjectError + 1003, "clsCache.K_0 :" & Chr(13) & Err.source, Err.description '1003 <-- Run errorn    Exit FunctionnnEnd FunctionnnPublic Function K_1(inx As Integer) As DoublennOn Error GoTo ErrorHandler:nn    K_1 = K_1_(inx)n    n    Exit Functionn    nErrorHandler:nn    Err.Raise vbObjectError + 1003, "clsCache.K_1 :" & Chr(13) & Err.source, Err.description '1003 <-- Run errorn    Exit FunctionnnnEnd FunctionnnPublic Function K_2(inx As Integer) As DoublennOn Error GoTo ErrorHandler:nn    K_2 = K_2_(inx)n    n    Exit Functionn    nErrorHandler:nn    Err.Raise vbObjectError + 1003, "clsCache.K_2 :" & Chr(13) & Err.source, Err.description '1003 <-- Run errorn    Exit FunctionnnnEnd FunctionnnPublic Function K_3(inx As Integer) As DoublennOn Error GoTo ErrorHandler:nn    K_3 = K_3_(inx)n    n    Exit Functionn    nErrorHandler:nn    Err.Raise vbObjectError + 1003, "clsCache.K_3 :" & Chr(13) & Err.source, Err.description '1003 <-- Run errorn    Exit FunctionnnnEnd FunctionnnPublic Function K_4(inx As Integer) As DoublennOn Error GoTo ErrorHandler:nn    K_4 = K_4_(inx)n    n    Exit Functionn    nErrorHandler:nn    Err.Raise vbObjectError + 1003, "clsCache.K_4 :" & Chr(13) & Err.source, Err.description '1003 <-- Run errorn    Exit FunctionnnEnd FunctionnnPublic Function forward_rate(inx As Integer) As DoublennOn Error GoTo ErrorHandler:nn    forward_rate = fwd_rate_(inx)n    n    Exit Functionn    nErrorHandler:n    n    Err.Raise vbObjectError + 1003, "clsCache.forward_rate :" & Chr(13) & Err.source, Err.description '1003 <-- Run errorn    Exit Functionn        nEnd Function
+Option Explicit
+
+'############################################################
+' Class: clsCache
+' This class contains information used for the cliquet simulation.
+' The information is calculated beforehand to save cost
+'############################################################
+
+Private A1_() As Double
+Private A2_() As Double
+Private A3_() As Double
+Private K_0_() As Double
+Private K_1_() As Double
+Private K_2_() As Double
+Private K_3_() As Double
+Private K_4_() As Double
+Private A_() As Double
+
+Private fwd_rate_() As Double
+
+
+Public Sub initialize(heston_param As clsHestonParameter, time_step As clsTimeStep, rate_curve As clsRateCurve, Optional gamma_1 As Double = 0.5)
+
+    Dim inx As Integer
+    
+    Dim gamma_2 As Double
+    
+On Error GoTo ErrorHandler
+    
+    ReDim A1_(0 To time_step.no_of_steps) As Double
+    ReDim A2_(0 To time_step.no_of_steps) As Double
+    ReDim A3_(0 To time_step.no_of_steps) As Double
+    ReDim A_(0 To time_step.no_of_steps) As Double
+        
+    ReDim K_0_(0 To time_step.no_of_steps) As Double
+    ReDim K_1_(0 To time_step.no_of_steps) As Double
+    ReDim K_2_(0 To time_step.no_of_steps) As Double
+    ReDim K_3_(0 To time_step.no_of_steps) As Double
+    ReDim K_4_(0 To time_step.no_of_steps) As Double
+    ReDim K_Vega_(0 To time_step.no_of_steps) As Double
+    ReDim fwd_rate_(0 To time_step.no_of_steps - 1) As Double
+    
+    Dim rho As Double
+    Dim lamda As Double
+    Dim eta As Double
+    Dim v_l As Double
+    Dim dt As Double
+    
+    rho = heston_param.rho
+    lamda = heston_param.lamda
+    v_l = heston_param.v_long
+    eta = heston_param.eta
+    
+    gamma_2 = 1 - gamma_1
+    
+    If time_step.no_of_steps < 0 Then
+    
+        Err.Raise vbObjectError + 1001, "clsCache.initialize", "The number of time steps is less than zero"
+        
+    End If
+           
+    'rate_curve.make_obj
+    
+    For inx = 0 To time_step.no_of_steps
+    
+        dt = time_step.dt(inx)
+    
+        A1_(inx) = Exp(-lamda * dt)
+        A2_(inx) = eta ^ 2 * A1_(inx) / lamda * (1 - A1_(inx))
+        A3_(inx) = v_l * eta ^ 2 / 2 / lamda * (1 - A1_(inx)) ^ 2
+        
+        K_0_(inx) = -rho * lamda * v_l / eta * dt
+        K_1_(inx) = gamma_1 * dt * (lamda * rho / eta - 0.5) - rho / eta
+        K_2_(inx) = gamma_2 * dt * (lamda * rho / eta - 0.5) + rho / eta
+        K_3_(inx) = gamma_1 * dt * (1 - rho ^ 2)
+        K_4_(inx) = gamma_2 * dt * (1 - rho ^ 2)
+            
+        
+        A_(inx) = K_2_(inx) + 0.5 * K_4_(inx)
+        
+        If inx <= time_step.no_of_steps - 1 Then
+        
+            fwd_rate_(inx) = rate_curve.get_fwd_rate(time_step.get_date(inx), time_step.get_date(inx + 1))
+            
+        End If
+        
+    Next inx
+        
+    Exit Sub
+    
+ErrorHandler:
+
+    Err.Raise vbObjectError + 1002, "clsCache.initialize :" & Chr(13) & Err.source, Err.description '1003 <-- Run error
+    Exit Sub
+
+
+End Sub
+
+Public Function A1(inx As Integer) As Double
+
+On Error GoTo ErrorHandler:
+
+    A1 = A1_(inx)
+    
+    Exit Function
+    
+ErrorHandler:
+
+    Err.Raise vbObjectError + 1003, "clsCache.A1 :" & Chr(13) & Err.source, Err.description '1003 <-- Run error
+    Exit Function
+
+    
+End Function
+
+Public Function A2(inx As Integer) As Double
+
+On Error GoTo ErrorHandler:
+
+    A2 = A2_(inx)
+    
+    Exit Function
+        
+ErrorHandler:
+
+    Err.Raise vbObjectError + 1003, "clsCache.A2 :" & Chr(13) & Err.source, Err.description '1003 <-- Run error
+    Exit Function
+
+    
+End Function
+
+Public Function A3(inx As Integer) As Double
+
+On Error GoTo ErrorHandler:
+
+    A3 = A3_(inx)
+    
+    Exit Function
+        
+ErrorHandler:
+
+    Err.Raise vbObjectError + 1003, "clsCache.A3 :" & Chr(13) & Err.source, Err.description '1003 <-- Run error
+    Exit Function
+
+    
+End Function
+
+
+Public Function a(inx As Integer) As Double
+
+On Error GoTo ErrorHandler:
+
+    a = A_(inx)
+    
+    Exit Function
+        
+ErrorHandler:
+
+    Err.Raise vbObjectError + 1003, "clsCache.A :" & Chr(13) & Err.source, Err.description '1003 <-- Run error
+    Exit Function
+
+    
+End Function
+
+Public Function K_0(inx As Integer) As Double
+
+On Error GoTo ErrorHandler:
+
+    K_0 = K_0_(inx)
+    
+    Exit Function
+    
+ErrorHandler:
+
+    Err.Raise vbObjectError + 1003, "clsCache.K_0 :" & Chr(13) & Err.source, Err.description '1003 <-- Run error
+    Exit Function
+
+End Function
+
+Public Function K_1(inx As Integer) As Double
+
+On Error GoTo ErrorHandler:
+
+    K_1 = K_1_(inx)
+    
+    Exit Function
+    
+ErrorHandler:
+
+    Err.Raise vbObjectError + 1003, "clsCache.K_1 :" & Chr(13) & Err.source, Err.description '1003 <-- Run error
+    Exit Function
+
+
+End Function
+
+Public Function K_2(inx As Integer) As Double
+
+On Error GoTo ErrorHandler:
+
+    K_2 = K_2_(inx)
+    
+    Exit Function
+    
+ErrorHandler:
+
+    Err.Raise vbObjectError + 1003, "clsCache.K_2 :" & Chr(13) & Err.source, Err.description '1003 <-- Run error
+    Exit Function
+
+
+End Function
+
+Public Function K_3(inx As Integer) As Double
+
+On Error GoTo ErrorHandler:
+
+    K_3 = K_3_(inx)
+    
+    Exit Function
+    
+ErrorHandler:
+
+    Err.Raise vbObjectError + 1003, "clsCache.K_3 :" & Chr(13) & Err.source, Err.description '1003 <-- Run error
+    Exit Function
+
+
+End Function
+
+Public Function K_4(inx As Integer) As Double
+
+On Error GoTo ErrorHandler:
+
+    K_4 = K_4_(inx)
+    
+    Exit Function
+    
+ErrorHandler:
+
+    Err.Raise vbObjectError + 1003, "clsCache.K_4 :" & Chr(13) & Err.source, Err.description '1003 <-- Run error
+    Exit Function
+
+End Function
+
+Public Function forward_rate(inx As Integer) As Double
+
+On Error GoTo ErrorHandler:
+
+    forward_rate = fwd_rate_(inx)
+    
+    Exit Function
+    
+ErrorHandler:
+    
+    Err.Raise vbObjectError + 1003, "clsCache.forward_rate :" & Chr(13) & Err.source, Err.description '1003 <-- Run error
+    Exit Function
+        
+End Function

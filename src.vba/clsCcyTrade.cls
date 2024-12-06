@@ -1,1 +1,36 @@
-Option ExplicitnnPublic deal_seq As LongnPublic book_src As StringnPublic tdate As DatenPublic ccy As StringnPublic ccy2 As StringnPublic sell_buy As IntegernPublic valdate As DatenPublic notional As DoublenPublic ref_rate As DoublenPublic trade_type As StringnnnnPublic Function copy_obj() As clsCcyTradenn    Dim obj As clsCcyTraden    n    Set obj = New clsCcyTraden    n    obj.deal_seq = deal_seqn    obj.book_src = book_srcn    obj.tdate = tdaten    obj.ccy = ccyn    obj.ccy2 = ccy2n    obj.sell_buy = sell_buyn    obj.valdate = valdaten    obj.notional = notionaln    obj.ref_rate = ref_raten    obj.trade_type = trade_typen    nn    Set copy_obj = objnnEnd Functionn
+Option Explicit
+
+Public deal_seq As Long
+Public book_src As String
+Public tdate As Date
+Public ccy As String
+Public ccy2 As String
+Public sell_buy As Integer
+Public valdate As Date
+Public notional As Double
+Public ref_rate As Double
+Public trade_type As String
+
+
+
+Public Function copy_obj() As clsCcyTrade
+
+    Dim obj As clsCcyTrade
+    
+    Set obj = New clsCcyTrade
+    
+    obj.deal_seq = deal_seq
+    obj.book_src = book_src
+    obj.tdate = tdate
+    obj.ccy = ccy
+    obj.ccy2 = ccy2
+    obj.sell_buy = sell_buy
+    obj.valdate = valdate
+    obj.notional = notional
+    obj.ref_rate = ref_rate
+    obj.trade_type = trade_type
+    
+
+    Set copy_obj = obj
+
+End Function

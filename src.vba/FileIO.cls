@@ -1,1 +1,182 @@
-Option ExplicitnnPublic Function WrtFile( _nByVal Dimension As Long, _nByVal SavePathName As String, _nByVal DerivID As String, _nByRef NodeValue() As Double, _nByRef px() As Double, _nByRef nmin() As Long, _nByRef nmax() As Long _n) As IntegernnDim i As LongnDim j As LongnDim filesystem As VariantnDim txtfile As VariantnDim LineStr As StringnnDim Series() As LongnDim tmpNode() As LongnDim tmpSeq() As StringnnOn Error GoTo ErrorHandlernn    Dim nodecls As New NodeControlnn    Set filesystem = CreateObject("Scripting.FileSystemObject")n    Set txtfile = filesystem.CreateTextFile(SavePathName & DerivID, True)n    n    Call nodecls.ToSeries(Dimension, Series(), nmin(), nmax())n    n    txtfile.writeline (Dimension)n    n    For j = 1 To Dimensionn    n        ReDim tmpSeq(nmin(j) To nmax(j)) As Stringn    n        For i = nmin(j) To nmax(j)n        n           tmpSeq(i) = CStr(px(j, i))n                    n        Next in        n        LineStr = Join(tmpSeq(), "*")n        n        txtfile.writeline (LineStr)n    n    Next jn    n    ReDim tmpSeq(0 To Series(Dimension) - 1) As Stringn    n    For i = 0 To Series(Dimension) - 1n    n        Call nodecls.SeqToNode(Dimension, i, tmpNode(), Series(), nmin(), nmax())n        n        tmpSeq(i) = CStr(nodecls.ReturnNodeValue(tmpNode(), NodeValue()))n        n    Next inn    LineStr = Join(tmpSeq(), "*")n    n    txtfile.writeline (LineStr)n        n    txtfile.Closen    WrtFile = 1n    Exit Functionn    nErrorHandler:n    n    If txtfile <> Null Thenn        txtfile.Closen    End Ifn    WrtFile = -1n    n    Err.Raise Err.number, "FileIO.wrtFile", "ERROR IN WRITING TEXT FILE " & Err.descriptionn    'MsgBox Err.Numbern    Exit FunctionnnEnd FunctionnnPublic Function ReadFile( _nByVal SaveFileName As String, _nByRef NodeValue() As Double, _nByRef px() As Double, _nByRef dx() As Double, _nByRef nmin() As Long, _nByRef nmax() As Long _n) As IntegernnDim i As LongnDim j As LongnDim Dimension As LongnnDim LineStrArray() As StringnDim LineStr As StringnnDim Series() As LongnDim tmpNode() As LongnnOn Error GoTo ErrorHandlernn    Dim nodecls As New NodeControln    Dim funcls As New Functionsn    n    Open SaveFileName For Input As #1n    n    i = 0n    n    Do While Not EOF(1)n    n        Line Input #1, LineStrnn        If i = 0 Thennn            Dimension = CLng(LineStr)n            n            If Dimension = 1 Thenn            n                ReDim NodeValue(nmin(1) To nmax(1)) As Doublen            n            ElseIf Dimension = 2 Thenn            n                ReDim NodeValue(nmin(1) To nmax(1), nmin(2) To nmax(2)) As Doublen            n            ElseIf Dimension = 3 Thenn            n                ReDim NodeValue(nmin(1) To nmax(1), nmin(2) To nmax(2), nmin(3) To nmax(3)) As Doublen            n            End Ifn            n            ReDim px(1 To Dimension, funcls.lReturnMin(nmin()) To funcls.lReturnMax(nmax())) As Doublen            ReDim dx(1 To Dimension, funcls.lReturnMin(nmin()) + 1 To funcls.lReturnMax(nmax())) As Doublen            n            Call nodecls.ToSeries(Dimension, Series(), nmin(), nmax())n        n        ElseIf i >= 1 And i <= Dimension Thennn            LineStrArray = Split(CStr(LineStr), "*")n            n            For j = LBound(LineStrArray()) To UBound(LineStrArray())n            n                px(i, j + nmin(i) - LBound(LineStrArray())) = CDbl(LineStrArray(j))n                n                If j > LBound(LineStrArray()) Thenn                n                    dx(i, j) = px(i, j + nmin(i) - LBound(LineStrArray())) - px(i, j - 1 + nmin(i) - LBound(LineStrArray()))n                    n                End Ifn            n            Next jnn        ElseIf i = Dimension + 1 Thenn        n            LineStrArray = Split(CStr(LineStr), "*")n            n            For j = LBound(LineStrArray()) To UBound(LineStrArray())n            n                Call nodecls.SeqToNode(Dimension, j - LBound(LineStrArray()), tmpNode(), Series(), nmin(), nmax())n                n                Call nodecls.GetNodeValue(Dimension, tmpNode(), NodeValue(), CDbl(LineStrArray(j)))n            n            Next jn        n        End Ifn        n        i = i + 1nn    Loopn    n    Close #1n    ReadFile = 1n    Exit Functionn    nErrorHandler:nn    Close #1n    MsgBox Err.descriptionn    ReadFile = -1n    n    Exit FunctionnnEnd Functionn
+Option Explicit
+
+Public Function WrtFile( _
+ByVal Dimension As Long, _
+ByVal SavePathName As String, _
+ByVal DerivID As String, _
+ByRef NodeValue() As Double, _
+ByRef px() As Double, _
+ByRef nmin() As Long, _
+ByRef nmax() As Long _
+) As Integer
+
+Dim i As Long
+Dim j As Long
+Dim filesystem As Variant
+Dim txtfile As Variant
+Dim LineStr As String
+
+Dim Series() As Long
+Dim tmpNode() As Long
+Dim tmpSeq() As String
+
+On Error GoTo ErrorHandler
+
+    Dim nodecls As New NodeControl
+
+    Set filesystem = CreateObject("Scripting.FileSystemObject")
+    Set txtfile = filesystem.CreateTextFile(SavePathName & DerivID, True)
+    
+    Call nodecls.ToSeries(Dimension, Series(), nmin(), nmax())
+    
+    txtfile.writeline (Dimension)
+    
+    For j = 1 To Dimension
+    
+        ReDim tmpSeq(nmin(j) To nmax(j)) As String
+    
+        For i = nmin(j) To nmax(j)
+        
+           tmpSeq(i) = CStr(px(j, i))
+                    
+        Next i
+        
+        LineStr = Join(tmpSeq(), "*")
+        
+        txtfile.writeline (LineStr)
+    
+    Next j
+    
+    ReDim tmpSeq(0 To Series(Dimension) - 1) As String
+    
+    For i = 0 To Series(Dimension) - 1
+    
+        Call nodecls.SeqToNode(Dimension, i, tmpNode(), Series(), nmin(), nmax())
+        
+        tmpSeq(i) = CStr(nodecls.ReturnNodeValue(tmpNode(), NodeValue()))
+        
+    Next i
+
+    LineStr = Join(tmpSeq(), "*")
+    
+    txtfile.writeline (LineStr)
+        
+    txtfile.Close
+    WrtFile = 1
+    Exit Function
+    
+ErrorHandler:
+    
+    If txtfile <> Null Then
+        txtfile.Close
+    End If
+    WrtFile = -1
+    
+    Err.Raise Err.number, "FileIO.wrtFile", "ERROR IN WRITING TEXT FILE " & Err.description
+    'MsgBox Err.Number
+    Exit Function
+
+End Function
+
+Public Function ReadFile( _
+ByVal SaveFileName As String, _
+ByRef NodeValue() As Double, _
+ByRef px() As Double, _
+ByRef dx() As Double, _
+ByRef nmin() As Long, _
+ByRef nmax() As Long _
+) As Integer
+
+Dim i As Long
+Dim j As Long
+Dim Dimension As Long
+
+Dim LineStrArray() As String
+Dim LineStr As String
+
+Dim Series() As Long
+Dim tmpNode() As Long
+
+On Error GoTo ErrorHandler
+
+    Dim nodecls As New NodeControl
+    Dim funcls As New Functions
+    
+    Open SaveFileName For Input As #1
+    
+    i = 0
+    
+    Do While Not EOF(1)
+    
+        Line Input #1, LineStr
+
+        If i = 0 Then
+
+            Dimension = CLng(LineStr)
+            
+            If Dimension = 1 Then
+            
+                ReDim NodeValue(nmin(1) To nmax(1)) As Double
+            
+            ElseIf Dimension = 2 Then
+            
+                ReDim NodeValue(nmin(1) To nmax(1), nmin(2) To nmax(2)) As Double
+            
+            ElseIf Dimension = 3 Then
+            
+                ReDim NodeValue(nmin(1) To nmax(1), nmin(2) To nmax(2), nmin(3) To nmax(3)) As Double
+            
+            End If
+            
+            ReDim px(1 To Dimension, funcls.lReturnMin(nmin()) To funcls.lReturnMax(nmax())) As Double
+            ReDim dx(1 To Dimension, funcls.lReturnMin(nmin()) + 1 To funcls.lReturnMax(nmax())) As Double
+            
+            Call nodecls.ToSeries(Dimension, Series(), nmin(), nmax())
+        
+        ElseIf i >= 1 And i <= Dimension Then
+
+            LineStrArray = Split(CStr(LineStr), "*")
+            
+            For j = LBound(LineStrArray()) To UBound(LineStrArray())
+            
+                px(i, j + nmin(i) - LBound(LineStrArray())) = CDbl(LineStrArray(j))
+                
+                If j > LBound(LineStrArray()) Then
+                
+                    dx(i, j) = px(i, j + nmin(i) - LBound(LineStrArray())) - px(i, j - 1 + nmin(i) - LBound(LineStrArray()))
+                    
+                End If
+            
+            Next j
+
+        ElseIf i = Dimension + 1 Then
+        
+            LineStrArray = Split(CStr(LineStr), "*")
+            
+            For j = LBound(LineStrArray()) To UBound(LineStrArray())
+            
+                Call nodecls.SeqToNode(Dimension, j - LBound(LineStrArray()), tmpNode(), Series(), nmin(), nmax())
+                
+                Call nodecls.GetNodeValue(Dimension, tmpNode(), NodeValue(), CDbl(LineStrArray(j)))
+            
+            Next j
+        
+        End If
+        
+        i = i + 1
+
+    Loop
+    
+    Close #1
+    ReadFile = 1
+    Exit Function
+    
+ErrorHandler:
+
+    Close #1
+    MsgBox Err.description
+    ReadFile = -1
+    
+    Exit Function
+
+End Function

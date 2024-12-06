@@ -1,1 +1,1547 @@
-Option ExplicitnOption Base 1nnPublic Enum ELS_COLn    SQ = 1n    HEDG_TR_TYPE_CODE = 2n    PROD_CLS_CODE = 3n    ISIN = 4n    FNCD_ELS = 5n    FO_ELS_D = 6n    IO_ELS_D = 7n    FO_ELS_H = 8n    PROD_CLS_CODE_H = 9n    IO_ESWAP_H = 10n    IO_FRN_H = 11n    FNCD_ESWAP = 12n    FO_ESWAP_T = 13n    IO_ESWAP_T = 14n    FO_FRN_T = 15n    IO_FRN_T = 16n    KOR_ISNM = 17n    STLM_CRCD = 18n    REAL_PBLC_FCAM = 19n    DEAL_CLS_CODE = 20n    PBLC_STCK_QTY = 21n    RMND_QTY = 22n    NOTIONAL_CCY = 23n    NOTIONAL_KRW = 24n    FRST_STND_PRC_FIN_DATE = 25n    PBLC_DATE = 26n    MTRT_DATE = 27n    RMND_DAYS = 28n    FUND_PBLC_UNPR = 29n    FUND_BOOK_UNPR = 30n    HEDG_BUF_D = 31n    HEDG_BUF_H = 32n    clrd_type_code = 33n    unas_choc_mthd_code = 34n    NUM_UNAS = 35n    UNAS_ISCD1 = 40n    UNAS_INTL_PRC1 = 44n    AC_UNAS_SDRT1 = 48n    AC_CLRD_DTRM_DATE1 = 60n    AC_CLRD_ERT1 = 72n    KI_BARR_VAL = 84n    KI_HIT_DATE = 85n    M_BONS_CUPN_STA_SDRT = 86n    M_BONS_CUPN_INRT = 87n    EE_CLRD_BARR_VAL1 = 88n    EE_CALC_FIN_DATE1 = 91n    EE_CLRD_INRT1 = 94n    EE_CLRD_BARR_HIT_YN1 = 97n    PRC_APLY_CLS_CODE = 102nEnd EnumnnPrivate Enum ELS_PRICING_COLn    SQ = 1n    CALC_TIME = 2n    TODAY_EVENT = 3n    NO = 4n    HEDG_TR_TYPE_CODE = 5n    n    PROD_CLS_CODE = 6n    FO_ELS_D = 7n    PROD_CLS_CODE_H = 8n    IO_ESWAP_H = 9n    IO_ESWAP_T = 10n    KOR_ISNM = 11n    STLM_CRCD = 12n    NOTIONAL_CCY = 13n    DAY1_PL_D = 14n    DAY1_PL_H = 15n    ua_pct_price = 16n    UA_WORST = 22n    UA_WORST_PCT_PRICE = 23n    REDEEMABLE_NO = 24n    REDEEMABLE_DATE = 25n    REDEEMABLE_DAYS_LEFT = 26n    REDEEMABLE_BARRIER = 27n    REDEEMABLE_RATIO = 28n    REDEEMABLE_MARGIN = 29n    IS_MATURITY = 30n    next_ac_no = 31n    NEXT_AC_DATE = 32n    NEXT_AC_DAYS_LEFT = 33n    NEXT_AC_BARRIER = 34n    NEXT_AC_REDEEM_RATIO = 35n    NEXT_AC_MARGIN = 36n    NEXT_AC_AVAILABLE = 37n'    ELS_PRICE_EST = 34n'    ELS_PRICE_EST_ERR = 35n'    els_price_theo = 36n'    ESWAP_PRICE_THEO = 37n    PRICE_THEO_D = 38n    PRICE_THEO_H = 39n'    FRN_PRICE_THEO = 38n'    els_price_mtm = 39n'    ESWAP_PRICE_MTM = 40n    PRICE_MTM_D = 40n    PRICE_MTM_H = 41n    ELS_PRICE_THEO_FR = 42n    ESWAP_PRICE_THEO_FR = 43n    ELS_PRICE_THEO_DIFF = 44n    ELS_PRICE_THEO_DIFF_CHG = 45n    PL_REAL = 46n    PL_EST = 47n    PL_EST_ERR = 48n    PL_FR = 49n    PL_FR_DIFF = 50n    PL_DELTA = 51n    PL_GAMMA = 52n    PL_XGAMMA = 53n    PL_VEGA = 55n    PL_THETA = 57n    PL_RF = 58n    PL_CVA = 59n    PL_FX = 60n    PL_DAY1 = 61nEnd EnumnnPrivate Enum TODAY_EVENTn    EVAL_AC = 1 '상환평가일: 상환확정n    EVAL_TBD = 2 '상환평가일: 상환가능n    EVAL_FAIL = 3 '상환평가일: 상환실패n    DEAL_TRADE = 4 '신규 거래n    DEAL_ISSUE = 5 '신규 발행n    ESWAP_RCV_FLT = 6 '스왑 변동금리 수취nEnd EnumnnPublic Sub btnCalcPrice_Click()nn    '전역변수 설정n    Call SET_GLOBALn    n    Dim rng As Rangen    Set rng = Range("TBL_ELS_PRICING_LIST")n    n    Dim rng_els_list As Rangen    Set rng_els_list = shtELSList.Range("TBL_ELS_LIST")n    n    If Range("clear_price").value = True Thenn        rng.Columns(CALC_TIME).ClearContentsn        rng.Columns(TODAY_EVENT).ClearContentsn        rng.Columns(PRICE_THEO_D).ClearContentsn        rng.Columns(PRICE_THEO_H).ClearContentsn        rng.Columns(PRICE_MTM_D).ClearContentsn        rng.Columns(PRICE_MTM_H).ClearContentsn    End Ifn    n    Dim bScreenUpdating As Booleann    Dim btatusBar As Booleann    Dim bDisplayStatusBar As Booleann    Dim vCalculation As Variantn    Dim bEnableEvents As Booleann    bScreenUpdating = Application.ScreenUpdatingn    btatusBar = Application.StatusBarn    bDisplayStatusBar = Application.DisplayStatusBarn    vCalculation = Application.Calculationn    bEnableEvents = Application.EnableEventsn    n    With Applicationn        .ScreenUpdating = Truen        .StatusBar = Falsen        .DisplayStatusBar = Truen        .Calculation = xlCalculationAutomaticn        .EnableEvents = Truen    End Withnn    Dim target_date As Daten    target_date = Range("target_date").valuenn    Dim latest_call_date As Daten    Dim latest_bus_date As Daten    Dim spot_date As Daten    'latest_bus_date = get_latest_bus_date(target_date)n    latest_bus_date = shtMarket.Range("market_prevdate").value 'tempn    n    Dim str_target_date As Stringn    str_target_date = date2str(target_date)n    n    Dim adoCon As New adoDB.Connectionn    n    Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)nn    Dim i As Integern    Dim j As Integern    Dim k As Integern    Dim sql As Stringnn    Dim start_time As Daten    Dim elapsed_time As Daten    n    Dim prod_code As Stringn    n    Dim for_frn_flag As Booleann    Dim for_eswap_flag As Booleannn    Dim ac_deal_ticket As clsACDealTicketn    Dim eswap_deal_ticket As clsACDealTicketnn    Dim ac_greeks As clsGreeksn    Dim eswap_greeks As clsGreeksnn    Dim riskfree_dcf_enable As Booleann    Dim prev_riskfree_dcf_enable As Booleann    n    Dim market_set As clsMarketSetn    Dim ua_pct_price() As Doublen    Dim is_delayed_spot As Booleann    n    Dim rtn(4) As Variantn    n    Dim calc_delta_gamma As Booleann    Dim calc_sticky_moneyness_delta As Booleann    Dim calc_sticky_strike_delta As Booleann    Dim calc_cross_gamma As Booleann    Dim calc_vega As Booleann    Dim calc_term_vega As Booleann    Dim calc_skew As Booleann    Dim calc_corr As Booleann    Dim calc_rho As Booleann    Dim calc_theta As Booleann    'Dim calc_local_corr As Booleann    n    If GREEKS_ENABLE = True Thenn        calc_delta_gamma = Truen        calc_sticky_moneyness_delta = Truen        calc_sticky_strike_delta = Falsen        calc_cross_gamma = Falsen        calc_vega = Truen        calc_term_vega = Falsen        calc_skew = Falsen        calc_corr = Falsen        calc_rho = Truen        calc_theta = Truen        'calc_local_corr = Truen    Elsen        calc_delta_gamma = Falsen        calc_sticky_moneyness_delta = Falsen        calc_sticky_strike_delta = Falsen        calc_cross_gamma = Falsen        calc_vega = Falsen        calc_term_vega = Falsen        calc_skew = Falsen        calc_corr = Falsen        calc_rho = Falsen        calc_theta = Falsen        'calc_local_corr = Truen    End Ifnn    Dim seq_from_els As Integern    Dim seq_to_els As Integern    Dim seq_cur_els As Integern    seq_from_els = Range("from_seq").valuen    seq_to_els = Range("to_seq").valuen        n    Dim note_price As Doublen    Dim swap_price As Doublen    Dim price As Doublen    Dim day1_pl_price As Doublen    n    Dim i_dh As Integern    Dim prod_cls As Stringn    n    'i_dh = 1 ... 대상 pricing loopn    'i_dh = 2 ... 수단 pricing loopn    Dim i_dh_from As Integern    Dim i_dh_to As Integern    Select Case Range("pricing_target").valuen    Case "전체"n        i_dh_from = 1n        i_dh_to = 2n    Case "대상"n        i_dh_from = 1n        i_dh_to = 1n    Case "수단"n        i_dh_from = 2n        i_dh_to = 2n    End Selectn    n    For i_dh = i_dh_from To i_dh_ton    n'2024.07.29 미래금융팀 테스트용으로 Range("insert_greeks") 삭제 및 주석처리n'        If Range("insert_greeks").value = True And GREEKS_ENABLE = True Thenn'            i_dh = 2n'        End Ifn        n        For i = seq_from_els To seq_to_elsn    n            start_time = Nown            Range("cur_seq") = in            rng.Cells(i, CALC_TIME) = "Calcuating..."n    n            If i_dh = 1 Thenn                prod_cls = rng(i, ELS_PRICING_COL.PROD_CLS_CODE).valuen            Elsen                prod_cls = rng(i, ELS_PRICING_COL.PROD_CLS_CODE_H).valuen            End Ifn            n            If rng(i, ELS_PRICING_COL.IO_ESWAP_T).value <> "" Thenn                prod_code = rng(i, ELS_PRICING_COL.IO_ESWAP_T).value '자체 E.swap IO~Tn            Elsen                prod_code = rng(i, ELS_PRICING_COL.IO_ESWAP_H).value '백투백 E.swap IO~Hn            End Ifn            n            'market_setn            If prod_cls = "스왑" Thenn                riskfree_dcf_enable = True '무위험 커브 할인n                for_frn_flag = Falsen                for_eswap_flag = Truen            Elsen                riskfree_dcf_enable = False '신용등급 커브 할인n                for_frn_flag = Falsen                for_eswap_flag = Falsen            End Ifn            n            If i = seq_from_els Or prev_riskfree_dcf_enable <> riskfree_dcf_enable Thenn                Set market_set = read_market_set(riskfree_dcf_enable)n                prev_riskfree_dcf_enable = riskfree_dcf_enablen            End Ifn            n            '시나리오테스트 중 미완료 종목만 계산시 이미 완료된 종목이면 skip '2024.07.18n            If Not (SCENARIO_ENABLE = True And Range("missed_prod_only").value = True And is_completed(prod_code, target_date, shtMarket.Range("SCENARIO_ID").value, adoCon) = True) Thenn            n                'evaluate autocalln                Set ac_deal_ticket = get_ac_deal_ticket(prod_code, target_date, False, False, adoCon) '회계처리일이 아닌 계약 상 실제 조기상환결정일 기준: eval_date_lag = falsen                n                'target_date 포함 이전 최직근 call_daten                latest_call_date = CDate(0) 'ac_deal_ticket.value_date : 2024.07.22 dummy 초기값 삭제. date형 기본값으로 적용.n                For k = 1 To ac_deal_ticket.no_of_schedulen                    If target_date >= ac_deal_ticket.autocall_schedules(k).call_date Thenn                        latest_call_date = ac_deal_ticket.autocall_schedules(k).call_daten                    End Ifn                Next kn                n                spot_date = target_daten                is_delayed_spot = Truen                    n                If ac_deal_ticket.has_eval_shift_ul = True Thenn                    n                        '1 거래일: latest_bus_date < value_date = latest_call_date = target_date                  -> spot_date = target_date, is_delayed_spot = truen                        '2 발행일: latest_bus_date <= value_date = latest_call_date <= target_date                -> spot_date = target_date, is_delayed_spot = truen                        '1/2: latest_bus_date <= latest_call_date <= target_date & value_date = latest_call_daten                        n                        '3 평상시: latest_call_date < latest_bus_date < target_date                               -> spot_date = target_date, is_delayed_spot = truen                        '4 조기상환평가일 도래했으나 일부 종가 미형성: latest_bus_date < latest_call_date = target_date       -> spot_date = target_date, is_delayed_spot = truen                                            n                        '5 조기상환평가 회계적용일: latest_bus_date = latest_call_date < target_date                  -> spot_date = latest_call_date, is_delayed_spot = falsen                        '6 한국 연휴기간 중 조기상환평가일 도래: latest_bus_date < latest_call_date < target_date         -> spot_date = latest_call_date, is_delayed_spot = falsen                        '5/6: latest_bus_date <= latest_call_date < target_date & value_date < latest_call_daten                        n                    If latest_bus_date <= latest_call_date And latest_call_date < target_date And ac_deal_ticket.value_date < latest_call_date Thenn                        spot_date = latest_call_daten                        is_delayed_spot = Falsen                    End Ifn                    n                End Ifn                n                '기초자산 현재가n                ReDim ua_pct_price(ac_deal_ticket.no_of_ul) As Doublen                For k = 1 To ac_deal_ticket.no_of_uln                    ua_pct_price(k) = get_spot(ac_deal_ticket.ul_code(k), spot_date, is_delayed_spot, adoCon) / ac_deal_ticket.reference_price(k)n                Next kn                n                '상환 확정시 : 2024.05.21n                If eval_next_autocall(ac_deal_ticket, spot_date, ua_pct_price, rtn) = True And spot_date = latest_call_date And (ac_deal_ticket.has_eval_shift_ul = False Or is_delayed_spot = False) Thenn                n                    day1_pl_price = 0n                    n                    If prod_cls = "스왑" Thenn                        price = (CDbl(rtn(3)) - 1) * ac_deal_ticket.unit_notionaln                    Elsen                        price = CDbl(rtn(3)) * ac_deal_ticket.unit_notionaln                    End Ifn                    n                    rng.Cells(i, ELS_PRICING_COL.TODAY_EVENT) = "상환 확정"n          n                ElseIf ac_deal_ticket.notional <> 0 Thenn                n                    Set ac_deal_ticket = get_ac_deal_ticket(prod_code, target_date, False, for_eswap_flag, adoCon, , True, , market_set) 'eval_date_lag = true (1 calendar day)n                    n                    'modify ac_deal_ticket for leverage indices : 2018.7.9n                    Set ac_deal_ticket = modify_ac_deal_ticket(ac_deal_ticket, market_set)n                n                    Set ac_greeks = New clsGreeksn                n                    run_ac_pricing_mc ac_greeks, ac_deal_ticket, market_set _n                                        , calc_delta_gamma _n                                        , calc_sticky_moneyness_delta _n                                        , calc_sticky_strike_delta _n                                        , calc_cross_gamma _n                                        , calc_vega _n                                        , calc_term_vega _n                                        , calc_skew _n                                        , calc_corr _n                                        , calc_rho _n                                        , calc_theta _n                                        , CORR_SKEW_ENABLEn                                       ' , calc_local_corrn                n                    price = ac_greeks.value / ac_deal_ticket.notional * ac_deal_ticket.unit_notionaln    n                    If i_dh = 1 Thenn                        day1_pl_price = rng.Cells(i, ELS_PRICING_COL.DAY1_PL_D) / Abs(ac_deal_ticket.qty)n                        n    '                    rng.Cells(i, ELS_PRICING_COL.PRICE_THEO_D) = Round(price / ac_deal_ticket.unit_notional, 7) * ac_deal_ticket.unit_notionaln    '                    rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_D) = Round((price + day1_pl_price) / ac_deal_ticket.unit_notional, 7) * ac_deal_ticket.unit_notionaln                    Elsen                        day1_pl_price = rng.Cells(i, ELS_PRICING_COL.DAY1_PL_H) / Abs(ac_deal_ticket.qty)n                        n                        '수단 Day1 PL 관리가 안 된 과거 기간은 대상과 동일한 값 사용n                        If date2str(ac_deal_ticket.settlement_date) < "20240403" Thenn                            day1_pl_price = rng.Cells(i, ELS_PRICING_COL.DAY1_PL_D) / Abs(ac_deal_ticket.qty)n                        End Ifn                        n    '                    rng.Cells(i, ELS_PRICING_COL.PRICE_THEO_H) = Round(price / ac_deal_ticket.unit_notional, 7) * ac_deal_ticket.unit_notionaln    '                    rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_H) = Round((price + day1_pl_price) / ac_deal_ticket.unit_notional, 7) * ac_deal_ticket.unit_notionaln                        n'2024.07.29 미래금융팀 테스트용으로 Range("insert_greeks") 삭제 및 주석처리n'                        If Range("insert_greeks").value = True And GREEKS_ENABLE = True Thenn'                            If SCENARIO_ENABLE = True Thenn'                                Call insert_scenario_result(ac_greeks, ac_deal_ticket, market_set, adoCon, shtMarket.Range("SCENARIO_ID").value)n'                            Elsen'                                Call insert_greeks(ac_greeks, ac_deal_ticket, market_set, adoCon)n'                            End Ifn'                        End Ifn                        n                    End Ifn                    n                End Ifn                n                If i_dh = 1 Thenn                    rng.Cells(i, ELS_PRICING_COL.PRICE_THEO_D) = Round(price / ac_deal_ticket.unit_notional, 8) * ac_deal_ticket.unit_notionaln                    n                    '발행일 기준가 = 장부가n                    If ac_deal_ticket.settlement_date = target_date Thenn                        If prod_cls = "스왑" Thenn                            rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_D) = rng_els_list.Cells(rng.Cells(i, ELS_PRICING_COL.NO), ELS_COL.FUND_PBLC_UNPR) - ac_deal_ticket.unit_notional 'tempn                        Elsen                            rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_D) = rng_els_list.Cells(rng.Cells(i, ELS_PRICING_COL.NO), ELS_COL.FUND_BOOK_UNPR)n                        End Ifn                    Elsen                        rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_D) = Round((price + day1_pl_price) / ac_deal_ticket.unit_notional, 8) * ac_deal_ticket.unit_notionaln                    End Ifn                Elsen                    rng.Cells(i, ELS_PRICING_COL.PRICE_THEO_H) = Round(price / ac_deal_ticket.unit_notional, 8) * ac_deal_ticket.unit_notionaln                    n                    '발행일 기준가 = 장부가n                    If ac_deal_ticket.settlement_date = target_date Then 'temp : ac_deal_ticket.issue_cost = #35304 장부가(PERC_APLY_THPR)n                        If prod_cls = "스왑" Thenn                            rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_H) = -1 * ac_deal_ticket.issue_cost * ac_deal_ticket.unit_notional '스왑인 경우, 장부가에 (-) 빠져있음n                        Elsen                            rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_H) = ac_deal_ticket.issue_cost * ac_deal_ticket.unit_notionaln                        End Ifn                    Elsen                        rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_H) = Round((price + day1_pl_price) / ac_deal_ticket.unit_notional, 8) * ac_deal_ticket.unit_notionaln                    End Ifn                End Ifn                        n                'Greeks로 가격 추정n        n                'Numerical 손익 분해: 델타, 감마, 베가, 세타, 기타(크로스감마, 스큐, 금리, 상관계수)n        n                'Impled Vol 변동 추정치(%p) ~ 실제 베가 PL / 전일 베가n        n                Set ac_deal_ticket = Nothingn                Set eswap_deal_ticket = Nothingn    n                Set ac_greeks = Nothingn                Set eswap_greeks = Nothingn                        n                elapsed_time = elapsed_time + (Now - start_time)n        n                rng.Cells(i, CALC_TIME) = Now - start_timen                n                Range("elapsed_time") = elapsed_timen        n                'AutoSave: every [auto_save_freq] productsn                If Range("auto_save").value = True And (i Mod Range("auto_save_freq").value) = 0 Thenn                    ThisWorkbook.Saven                End Ifn            n            End Ifn    n        Next in    n    Next i_dhnn    'Reset SEQn    Range("from_seq") = 1n    n    'AutoSaven    If Range("auto_save").value = True Thenn        ThisWorkbook.Saven        ThisWorkbook.Closen    End Ifn    n    Call disconnectDB(adoCon)n    n    Set market_set = Nothingn    n    Set ac_deal_ticket = Nothingn    Set eswap_deal_ticket = Nothingn    n    Set ac_greeks = Nothingn    Set eswap_greeks = Nothingnn    With Applicationn        .ScreenUpdating = bScreenUpdatingn        .StatusBar = btatusBarn        .DisplayStatusBar = bDisplayStatusBarn        .Calculation = vCalculationn        .EnableEvents = bEnableEventsn    End WithnnEnd SubnnPrivate Sub btnComparePrice_Click()n'Equity파생운용부 이론가 및 기준가 조회nn    Dim target_date As Daten    target_date = Range("target_date").valuen    n    Dim rng As Rangen    Set rng = Range("TBL_ELS_PRICING_LIST")nn    Dim adoCon As New adoDB.Connectionn    Dim oCmd As New adoDB.Commandn    Dim oRS As New adoDB.Recordsetn    n    Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)n    n    Dim bind_variable() As Stringn    Dim bind_value() As Variantn    ReDim bind_variable(2) As Stringn    ReDim bind_value(2) As Variantn    bind_variable(1) = ":tdate"n    bind_variable(2) = ":code"n    bind_value(1) = date2str(target_date)n    n    Dim i As Integern    Dim sql As Stringn        n    For i = 1 To rng.Rows.countn    n        If IsEmpty(rng(i, ELS_COL.SQ)) = False Thenn            n            bind_value(2) = rng(i, ELS_PRICING_COL.IO_ESWAP_T).valuen            n            sql = getSQL(SQL_PATH_ELS_PRICE_FR, bind_variable, bind_value)n    n            With oCmdn            n                .ActiveConnection = adoConn                .CommandType = adCmdTextn                .CommandText = sqln                n                oRS.Open .Executen            n            End Withn            n            Do Until oRS.EOFn                rng(i, ELS_PRICING_COL.ELS_PRICE_THEO_FR) = oRS(1)n                oRS.MoveNextn            Loopn            n            oRS.Closen            n        End Ifn        n    Next in    n    Call disconnectDB(adoCon)n    nEnd SubnnPrivate Sub btnDecomposePL_Click()n    n    '실제 회계 손익n    n    '손익 추정 오차n    n    n    n    Dim rng As Rangen    Set rng = Range("TBL_ELS_PRICING_LIST")n    rng.Columns(CALC_TIME).ClearContentsn    rng.Columns(els_price_theo).ClearContentsn    n    Dim bScreenUpdating As Booleann    Dim btatusBar As Booleann    Dim bDisplayStatusBar As Booleann    Dim vCalculation As Variantn    Dim bEnableEvents As Booleann    bScreenUpdating = Application.ScreenUpdatingn    btatusBar = Application.StatusBarn    bDisplayStatusBar = Application.DisplayStatusBarn    vCalculation = Application.Calculationn    bEnableEvents = Application.EnableEventsn    n    With Applicationn        .ScreenUpdating = Truen        .StatusBar = Falsen        .DisplayStatusBar = Truen        .Calculation = xlCalculationAutomaticn        .EnableEvents = Truen    End Withnn    Dim target_date As Daten    target_date = Range("target_date").valuen    n    Dim str_target_date As Stringn    str_target_date = date2str(target_date)n    n    Dim adoCon As New adoDB.Connectionn    Dim oCmd As New adoDB.Commandn    Dim oRS As New adoDB.Recordsetn    n    Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)n    n    Dim bind_variable() As Stringn    Dim bind_value() As Variantn    ReDim bind_variable(2) As Stringn    ReDim bind_value(2) As Variantn    bind_variable(1) = ":tdate"n    bind_value(1) = str_target_daten    n    Dim i As Integern    Dim j As Integern    Dim k As Integern    Dim sql As Stringn    n'    Dim ofs As Integern'    Dim unit_notional As Doublen'    Dim next_cpn As Doublen'    Dim hedge_buff As Doublen'    Dim book_price As Doublen'    Dim qty As Doublen'    Dim ds As Doublen'    Dim delta As Doublen'    Dim gamma As Doublen'    Dim vega As Doublen'    Dim theta As Doublen'    Dim delta_pl As Doublen'    Dim gamma_pl As Doublen'    Dim vega_pl As Doublen'    Dim theta_pl As Doublen'    Dim tau As Doublen'    Dim dur_els As Doublen'    Dim iv_110 As Doublen'    Dim iv_90 As Doublen'    Dim price_frn As Doublen'    Dim dv01_frn As Doublen'    Dim frn As Doublenn    Dim seq_from_els As Integern    Dim seq_to_els As Integern    seq_from_els = Range("from_seq").valuen    seq_to_els = Range("to_seq").valuen    n    Dim note_price As Doublen    Dim swap_price As Doublen    Dim frn_price As Doublen    Dim plain_frn_price As Doublen    Dim day1_pl_price As Doublen    n    For i = seq_from_els To seq_to_elsn    n        sql = getSQL(SQL_PATH_ELS, bind_variable, bind_value)n        n        With oCmdn    n            .ActiveConnection = adoConn            .CommandType = adCmdTextn            .CommandText = sqln    n            oRS.Open .Executen    n        End Withn    n        Application.Calculation = xlCalculationManualn        Application.ScreenUpdating = Falsen        n        i = 1n    n        Do Until oRS.EOFn            n            If selected_hedge_type_code = HEDG_TR_TYPE_CODE.all Or selected_hedge_type_code = oRS(0) Thenn        n                els_list(i, 1) = in                n                For j = 0 To oRS.Fields.count - 1n                    els_list(i, j + 2) = oRS(j)n                Next jn                n                i = i + 1n            End Ifn    n            oRS.MoveNextn    n        Loopn    n    Next inn    With Applicationn        .ScreenUpdating = bScreenUpdatingn        .StatusBar = btatusBarn        .DisplayStatusBar = bDisplayStatusBarn        .Calculation = vCalculationn        .EnableEvents = bEnableEventsn    End WithnnEnd SubnnPrivate Sub btnEstimatePrice_Click()nnEnd SubnnPrivate Sub btnReadPrice_Click()n'RM 이론가 및 기준가 조회nn    Dim target_date As Daten    target_date = Range("target_date").valuen    n    Dim rng As Rangen    Set rng = Range("TBL_ELS_PRICING_LIST")nn    Dim adoCon As New adoDB.Connectionn    Dim oCmd As New adoDB.Commandn    Dim oRS As New adoDB.Recordsetn    n    Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)n    n    Dim bind_variable() As Stringn    Dim bind_value() As Variantn    ReDim bind_variable(2) As Stringn    ReDim bind_value(2) As Variantn    bind_variable(1) = ":tdate"n    bind_variable(2) = ":code"n    bind_value(1) = date2str(target_date)n    n    Dim i As Integern    Dim sql As Stringn        n    For i = 1 To rng.Rows.countn    n        If IsEmpty(rng(i, ELS_COL.SQ)) = False Thenn            n            bind_value(2) = rng(i, ELS_PRICING_COL.FO_ELS_D).valuen            n            'sql = getSQL(SQL_PATH_ELS_PRICE, bind_variable, bind_value)n            sql = "select code, theory_price, market_price from ras.rm_els_data where tdate = '" + bind_value(1) + "' and code = '" + bind_value(2) + "'"n    n            With oCmdn            n                .ActiveConnection = adoConn                .CommandType = adCmdTextn                .CommandText = sqln                n                oRS.Open .Executen            n            End Withn            n            Do Until oRS.EOFn                rng(i, ELS_PRICING_COL.els_price_theo) = oRS(1)n                rng(i, ELS_PRICING_COL.els_price_mtm) = oRS(2)n                oRS.MoveNextn            Loopn            n            oRS.Closen            n        End Ifn        n    Next in    n    Call disconnectDB(adoCon)n    nEnd SubnnPublic Sub btnReadTargetELS_Click()nn    SET_GLOBALnn    Dim target_date As Daten    target_date = Range("target_date").valuen    n    Dim tdate_str As Stringn    tdate_str = date2str(target_date)n                n    Dim tbl As Rangen    Set tbl = shtELSList.Range("TBL_ELS_LIST")n    n    Dim rng As Rangen    Set rng = Range("TBL_ELS_PRICING_LIST")n    rng.ClearContentsn    n    Range("cur_seq").ClearContentsn    Range("elapsed_time").ClearContentsn    n    Dim els_pricing_list As Variantn    els_pricing_list = rng.valuenn    Dim adoCon As New adoDB.Connectionn'    Dim oCmd As New adoDB.Commandn'    Dim oRS As New adoDB.Recordsetn    n    Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)n    n'    Dim bind_variable() As Stringn'    Dim bind_value() As Variantn'    ReDim bind_variable(2) As Stringn'    ReDim bind_value(2) As Variantn'    bind_variable(1) = ":tdate"n'    bind_value(1) = tdate_strn    n    Dim i As Integern    Dim j As Integern    Dim k As Integern    Dim sql As Stringn    n    Dim ua_pct_price() As Doublen    Dim ua_wp As Stringn    Dim ua_wp_pct_price As Doublen    Dim ac_deal_ticket As clsACDealTicketn    Dim latest_call_date As Daten    Dim latest_bus_date As Daten    Dim spot_date As Daten    Dim is_delayed_spot As Booleann    n    'latest_bus_date = get_latest_bus_date(target_date)n    latest_bus_date = shtMarket.Range("market_prevdate").value 'tempn    n    Dim rtn(4) As Variantn    n    j = 1n    n    Application.Calculation = xlCalculationManualn    Application.ScreenUpdating = Falsen    n    With rng.Interiorn        .Pattern = xlNonen        .TintAndShade = 0n        .PatternTintAndShade = 0n    End Withn    n    Dim prod_code As Stringn    n    For i = 1 To tbl.Rows.countn    n        'If tbl(i, ELS_COL.HEDG_TR_TYPE_CODE).value = 1 Thenn        'If tbl(i, ELS_COL.HEDG_TR_TYPE_CODE).value = 2 Thenn        If tbl(i, ELS_COL.HEDG_TR_TYPE_CODE).value = 1 Or (tbl(i, ELS_COL.HEDG_TR_TYPE_CODE).value = 2 And tbl(i, ELS_COL.IO_FRN_H) <> "" And tbl(i, ELS_COL.PROD_CLS_CODE) <> "ELB" And tbl(i, ELS_COL.PRC_APLY_CLS_CODE) = "D") Then '자체헤지 + unfunded BTB(ex.ELB) & 자체평가n            n            els_pricing_list(j, ELS_PRICING_COL.SQ) = jn            els_pricing_list(j, ELS_PRICING_COL.NO) = in            els_pricing_list(j, ELS_PRICING_COL.HEDG_TR_TYPE_CODE) = tbl(i, ELS_COL.HEDG_TR_TYPE_CODE).valuen            n            els_pricing_list(j, ELS_PRICING_COL.PROD_CLS_CODE) = tbl(i, ELS_COL.PROD_CLS_CODE).valuen            els_pricing_list(j, ELS_PRICING_COL.FO_ELS_D) = tbl(i, ELS_COL.FO_ELS_D).valuen            n            els_pricing_list(j, ELS_PRICING_COL.PROD_CLS_CODE_H) = tbl(i, ELS_COL.PROD_CLS_CODE_H).valuen            els_pricing_list(j, ELS_PRICING_COL.IO_ESWAP_H) = tbl(i, ELS_COL.IO_ESWAP_H).valuen            els_pricing_list(j, ELS_PRICING_COL.IO_ESWAP_T) = tbl(i, ELS_COL.IO_ESWAP_T).valuen            n            els_pricing_list(j, ELS_PRICING_COL.KOR_ISNM) = tbl(i, ELS_COL.KOR_ISNM).valuen            els_pricing_list(j, ELS_PRICING_COL.STLM_CRCD) = tbl(i, ELS_COL.STLM_CRCD).valuen            els_pricing_list(j, ELS_PRICING_COL.NOTIONAL_CCY) = tbl(i, ELS_COL.NOTIONAL_CCY).valuen            n            'els_pricing_list(j, ELS_PRICING_COL.HEDG_BUF) = tbl(i, ELS_COL.HEDG_BUF).valuen            els_pricing_list(j, ELS_PRICING_COL.DAY1_PL_D) = tbl(i, ELS_COL.HEDG_BUF_D).value * tbl(i, ELS_COL.NOTIONAL_CCY).value * (tbl(i, ELS_COL.MTRT_DATE).value - target_date) / (tbl(i, ELS_COL.MTRT_DATE).value - tbl(i, ELS_COL.PBLC_DATE).value)n            els_pricing_list(j, ELS_PRICING_COL.DAY1_PL_H) = tbl(i, ELS_COL.HEDG_BUF_H).value * tbl(i, ELS_COL.NOTIONAL_CCY).value * (tbl(i, ELS_COL.MTRT_DATE).value - target_date) / (tbl(i, ELS_COL.MTRT_DATE).value - tbl(i, ELS_COL.PBLC_DATE).value)nn            '/<------ pricing 가능 기초자산 판단 목적n            If tbl(i, ELS_COL.HEDG_TR_TYPE_CODE).value = 1 Thenn                prod_code = tbl(i, ELS_COL.IO_ESWAP_T).value '자체 E.swap IO~Tn            ElseIf tbl(i, ELS_COL.HEDG_TR_TYPE_CODE).value = 2 Thenn                prod_code = tbl(i, ELS_COL.IO_ESWAP_H).value '백투백 ELS IO~Hn            End Ifnn            'deal ticket 생성n            Set ac_deal_ticket = get_ac_deal_ticket(prod_code, target_date, False, False, adoCon) '회계처리일이 아닌 계약 상 실제 조기상환결정일 기준: eval_date_lag = falsen            'Set ac_deal_ticket = get_ac_deal_ticket(prod_code, target_date, False, False, adoCon, , True)nn            'pricing 불가능 기초자산 종목은 제외n            'For k = 1 To tbl(i, ELS_COL.NUM_UNAS)n            For k = 1 To ac_deal_ticket.no_of_uln                If is_active_ua(ac_deal_ticket.ul_code(k)) = False Thenn                    GoTo JUMP_TO_NEXT_PRODn                End Ifn            Next kn            '------->/nn            If Range("check_autocall").value = True Thenn                n                'target_date 포함 이전 최직근 call_daten                latest_call_date = ac_deal_ticket.value_daten                For k = 1 To ac_deal_ticket.no_of_schedulen                    If target_date >= ac_deal_ticket.autocall_schedules(k).call_date Thenn                        latest_call_date = ac_deal_ticket.autocall_schedules(k).call_daten                    End Ifn                Next kn                n                spot_date = target_daten                is_delayed_spot = Truen                    n                If ac_deal_ticket.has_eval_shift_ul = True Thenn                n                    '1 거래일: latest_bus_date < value_date = latest_call_date = target_date                  -> spot_date = target_date, is_delayed_spot = truen                    '2 발행일: latest_bus_date <= value_date = latest_call_date <= target_date                -> spot_date = target_date, is_delayed_spot = truen                    '1/2: latest_bus_date <= latest_call_date <= target_date & value_date = latest_call_daten                    n                    '3 평상시: latest_call_date < latest_bus_date < target_date                               -> spot_date = target_date, is_delayed_spot = truen                    '4 조기상환평가일 도래했으나 일부 종가 미형성: latest_bus_date < latest_call_date = target_date       -> spot_date = target_date, is_delayed_spot = truen                                        n                    '5 조기상환평가 회계적용일: latest_bus_date = latest_call_date < target_date                  -> spot_date = latest_call_date, is_delayed_spot = falsen                    '6 한국 연휴기간 중 조기상환평가일 도래: latest_bus_date < latest_call_date < target_date         -> spot_date = latest_call_date, is_delayed_spot = falsen                    '5/6: latest_bus_date <= latest_call_date < target_date & value_date < latest_call_daten                    n                    If latest_bus_date <= latest_call_date And latest_call_date < target_date And ac_deal_ticket.value_date < latest_call_date Thenn                        spot_date = latest_call_daten                        is_delayed_spot = Falsen                    End Ifn                n                End Ifn                n                '기초자산 현재가n                'ReDim ua_pct_price(tbl(i, ELS_COL.NUM_UNAS)) As Doublen                ReDim ua_pct_price(ac_deal_ticket.no_of_ul) As Doublen                ua_wp_pct_price = MAX_UA_PCT_PRICEn                n                'For k = 1 To tbl(i, ELS_COL.NUM_UNAS)n                For k = 1 To ac_deal_ticket.no_of_uln                               n                    'ua_pct_price(k) = get_spot(ac_deal_ticket.ul_code(k), target_date, True, adoCon) / ac_deal_ticket.reference_price(k)n                    ua_pct_price(k) = get_spot(ac_deal_ticket.ul_code(k), spot_date, is_delayed_spot, adoCon) / ac_deal_ticket.reference_price(k)n    n                    If ua_pct_price(k) < ua_wp_pct_price Thenn                        ua_wp = ac_deal_ticket.ul_code(k)n                        ua_wp_pct_price = ua_pct_price(k)n                    End Ifn    n                    els_pricing_list(j, ELS_PRICING_COL.ua_pct_price + get_ua_ofs(ac_deal_ticket.ul_code(k))) = ua_pct_price(k)n                Next kn    n                'Worst performern                els_pricing_list(j, ELS_PRICING_COL.UA_WORST) = ua_wpn                els_pricing_list(j, ELS_PRICING_COL.UA_WORST_PCT_PRICE) = ua_wp_pct_pricen    n                '기준일 이벤트n                'els_pricing_list(j, ELS_PRICING_COL.TODAY_EVENT) = ac_deal_ticket.commentn                'els_pricing_list(j, ELS_PRICING_COL.TODAY_EVENT) = check_event(ac_deal_ticket, target_date, ua_pct_price)n    n                For k = 1 To ac_deal_ticket.no_of_schedulen    n                    'If ac_deal_ticket.autocall_schedules(k).call_date >= target_date Thenn                    If ac_deal_ticket.autocall_schedules(k).call_date >= spot_date Thenn                    n                        If eval_next_autocall(ac_deal_ticket, ac_deal_ticket.autocall_schedules(k).call_date, ua_pct_price, rtn) = True Thenn    n                            els_pricing_list(j, ELS_PRICING_COL.REDEEMABLE_NO) = rtn(1)n                            els_pricing_list(j, ELS_PRICING_COL.REDEEMABLE_DATE) = ac_deal_ticket.autocall_schedules(CInt(rtn(1))).call_daten                            els_pricing_list(j, ELS_PRICING_COL.REDEEMABLE_DAYS_LEFT) = ac_deal_ticket.autocall_schedules(CInt(rtn(1))).call_date - target_daten                            els_pricing_list(j, ELS_PRICING_COL.REDEEMABLE_BARRIER) = rtn(2)n                            els_pricing_list(j, ELS_PRICING_COL.REDEEMABLE_RATIO) = rtn(3)n                            els_pricing_list(j, ELS_PRICING_COL.REDEEMABLE_MARGIN) = rtn(4) - rtn(2) '베리어까지 버퍼(+: 조기상환, -: 조기상환 실패 또는 만기손실상환)n    n                            '만기 판단 조건n                            If els_pricing_list(j, ELS_PRICING_COL.REDEEMABLE_DATE) = ac_deal_ticket.autocall_schedules(ac_deal_ticket.no_of_schedule).call_date Thenn                                els_pricing_list(j, ELS_PRICING_COL.IS_MATURITY) = "Y"n                            End Ifn    n                            Exit Forn                        End Ifn    n                    End Ifn    n                Next kn    n                '다음 조기상환 회차n                'Call eval_next_autocall(ac_deal_ticket, target_date, ua_pct_price, rtn)n                Call eval_next_autocall(ac_deal_ticket, spot_date, ua_pct_price, rtn)n                n                If rtn(1) > 0 Thenn                    els_pricing_list(j, ELS_PRICING_COL.next_ac_no) = rtn(1)n                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_DATE) = ac_deal_ticket.autocall_schedules(CInt(rtn(1))).call_daten                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_DAYS_LEFT) = ac_deal_ticket.autocall_schedules(CInt(rtn(1))).call_date - target_daten                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_BARRIER) = rtn(2)n                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_REDEEM_RATIO) = rtn(3)n                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_MARGIN) = rtn(4) - rtn(2) '베리어까지 버퍼(+: 조기상환, -: 조기상환 실패 또는 만기손실상환)n                End Ifn    n                'Check eventn                'check_event ac_deal_ticket, target_date, ua_pct_price, next_ac_non    n                '상환 / PIN 판단 조건n                If els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_DAYS_LEFT) < 14 And Abs(els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_MARGIN)) < 0.03 Thenn                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_AVAILABLE) = "PIN"n                ElseIf els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_DATE) = ac_deal_ticket.autocall_schedules(ac_deal_ticket.no_of_schedule).call_date Thenn                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_AVAILABLE) = "만기"n                ElseIf els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_MARGIN) > 0 Thenn                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_AVAILABLE) = "Y"n                End Ifn            n            End Ifn            n            If j Mod 2 = 0 Thenn                With rng.Rows(j).Interiorn                    .Pattern = xlSolidn                    .PatternColorIndex = xlAutomaticn                    .ThemeColor = xlThemeColorAccent3n                    .TintAndShade = 0.799981688894314n                    .PatternTintAndShade = 0n                End Withn            End Ifn            n            j = j + 1n        n        End Ifn        nJUMP_TO_NEXT_PROD:n        n    Next in    n    rng.value = els_pricing_listn    n    Application.ScreenUpdating = Truen    Application.Calculation = xlCalculationAutomaticn    n    Call disconnectDB(adoCon)n    n    Range("from_seq") = 1n    Range("to_seq") = WorksheetFunction.CountA(Range("TBL_ELS_PRICING_LIST").Columns(1))n    n    nEnd SubnnPrivate Function get_ua_ofs(ua_code As String) As Integernn    Dim rtn As Integern    n    Select Case get_ua_idx(ua_code)n    Case ua.KOSPI200: rtn = 0n    Case ua.NKY: rtn = 1n    Case ua.HSCEI: rtn = 2n    Case ua.SX5E: rtn = 3n    Case ua.SPX: rtn = 4n    Case ua.TSLA: rtn = 5n    End Selectnn    get_ua_ofs = rtnn    nEnd FunctionnnPrivate Function check_event(ac_deal_ticket As clsACDealTicket, target_date As Date, ua_pct_price() As Double, next_ac_no As Integer) As Stringn    n    Dim rtn As Stringnn    '[발행관련]n    n    '신규거래n    If target_date = ac_deal_ticket.value_date Thenn        rtn = "신규 거래"n        '발행취소n'        If ac_deal_ticket.alive_yn Thenn'            rtn = "발행 취소"n'        End Ifn    End Ifn    n    '신규발행n    If target_date = ac_deal_ticket.settlement_date Thenn        rtn = "신규 발행"n    End Ifnn    '[상환관련]n    n    '상환평가일: 상환실패n    '상환평가일: 종가 미확정n    '상환확정: 상환확정(#차)n    '상환확정: 만기n    '상환확정: 만기손실n    n    'ac_deal_ticket에는 eval_shift가 적용되어 있지 않다고 가정.n    n    '상환평가일: 종가 미확정, 상환 실패n    If target_date = ac_deal_ticket.autocall_schedules(next_ac_no).call_date Thennn        Select Case ac_deal_ticket.autocall_schedules(next_ac_no).performance_typen        Case 0: rtn = "상환평가일: 종가 미확정" 'avg -> 무조건 미확정n        Case -1, 1: rtn = "상환평가일: 종가 미확정" 'min, max -> EVAL_SHIFT_UA이 아닌 기초지산 종가 체크 -> 1) 하나라도 만족 못하면 상환실패 2) 모두 만족하면, 미확정nn            Dim u As Integern            For u = 1 To ac_deal_ticket.no_of_uln                If is_eval_shift_ua(ac_deal_ticket.ul_code(u)) = False Thenn                n                    eval_next_autocalln                n                    '29 EarlyExitn                    Dim ee_touched_array() As Longn                    ee_touched_array = ac_deal_ticket.early_exit_touched_flagsn                    n                    If (ee_touched_array(ee_no) = 0) And (ua_pct_price(u) < ac_deal_ticket.early_exit_barrier(ee_no)) Thenn                        rtn = "상환평가일: 상환실패"n                    End Ifn                    n                    '01 HiFive, 02 StepDown, 17 SafeStepDown, 22 CouponStepDown, 29 EarlyExit, 36 A-win, 38 Five Winsn                    If ua_pct_price(u) < ac_deal_ticket.autocall_schedules(next_ac_no).percent_strike Thenn                        rtn = "상환평가일: 상환실패"n                    End Ifn                    n                    Exit Forn                End Ifn            Next un            n        End Selectnn    End Ifn    n    '상환평가일: 상환확정n    If target_date > ac_deal_ticket.autocall_schedules(next_ac_no).call_date Thenn    n    End Ifn    n    '모두 해외지수이고 call_date가 국내 연휴기간 중인 경우, target_date > 조기상환결정일(TRTH_CLRD_DTRM_DATE)+1 이더라도 상환여부 판단 필요.n    '이 경우, 해당 기간 중 해외지수 종가가 동일하게 국내 비영업일 기준으로 하루 지연되어 입수되어야 함.n    nn    n    '[베리어 관련]n    'KI touchn        Select Case ac_deal_ticket.ki_performance_typen        Case -1: ki_det_price = WorksheetFunction.min(ua_pct_price)n        Case 0: ki_det_price = WorksheetFunction.avg(ua_pct_price)n        Case 1: ki_det_price = WorksheetFunction.max(ua_pct_price)n        End Selectn    'EE touchn    n    '[현금흐름 관련]n    '월 쿠폰지급n    n    '변동금리 수취n    '변동금리 스케줄 관리 -> floating_settlement_daten    Dim bind_variable() As Stringn    Dim bind_value() As Variantn    ReDim bind_variable(1) As Stringn    ReDim bind_value(1) As Variantn    bind_variable(1) = ":indv_iscd"n    bind_value(1) = ac_deal_ticket.asset_coden    n    Dim sql As Stringn    sql = getSQL(SQL_PATH_FLOATING_LEG, bind_variable, bind_value)n    n    With oCmdn    n        .ActiveConnection = adoConn        .CommandType = adCmdTextn        .CommandText = sqln        n        oRS.Open .Executen    n    End Withn    n    Do Until oRS.EOFn        n        If oRS("PRVS_DATE") = date2str(target_date) Thenn            rtn = rtn + "변동금리 수취"n            Exit Don        End Ifn        n        oRS.MoveNextn    Loopn    n    oRS.Closen    n    check_event = rtnn    nEnd FunctionnnPrivate Function eval_next_autocall(ac_deal_ticket As clsACDealTicket, target_date As Date, ua_pct_price() As Double, rtn() As Variant) As Booleann    n    '조기상환유형n    '01 HiFiven    '02 StepDownn    '17 SafeStepDownn    '22 CouponStepDownn    '29 EarlyExitn    '36 A-winn    '38 Five Winsn    n    'outn    'rtn(1) = 조기상환 회차n    'rtn(2) = barrier(%)n    'rtn(3) = 상환 지급율n    'rtn(4) = 기초자산 평가기준가n    n    eval_next_autocall = Falsen    n    'check barriern    Dim autocall_no As Integern    Dim barrier As Doublen    Dim redeem_ratio As Doublen    n    Dim i As Integern    n    autocall_no = 0 '기본값n    n    For i = 1 To ac_deal_ticket.no_of_schedulen        If ac_deal_ticket.autocall_schedules(i).call_date >= target_date Thenn            autocall_no = in            Exit Forn        End Ifn    Next in    n    If autocall_no > 0 Thenn    n    '기초자산 평가방법n    Dim ua_det_price As Doublen    Dim ki_det_price As Doublen    n    Select Case ac_deal_ticket.ki_performance_typen    Case -1: ki_det_price = WorksheetFunction.min(ua_pct_price)n    Case 0: ki_det_price = WorksheetFunction.avg(ua_pct_price)n    Case 1: ki_det_price = WorksheetFunction.max(ua_pct_price)n    End Selectn    n    Select Case ac_deal_ticket.autocall_schedules(autocall_no).performance_typen    Case -1: ua_det_price = WorksheetFunction.min(ua_pct_price)n    Case 0: ua_det_price = WorksheetFunction.avg(ua_pct_price)n    Case 1: ua_det_price = WorksheetFunction.max(ua_pct_price)n    End Selectn    n    Dim ac_success As Booleann    ac_success = (ac_deal_ticket.autocall_schedules(autocall_no).percent_strike < ua_det_price)n    n    If ac_deal_ticket.early_exit_flag = 1 Thennn        Dim ee_no As Integern        For i = 1 To ac_deal_ticket.no_of_early_exit_schedulen            If ac_deal_ticket.early_exit_date(ee_no) >= target_date Thenn                ee_no = in                Exit Forn            End Ifn        Next in        n        Dim ee_touched_array() As Longn        ee_touched_array = ac_deal_ticket.early_exit_touched_flagsn        n        Dim ee_success As Booleann        If ee_no > 0 Thenn            ee_success = (ee_touched_array(ee_no) = 0) And (ac_deal_ticket.early_exit_barrier(ee_no) < ua_det_price)n        Elsen            ee_success = Falsen        End Ifn        n    End Ifn    n    If ac_deal_ticket.monthly_coupon_flag = 1 Thennn        Dim m_cpn_no As Integern        For i = 1 To ac_deal_ticket.no_of_coupon_schedulen            If ac_deal_ticket.monthly_coupon_schedules(i).call_date >= target_date Thenn                m_cpn_no = in                Exit Forn            End Ifn        Next in            n        Dim m_cpn_success As Booleann        If m_cpn_no > 0 Then '2024.02.26n            m_cpn_success = (ac_deal_ticket.monthly_coupon_schedules(m_cpn_no).percent_strike < ua_det_price)n        End Ifn        n    End Ifn    n    'update barrier touchn    If ac_deal_ticket.ki_barrier_flag = 1 Thenn        Dim ki_touched As Booleann        ki_touched = (ac_deal_ticket.ki_touched_flag = 1) Or (ac_deal_ticket.ki_barrier > ki_det_price)n    End Ifn    n    '조건 적용 순서n    '29 EarlyExitn    If ee_success Thenn    n        eval_next_autocall = Truen    n        barrier = ac_deal_ticket.early_exit_barrier(ee_no)n        redeem_ratio = 1 + ac_deal_ticket.early_exit_coupon(ee_no)n    n    Elsen        barrier = ac_deal_ticket.autocall_schedules(autocall_no).percent_striken        n        '01 HiFive, 02 StepDown, 17 SafeStepDown, 22 CouponStepDown, 29 EarlyExit, 36 A-win, 38 Five Winsn        If ac_success Thenn            n            eval_next_autocall = Truenn            redeem_ratio = 1 + ac_deal_ticket.autocall_schedules(autocall_no).coupon_on_calln            n            If m_cpn_success Thenn                redeem_ratio = redeem_ratio + ac_deal_ticket.monthly_coupon_schedules(m_cpn_no).coupon_on_calln            End Ifn        n        Elsen            redeem_ratio = 0n            n            '만기상환n            'If ac_deal_ticket.autocall_schedules(autocall_no).call_date = ac_deal_ticket.maturity_date Thenn            If autocall_no = ac_deal_ticket.no_of_schedule Thenn            n                eval_next_autocall = Truen                n                If ac_deal_ticket.ki_barrier_flag = 0 Thenn                    redeem_ratio = ua_det_pricen                Elsen                    If ki_touched Thenn                        redeem_ratio = ua_det_pricen                    Elsen                        barrier = ac_deal_ticket.ki_barriern                        redeem_ratio = 1 + ac_deal_ticket.autocall_schedules(autocall_no).coupon_on_calln                    End Ifn                End Ifn                n            End Ifn            n        End Ifn        n    End Ifn    n    End Ifn    n    rtn(1) = autocall_non    rtn(2) = barriern    rtn(3) = redeem_ration    rtn(4) = ua_det_pricennEnd FunctionnnPrivate Sub btnInsertPrice_Click()nn    Dim from_seq As Integern    Dim to_seq As Integern    from_seq = Range("from_seq").valuen    to_seq = Range("to_seq").valuen    n    If vbYes = MsgBox("지금 화면에 출력된 SEQ=" & from_seq & "~" & to_seq & " ELS 가격을 DB에 입력하겠습니까?", vbYesNo) Thenn    n        Dim rng As Rangen        Set rng = Range("TBL_ELS_PRICING_LIST")n    n        Dim rng2 As Rangen        Set rng2 = shtELSList.Range("TBL_ELS_LIST")n        n        Dim sql As Stringn        n        Dim i, j As Integern        Dim hedge_buf As Doublen        Dim hedge_buf_h As Doublen        Dim str_db As Stringn        n        Dim oCmd As New adoDB.Commandn        Dim oRS As New adoDB.Recordsetn        n        Dim target_date As Daten        target_date = Range("target_date").valuen        n        Dim tdate_str As Stringn        tdate_str = date2str(target_date)n   n        Dim adoCon As New adoDB.Connectionn        Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)n        'Call connectDB(adoCon, TNS_SERVICE_NAME_TEST, USER_ID, PASSWORD) 'for TEST DBn        n        Dim prod_cls_name As Stringn        Dim prod_seq As Stringn        Dim deal_name As Stringn        n        Dim unit_notional As Doublen        Dim ccy As Stringn        Dim payoff_desc As Stringn        Dim value_date As Stringn        Dim issue_date As Stringn        Dim deal_price As Doublen        n'        Dim els_code As Stringn'        Dim eswap_code As Stringn'        Dim eswap_code_t As Stringn'n'        Dim els_theo_price As Doublen'        Dim els_market_price As Doublen'        Dim eswap_theo_price As Doublen'        Dim eswap_market_price As Doublenn        Dim io_code As Stringnn        Dim fo_code_d As Stringn        Dim io_code_h As Stringn        Dim io_code_t As Stringn        n        Dim theo_price_d As Doublen        Dim theo_price_h As Doublen        Dim mtm_price_d As Doublen        Dim mtm_price_h As Doublen        n        Dim tag As Stringn        n        For i = from_seq To to_seqn            n            fo_code_d = rng(i, ELS_PRICING_COL.FO_ELS_D)n            io_code_h = rng(i, ELS_PRICING_COL.IO_ESWAP_H)n            io_code_t = rng(i, ELS_PRICING_COL.IO_ESWAP_T)n            n            sql = "delete from ras.rm_pricing_data where tdate = '" + tdate_str + "' and code in ('" + fo_code_d + "','" + io_code_h + "','" + io_code_t + "') "n            adoCon.Execute (sql)n            n            theo_price_d = rng(i, ELS_PRICING_COL.PRICE_THEO_D)n            theo_price_h = rng(i, ELS_PRICING_COL.PRICE_THEO_H)n            mtm_price_d = rng(i, ELS_PRICING_COL.PRICE_MTM_D)n            mtm_price_h = rng(i, ELS_PRICING_COL.PRICE_MTM_H)n            n            If rng(i, ELS_PRICING_COL.PROD_CLS_CODE) = "스왑" Thenn                tag = "eq_ac_swap"n            Elsen                tag = "eq_ac_note"n            End Ifn            n            sql = "insert into ras.rm_pricing_data values ('" + tdate_str + "','" + fo_code_d + "', " & theo_price_d & ", " & mtm_price_d & ", SYSDATE, '" & tag & "') "n            adoCon.Execute (sql)n            n            If rng(i, ELS_PRICING_COL.PROD_CLS_CODE_H) = "스왑" Thenn                tag = "eq_ac_swap"n            Elsen                tag = "eq_ac_note"n            End Ifn            n            'SP 종목n            sql = "insert into ras.rm_pricing_data values ('" + tdate_str + "','" + io_code_h + "', " & theo_price_h & ", " & mtm_price_h & ", SYSDATE, '" & tag & "') "n            adoCon.Execute (sql)n            io_code = io_code_hn                            n            'E파 종목n            If io_code_t <> "" Thenn                sql = "insert into ras.rm_pricing_data values ('" + tdate_str + "','" + io_code_t + "', " & theo_price_h & ", " & mtm_price_h & ", SYSDATE, '" & tag & "') "n                adoCon.Execute (sql)n                io_code = io_code_tn            End Ifn                        n            '신규종목 입력n            If target_date = rng2(rng(i, ELS_PRICING_COL.NO), ELS_COL.PBLC_DATE) Thennn                sql = "select a.PROD_CLS_CODE, a.FUND_PBLC_TIMS, a.REAL_PBLC_FCAM, a.STLM_CRCD, a.BRIF_EXPL, a.FRST_STND_PRC_FIN_DATE, a.PBLC_DATE, c.PERC_APLY_THPR, replace(b.ENG_ISNM,'SY'), a.FUND_PBLC_UNPR/a.REAL_PBLC_FCAM from BSYS.TBSIMO100M00@GDW a, BSYS.TBSIMM100M00@GDW b, BSYS.TBSIMO201M00@GDW c where a.OTC_FUND_ISCD = '" + fo_code_d + "' and a.OTC_FUND_ISCD = c.OTC_FUND_ISCD and a.OTC_FUND_ISCD = b.ISCD"nn                With oCmdnn                    .ActiveConnection = adoConn                    .CommandType = adCmdTextn                    .CommandText = sqlnn                    oRS.Open .Executenn                End Withnn                Do Until oRS.EOFn'                    Select Case oRS(0)n'                    Case "04", "09": prod_cls_name = "OTC"n'                    Case "07": prod_cls_name = "ELS"n'                    Case "13": prod_cls_name = "ELB"n'                    End Selectn'n'                    prod_seq = oRS(1)n                    unit_notional = oRS(2)n                    ccy = oRS(3)n                    payoff_desc = oRS(4)n                    value_date = oRS(5)n                    issue_date = oRS(6)n                    If oRS(0) = "04" Then 'swap인 경우, note 기준 장부가n                        deal_price = oRS(9)n                    Elsen                        deal_price = oRS(7)n                    End Ifn                    deal_name = oRS(8)nn                    oRS.MoveNextn                Loopnn                oRS.Closenn                'deal_name = prod_cls_name + prod_seqnn                hedge_buf = Round((mtm_price_d - theo_price_d) / unit_notional, 6)n                hedge_buf_h = Round((mtm_price_h - theo_price_h) / unit_notional, 6)nn                str_db = ", ras.rm_els_info"nn                sql = "MERGE INTO RAS.RM_ELS_INFO USING dual ON (deal_name = '" + deal_name + "') WHEN MATCHED THEN Update SET code = '" + fo_code_d + "', hedge_buf = " & hedge_buf & ", hedge_buf_h = " & hedge_buf_h & ", inserttime = sysdate, indv_iscd = '" + io_code + "', status = '발행 완료' "n                sql = sql & " WHEN NOT MATCHED THEN INSERT (code, hedge_buf, hedge_buf_h, inserttime, indv_iscd, payoff_desc, ccy, value_date, issue_date, deal_price, status, deal_name) VALUES ('" + fo_code_d + "'," & hedge_buf & "," & hedge_buf_h & ", SYSDATE, '" + io_code + "', '" + payoff_desc + "','" + ccy + "','" + value_date + "','" + issue_date + "'," & deal_price & ",'발행 완료','" + deal_name + "')"nn                adoCon.Execute (sql)nn            End Ifn        n        Next in        n        Call disconnectDB(adoCon)n        n        Set oCmd = Nothingn        Set oRS = Nothingn        Set adoCon = Nothingn        n        'MsgBox ("insert 완료: excel -> ras.rm_els_data" & str_db)n        MsgBox ("insert 완료: excel -> ras.rm_pricing_data" & str_db)n        n    End Ifn    nEnd SubnnPrivate Function is_completed(prod_code As String, target_date As Date, scenario_id As String, adoCon As adoDB.Connection) As Booleann    n    Dim rtn As Booleann    n    Dim oCmd As New adoDB.Commandn    Dim oRS As New adoDB.Recordsetn    n    Dim sql As Stringn    n    sql = "select count(a.stk_code) from rcs.pml_position_st a, rcs.pml_greek_st b, rms.mr_scenario_detail_data c where a.tdate = b.tdate" _n        & " and a.tdate=c.tdate and a.stk_code=b.stk_code and a.stk_code=c.code and a.scenarioid=b.scenarioid and a.scenarioid=c.scenarioid and a.tdate='" + date2str(target_date) + "' and a.scenarioid='" + scenario_id + "' and a.stk_code ='" + prod_code + "'"nn    With oCmdn        .ActiveConnection = adoConn        .CommandType = adCmdTextn        .CommandText = sqln        oRS.Open .Executen    End Withn    n    Do Until oRS.EOFn        If oRS(0) = 0 Thenn            rtn = Falsen        Elsen            rtn = Truen        End Ifn        oRS.MoveNextn    Loopn    n    oRS.Closen    n    is_completed = rtnn            nEnd Function
+Option Explicit
+Option Base 1
+
+Public Enum ELS_COL
+    SQ = 1
+    HEDG_TR_TYPE_CODE = 2
+    PROD_CLS_CODE = 3
+    ISIN = 4
+    FNCD_ELS = 5
+    FO_ELS_D = 6
+    IO_ELS_D = 7
+    FO_ELS_H = 8
+    PROD_CLS_CODE_H = 9
+    IO_ESWAP_H = 10
+    IO_FRN_H = 11
+    FNCD_ESWAP = 12
+    FO_ESWAP_T = 13
+    IO_ESWAP_T = 14
+    FO_FRN_T = 15
+    IO_FRN_T = 16
+    KOR_ISNM = 17
+    STLM_CRCD = 18
+    REAL_PBLC_FCAM = 19
+    DEAL_CLS_CODE = 20
+    PBLC_STCK_QTY = 21
+    RMND_QTY = 22
+    NOTIONAL_CCY = 23
+    NOTIONAL_KRW = 24
+    FRST_STND_PRC_FIN_DATE = 25
+    PBLC_DATE = 26
+    MTRT_DATE = 27
+    RMND_DAYS = 28
+    FUND_PBLC_UNPR = 29
+    FUND_BOOK_UNPR = 30
+    HEDG_BUF_D = 31
+    HEDG_BUF_H = 32
+    clrd_type_code = 33
+    unas_choc_mthd_code = 34
+    NUM_UNAS = 35
+    UNAS_ISCD1 = 40
+    UNAS_INTL_PRC1 = 44
+    AC_UNAS_SDRT1 = 48
+    AC_CLRD_DTRM_DATE1 = 60
+    AC_CLRD_ERT1 = 72
+    KI_BARR_VAL = 84
+    KI_HIT_DATE = 85
+    M_BONS_CUPN_STA_SDRT = 86
+    M_BONS_CUPN_INRT = 87
+    EE_CLRD_BARR_VAL1 = 88
+    EE_CALC_FIN_DATE1 = 91
+    EE_CLRD_INRT1 = 94
+    EE_CLRD_BARR_HIT_YN1 = 97
+    PRC_APLY_CLS_CODE = 102
+End Enum
+
+Private Enum ELS_PRICING_COL
+    SQ = 1
+    CALC_TIME = 2
+    TODAY_EVENT = 3
+    NO = 4
+    HEDG_TR_TYPE_CODE = 5
+    
+    PROD_CLS_CODE = 6
+    FO_ELS_D = 7
+    PROD_CLS_CODE_H = 8
+    IO_ESWAP_H = 9
+    IO_ESWAP_T = 10
+    KOR_ISNM = 11
+    STLM_CRCD = 12
+    NOTIONAL_CCY = 13
+    DAY1_PL_D = 14
+    DAY1_PL_H = 15
+    ua_pct_price = 16
+    UA_WORST = 22
+    UA_WORST_PCT_PRICE = 23
+    REDEEMABLE_NO = 24
+    REDEEMABLE_DATE = 25
+    REDEEMABLE_DAYS_LEFT = 26
+    REDEEMABLE_BARRIER = 27
+    REDEEMABLE_RATIO = 28
+    REDEEMABLE_MARGIN = 29
+    IS_MATURITY = 30
+    next_ac_no = 31
+    NEXT_AC_DATE = 32
+    NEXT_AC_DAYS_LEFT = 33
+    NEXT_AC_BARRIER = 34
+    NEXT_AC_REDEEM_RATIO = 35
+    NEXT_AC_MARGIN = 36
+    NEXT_AC_AVAILABLE = 37
+'    ELS_PRICE_EST = 34
+'    ELS_PRICE_EST_ERR = 35
+'    els_price_theo = 36
+'    ESWAP_PRICE_THEO = 37
+    PRICE_THEO_D = 38
+    PRICE_THEO_H = 39
+'    FRN_PRICE_THEO = 38
+'    els_price_mtm = 39
+'    ESWAP_PRICE_MTM = 40
+    PRICE_MTM_D = 40
+    PRICE_MTM_H = 41
+    ELS_PRICE_THEO_FR = 42
+    ESWAP_PRICE_THEO_FR = 43
+    ELS_PRICE_THEO_DIFF = 44
+    ELS_PRICE_THEO_DIFF_CHG = 45
+    PL_REAL = 46
+    PL_EST = 47
+    PL_EST_ERR = 48
+    PL_FR = 49
+    PL_FR_DIFF = 50
+    PL_DELTA = 51
+    PL_GAMMA = 52
+    PL_XGAMMA = 53
+    PL_VEGA = 55
+    PL_THETA = 57
+    PL_RF = 58
+    PL_CVA = 59
+    PL_FX = 60
+    PL_DAY1 = 61
+End Enum
+
+Private Enum TODAY_EVENT
+    EVAL_AC = 1 '상환평가일: 상환확정
+    EVAL_TBD = 2 '상환평가일: 상환가능
+    EVAL_FAIL = 3 '상환평가일: 상환실패
+    DEAL_TRADE = 4 '신규 거래
+    DEAL_ISSUE = 5 '신규 발행
+    ESWAP_RCV_FLT = 6 '스왑 변동금리 수취
+End Enum
+
+Public Sub btnCalcPrice_Click()
+
+    '전역변수 설정
+    Call SET_GLOBAL
+    
+    Dim rng As Range
+    Set rng = Range("TBL_ELS_PRICING_LIST")
+    
+    Dim rng_els_list As Range
+    Set rng_els_list = shtELSList.Range("TBL_ELS_LIST")
+    
+    If Range("clear_price").value = True Then
+        rng.Columns(CALC_TIME).ClearContents
+        rng.Columns(TODAY_EVENT).ClearContents
+        rng.Columns(PRICE_THEO_D).ClearContents
+        rng.Columns(PRICE_THEO_H).ClearContents
+        rng.Columns(PRICE_MTM_D).ClearContents
+        rng.Columns(PRICE_MTM_H).ClearContents
+    End If
+    
+    Dim bScreenUpdating As Boolean
+    Dim btatusBar As Boolean
+    Dim bDisplayStatusBar As Boolean
+    Dim vCalculation As Variant
+    Dim bEnableEvents As Boolean
+    bScreenUpdating = Application.ScreenUpdating
+    btatusBar = Application.StatusBar
+    bDisplayStatusBar = Application.DisplayStatusBar
+    vCalculation = Application.Calculation
+    bEnableEvents = Application.EnableEvents
+    
+    With Application
+        .ScreenUpdating = True
+        .StatusBar = False
+        .DisplayStatusBar = True
+        .Calculation = xlCalculationAutomatic
+        .EnableEvents = True
+    End With
+
+    Dim target_date As Date
+    target_date = Range("target_date").value
+
+    Dim latest_call_date As Date
+    Dim latest_bus_date As Date
+    Dim spot_date As Date
+    'latest_bus_date = get_latest_bus_date(target_date)
+    latest_bus_date = shtMarket.Range("market_prevdate").value 'temp
+    
+    Dim str_target_date As String
+    str_target_date = date2str(target_date)
+    
+    Dim adoCon As New adoDB.Connection
+    
+    Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)
+
+    Dim i As Integer
+    Dim j As Integer
+    Dim k As Integer
+    Dim sql As String
+
+    Dim start_time As Date
+    Dim elapsed_time As Date
+    
+    Dim prod_code As String
+    
+    Dim for_frn_flag As Boolean
+    Dim for_eswap_flag As Boolean
+
+    Dim ac_deal_ticket As clsACDealTicket
+    Dim eswap_deal_ticket As clsACDealTicket
+
+    Dim ac_greeks As clsGreeks
+    Dim eswap_greeks As clsGreeks
+
+    Dim riskfree_dcf_enable As Boolean
+    Dim prev_riskfree_dcf_enable As Boolean
+    
+    Dim market_set As clsMarketSet
+    Dim ua_pct_price() As Double
+    Dim is_delayed_spot As Boolean
+    
+    Dim rtn(4) As Variant
+    
+    Dim calc_delta_gamma As Boolean
+    Dim calc_sticky_moneyness_delta As Boolean
+    Dim calc_sticky_strike_delta As Boolean
+    Dim calc_cross_gamma As Boolean
+    Dim calc_vega As Boolean
+    Dim calc_term_vega As Boolean
+    Dim calc_skew As Boolean
+    Dim calc_corr As Boolean
+    Dim calc_rho As Boolean
+    Dim calc_theta As Boolean
+    'Dim calc_local_corr As Boolean
+    
+    If GREEKS_ENABLE = True Then
+        calc_delta_gamma = True
+        calc_sticky_moneyness_delta = True
+        calc_sticky_strike_delta = False
+        calc_cross_gamma = False
+        calc_vega = True
+        calc_term_vega = False
+        calc_skew = False
+        calc_corr = False
+        calc_rho = True
+        calc_theta = True
+        'calc_local_corr = True
+    Else
+        calc_delta_gamma = False
+        calc_sticky_moneyness_delta = False
+        calc_sticky_strike_delta = False
+        calc_cross_gamma = False
+        calc_vega = False
+        calc_term_vega = False
+        calc_skew = False
+        calc_corr = False
+        calc_rho = False
+        calc_theta = False
+        'calc_local_corr = True
+    End If
+
+    Dim seq_from_els As Integer
+    Dim seq_to_els As Integer
+    Dim seq_cur_els As Integer
+    seq_from_els = Range("from_seq").value
+    seq_to_els = Range("to_seq").value
+        
+    Dim note_price As Double
+    Dim swap_price As Double
+    Dim price As Double
+    Dim day1_pl_price As Double
+    
+    Dim i_dh As Integer
+    Dim prod_cls As String
+    
+    'i_dh = 1 ... 대상 pricing loop
+    'i_dh = 2 ... 수단 pricing loop
+    Dim i_dh_from As Integer
+    Dim i_dh_to As Integer
+    Select Case Range("pricing_target").value
+    Case "전체"
+        i_dh_from = 1
+        i_dh_to = 2
+    Case "대상"
+        i_dh_from = 1
+        i_dh_to = 1
+    Case "수단"
+        i_dh_from = 2
+        i_dh_to = 2
+    End Select
+    
+    For i_dh = i_dh_from To i_dh_to
+    
+'2024.07.29 미래금융팀 테스트용으로 Range("insert_greeks") 삭제 및 주석처리
+'        If Range("insert_greeks").value = True And GREEKS_ENABLE = True Then
+'            i_dh = 2
+'        End If
+        
+        For i = seq_from_els To seq_to_els
+    
+            start_time = Now
+            Range("cur_seq") = i
+            rng.Cells(i, CALC_TIME) = "Calcuating..."
+    
+            If i_dh = 1 Then
+                prod_cls = rng(i, ELS_PRICING_COL.PROD_CLS_CODE).value
+            Else
+                prod_cls = rng(i, ELS_PRICING_COL.PROD_CLS_CODE_H).value
+            End If
+            
+            If rng(i, ELS_PRICING_COL.IO_ESWAP_T).value <> "" Then
+                prod_code = rng(i, ELS_PRICING_COL.IO_ESWAP_T).value '자체 E.swap IO~T
+            Else
+                prod_code = rng(i, ELS_PRICING_COL.IO_ESWAP_H).value '백투백 E.swap IO~H
+            End If
+            
+            'market_set
+            If prod_cls = "스왑" Then
+                riskfree_dcf_enable = True '무위험 커브 할인
+                for_frn_flag = False
+                for_eswap_flag = True
+            Else
+                riskfree_dcf_enable = False '신용등급 커브 할인
+                for_frn_flag = False
+                for_eswap_flag = False
+            End If
+            
+            If i = seq_from_els Or prev_riskfree_dcf_enable <> riskfree_dcf_enable Then
+                Set market_set = read_market_set(riskfree_dcf_enable)
+                prev_riskfree_dcf_enable = riskfree_dcf_enable
+            End If
+            
+            '시나리오테스트 중 미완료 종목만 계산시 이미 완료된 종목이면 skip '2024.07.18
+            If Not (SCENARIO_ENABLE = True And Range("missed_prod_only").value = True And is_completed(prod_code, target_date, shtMarket.Range("SCENARIO_ID").value, adoCon) = True) Then
+            
+                'evaluate autocall
+                Set ac_deal_ticket = get_ac_deal_ticket(prod_code, target_date, False, False, adoCon) '회계처리일이 아닌 계약 상 실제 조기상환결정일 기준: eval_date_lag = false
+                
+                'target_date 포함 이전 최직근 call_date
+                latest_call_date = CDate(0) 'ac_deal_ticket.value_date : 2024.07.22 dummy 초기값 삭제. date형 기본값으로 적용.
+                For k = 1 To ac_deal_ticket.no_of_schedule
+                    If target_date >= ac_deal_ticket.autocall_schedules(k).call_date Then
+                        latest_call_date = ac_deal_ticket.autocall_schedules(k).call_date
+                    End If
+                Next k
+                
+                spot_date = target_date
+                is_delayed_spot = True
+                    
+                If ac_deal_ticket.has_eval_shift_ul = True Then
+                    
+                        '1 거래일: latest_bus_date < value_date = latest_call_date = target_date                  -> spot_date = target_date, is_delayed_spot = true
+                        '2 발행일: latest_bus_date <= value_date = latest_call_date <= target_date                -> spot_date = target_date, is_delayed_spot = true
+                        '1/2: latest_bus_date <= latest_call_date <= target_date & value_date = latest_call_date
+                        
+                        '3 평상시: latest_call_date < latest_bus_date < target_date                               -> spot_date = target_date, is_delayed_spot = true
+                        '4 조기상환평가일 도래했으나 일부 종가 미형성: latest_bus_date < latest_call_date = target_date       -> spot_date = target_date, is_delayed_spot = true
+                                            
+                        '5 조기상환평가 회계적용일: latest_bus_date = latest_call_date < target_date                  -> spot_date = latest_call_date, is_delayed_spot = false
+                        '6 한국 연휴기간 중 조기상환평가일 도래: latest_bus_date < latest_call_date < target_date         -> spot_date = latest_call_date, is_delayed_spot = false
+                        '5/6: latest_bus_date <= latest_call_date < target_date & value_date < latest_call_date
+                        
+                    If latest_bus_date <= latest_call_date And latest_call_date < target_date And ac_deal_ticket.value_date < latest_call_date Then
+                        spot_date = latest_call_date
+                        is_delayed_spot = False
+                    End If
+                    
+                End If
+                
+                '기초자산 현재가
+                ReDim ua_pct_price(ac_deal_ticket.no_of_ul) As Double
+                For k = 1 To ac_deal_ticket.no_of_ul
+                    ua_pct_price(k) = get_spot(ac_deal_ticket.ul_code(k), spot_date, is_delayed_spot, adoCon) / ac_deal_ticket.reference_price(k)
+                Next k
+                
+                '상환 확정시 : 2024.05.21
+                If eval_next_autocall(ac_deal_ticket, spot_date, ua_pct_price, rtn) = True And spot_date = latest_call_date And (ac_deal_ticket.has_eval_shift_ul = False Or is_delayed_spot = False) Then
+                
+                    day1_pl_price = 0
+                    
+                    If prod_cls = "스왑" Then
+                        price = (CDbl(rtn(3)) - 1) * ac_deal_ticket.unit_notional
+                    Else
+                        price = CDbl(rtn(3)) * ac_deal_ticket.unit_notional
+                    End If
+                    
+                    rng.Cells(i, ELS_PRICING_COL.TODAY_EVENT) = "상환 확정"
+          
+                ElseIf ac_deal_ticket.notional <> 0 Then
+                
+                    Set ac_deal_ticket = get_ac_deal_ticket(prod_code, target_date, False, for_eswap_flag, adoCon, , True, , market_set) 'eval_date_lag = true (1 calendar day)
+                    
+                    'modify ac_deal_ticket for leverage indices : 2018.7.9
+                    Set ac_deal_ticket = modify_ac_deal_ticket(ac_deal_ticket, market_set)
+                
+                    Set ac_greeks = New clsGreeks
+                
+                    run_ac_pricing_mc ac_greeks, ac_deal_ticket, market_set _
+                                        , calc_delta_gamma _
+                                        , calc_sticky_moneyness_delta _
+                                        , calc_sticky_strike_delta _
+                                        , calc_cross_gamma _
+                                        , calc_vega _
+                                        , calc_term_vega _
+                                        , calc_skew _
+                                        , calc_corr _
+                                        , calc_rho _
+                                        , calc_theta _
+                                        , CORR_SKEW_ENABLE
+                                       ' , calc_local_corr
+                
+                    price = ac_greeks.value / ac_deal_ticket.notional * ac_deal_ticket.unit_notional
+    
+                    If i_dh = 1 Then
+                        day1_pl_price = rng.Cells(i, ELS_PRICING_COL.DAY1_PL_D) / Abs(ac_deal_ticket.qty)
+                        
+    '                    rng.Cells(i, ELS_PRICING_COL.PRICE_THEO_D) = Round(price / ac_deal_ticket.unit_notional, 7) * ac_deal_ticket.unit_notional
+    '                    rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_D) = Round((price + day1_pl_price) / ac_deal_ticket.unit_notional, 7) * ac_deal_ticket.unit_notional
+                    Else
+                        day1_pl_price = rng.Cells(i, ELS_PRICING_COL.DAY1_PL_H) / Abs(ac_deal_ticket.qty)
+                        
+                        '수단 Day1 PL 관리가 안 된 과거 기간은 대상과 동일한 값 사용
+                        If date2str(ac_deal_ticket.settlement_date) < "20240403" Then
+                            day1_pl_price = rng.Cells(i, ELS_PRICING_COL.DAY1_PL_D) / Abs(ac_deal_ticket.qty)
+                        End If
+                        
+    '                    rng.Cells(i, ELS_PRICING_COL.PRICE_THEO_H) = Round(price / ac_deal_ticket.unit_notional, 7) * ac_deal_ticket.unit_notional
+    '                    rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_H) = Round((price + day1_pl_price) / ac_deal_ticket.unit_notional, 7) * ac_deal_ticket.unit_notional
+                        
+'2024.07.29 미래금융팀 테스트용으로 Range("insert_greeks") 삭제 및 주석처리
+'                        If Range("insert_greeks").value = True And GREEKS_ENABLE = True Then
+'                            If SCENARIO_ENABLE = True Then
+'                                Call insert_scenario_result(ac_greeks, ac_deal_ticket, market_set, adoCon, shtMarket.Range("SCENARIO_ID").value)
+'                            Else
+'                                Call insert_greeks(ac_greeks, ac_deal_ticket, market_set, adoCon)
+'                            End If
+'                        End If
+                        
+                    End If
+                    
+                End If
+                
+                If i_dh = 1 Then
+                    rng.Cells(i, ELS_PRICING_COL.PRICE_THEO_D) = Round(price / ac_deal_ticket.unit_notional, 8) * ac_deal_ticket.unit_notional
+                    
+                    '발행일 기준가 = 장부가
+                    If ac_deal_ticket.settlement_date = target_date Then
+                        If prod_cls = "스왑" Then
+                            rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_D) = rng_els_list.Cells(rng.Cells(i, ELS_PRICING_COL.NO), ELS_COL.FUND_PBLC_UNPR) - ac_deal_ticket.unit_notional 'temp
+                        Else
+                            rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_D) = rng_els_list.Cells(rng.Cells(i, ELS_PRICING_COL.NO), ELS_COL.FUND_BOOK_UNPR)
+                        End If
+                    Else
+                        rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_D) = Round((price + day1_pl_price) / ac_deal_ticket.unit_notional, 8) * ac_deal_ticket.unit_notional
+                    End If
+                Else
+                    rng.Cells(i, ELS_PRICING_COL.PRICE_THEO_H) = Round(price / ac_deal_ticket.unit_notional, 8) * ac_deal_ticket.unit_notional
+                    
+                    '발행일 기준가 = 장부가
+                    If ac_deal_ticket.settlement_date = target_date Then 'temp : ac_deal_ticket.issue_cost = #35304 장부가(PERC_APLY_THPR)
+                        If prod_cls = "스왑" Then
+                            rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_H) = -1 * ac_deal_ticket.issue_cost * ac_deal_ticket.unit_notional '스왑인 경우, 장부가에 (-) 빠져있음
+                        Else
+                            rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_H) = ac_deal_ticket.issue_cost * ac_deal_ticket.unit_notional
+                        End If
+                    Else
+                        rng.Cells(i, ELS_PRICING_COL.PRICE_MTM_H) = Round((price + day1_pl_price) / ac_deal_ticket.unit_notional, 8) * ac_deal_ticket.unit_notional
+                    End If
+                End If
+                        
+                'Greeks로 가격 추정
+        
+                'Numerical 손익 분해: 델타, 감마, 베가, 세타, 기타(크로스감마, 스큐, 금리, 상관계수)
+        
+                'Impled Vol 변동 추정치(%p) ~ 실제 베가 PL / 전일 베가
+        
+                Set ac_deal_ticket = Nothing
+                Set eswap_deal_ticket = Nothing
+    
+                Set ac_greeks = Nothing
+                Set eswap_greeks = Nothing
+                        
+                elapsed_time = elapsed_time + (Now - start_time)
+        
+                rng.Cells(i, CALC_TIME) = Now - start_time
+                
+                Range("elapsed_time") = elapsed_time
+        
+                'AutoSave: every [auto_save_freq] products
+                If Range("auto_save").value = True And (i Mod Range("auto_save_freq").value) = 0 Then
+                    ThisWorkbook.Save
+                End If
+            
+            End If
+    
+        Next i
+    
+    Next i_dh
+
+    'Reset SEQ
+    Range("from_seq") = 1
+    
+    'AutoSave
+    If Range("auto_save").value = True Then
+        ThisWorkbook.Save
+        ThisWorkbook.Close
+    End If
+    
+    Call disconnectDB(adoCon)
+    
+    Set market_set = Nothing
+    
+    Set ac_deal_ticket = Nothing
+    Set eswap_deal_ticket = Nothing
+    
+    Set ac_greeks = Nothing
+    Set eswap_greeks = Nothing
+
+    With Application
+        .ScreenUpdating = bScreenUpdating
+        .StatusBar = btatusBar
+        .DisplayStatusBar = bDisplayStatusBar
+        .Calculation = vCalculation
+        .EnableEvents = bEnableEvents
+    End With
+
+End Sub
+
+Private Sub btnComparePrice_Click()
+'Equity파생운용부 이론가 및 기준가 조회
+
+    Dim target_date As Date
+    target_date = Range("target_date").value
+    
+    Dim rng As Range
+    Set rng = Range("TBL_ELS_PRICING_LIST")
+
+    Dim adoCon As New adoDB.Connection
+    Dim oCmd As New adoDB.Command
+    Dim oRS As New adoDB.Recordset
+    
+    Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)
+    
+    Dim bind_variable() As String
+    Dim bind_value() As Variant
+    ReDim bind_variable(2) As String
+    ReDim bind_value(2) As Variant
+    bind_variable(1) = ":tdate"
+    bind_variable(2) = ":code"
+    bind_value(1) = date2str(target_date)
+    
+    Dim i As Integer
+    Dim sql As String
+        
+    For i = 1 To rng.Rows.count
+    
+        If IsEmpty(rng(i, ELS_COL.SQ)) = False Then
+            
+            bind_value(2) = rng(i, ELS_PRICING_COL.IO_ESWAP_T).value
+            
+            sql = getSQL(SQL_PATH_ELS_PRICE_FR, bind_variable, bind_value)
+    
+            With oCmd
+            
+                .ActiveConnection = adoCon
+                .CommandType = adCmdText
+                .CommandText = sql
+                
+                oRS.Open .Execute
+            
+            End With
+            
+            Do Until oRS.EOF
+                rng(i, ELS_PRICING_COL.ELS_PRICE_THEO_FR) = oRS(1)
+                oRS.MoveNext
+            Loop
+            
+            oRS.Close
+            
+        End If
+        
+    Next i
+    
+    Call disconnectDB(adoCon)
+    
+End Sub
+
+Private Sub btnDecomposePL_Click()
+    
+    '실제 회계 손익
+    
+    '손익 추정 오차
+    
+    
+    
+    Dim rng As Range
+    Set rng = Range("TBL_ELS_PRICING_LIST")
+    rng.Columns(CALC_TIME).ClearContents
+    rng.Columns(els_price_theo).ClearContents
+    
+    Dim bScreenUpdating As Boolean
+    Dim btatusBar As Boolean
+    Dim bDisplayStatusBar As Boolean
+    Dim vCalculation As Variant
+    Dim bEnableEvents As Boolean
+    bScreenUpdating = Application.ScreenUpdating
+    btatusBar = Application.StatusBar
+    bDisplayStatusBar = Application.DisplayStatusBar
+    vCalculation = Application.Calculation
+    bEnableEvents = Application.EnableEvents
+    
+    With Application
+        .ScreenUpdating = True
+        .StatusBar = False
+        .DisplayStatusBar = True
+        .Calculation = xlCalculationAutomatic
+        .EnableEvents = True
+    End With
+
+    Dim target_date As Date
+    target_date = Range("target_date").value
+    
+    Dim str_target_date As String
+    str_target_date = date2str(target_date)
+    
+    Dim adoCon As New adoDB.Connection
+    Dim oCmd As New adoDB.Command
+    Dim oRS As New adoDB.Recordset
+    
+    Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)
+    
+    Dim bind_variable() As String
+    Dim bind_value() As Variant
+    ReDim bind_variable(2) As String
+    ReDim bind_value(2) As Variant
+    bind_variable(1) = ":tdate"
+    bind_value(1) = str_target_date
+    
+    Dim i As Integer
+    Dim j As Integer
+    Dim k As Integer
+    Dim sql As String
+    
+'    Dim ofs As Integer
+'    Dim unit_notional As Double
+'    Dim next_cpn As Double
+'    Dim hedge_buff As Double
+'    Dim book_price As Double
+'    Dim qty As Double
+'    Dim ds As Double
+'    Dim delta As Double
+'    Dim gamma As Double
+'    Dim vega As Double
+'    Dim theta As Double
+'    Dim delta_pl As Double
+'    Dim gamma_pl As Double
+'    Dim vega_pl As Double
+'    Dim theta_pl As Double
+'    Dim tau As Double
+'    Dim dur_els As Double
+'    Dim iv_110 As Double
+'    Dim iv_90 As Double
+'    Dim price_frn As Double
+'    Dim dv01_frn As Double
+'    Dim frn As Double
+
+    Dim seq_from_els As Integer
+    Dim seq_to_els As Integer
+    seq_from_els = Range("from_seq").value
+    seq_to_els = Range("to_seq").value
+    
+    Dim note_price As Double
+    Dim swap_price As Double
+    Dim frn_price As Double
+    Dim plain_frn_price As Double
+    Dim day1_pl_price As Double
+    
+    For i = seq_from_els To seq_to_els
+    
+        sql = getSQL(SQL_PATH_ELS, bind_variable, bind_value)
+        
+        With oCmd
+    
+            .ActiveConnection = adoCon
+            .CommandType = adCmdText
+            .CommandText = sql
+    
+            oRS.Open .Execute
+    
+        End With
+    
+        Application.Calculation = xlCalculationManual
+        Application.ScreenUpdating = False
+        
+        i = 1
+    
+        Do Until oRS.EOF
+            
+            If selected_hedge_type_code = HEDG_TR_TYPE_CODE.all Or selected_hedge_type_code = oRS(0) Then
+        
+                els_list(i, 1) = i
+                
+                For j = 0 To oRS.Fields.count - 1
+                    els_list(i, j + 2) = oRS(j)
+                Next j
+                
+                i = i + 1
+            End If
+    
+            oRS.MoveNext
+    
+        Loop
+    
+    Next i
+
+    With Application
+        .ScreenUpdating = bScreenUpdating
+        .StatusBar = btatusBar
+        .DisplayStatusBar = bDisplayStatusBar
+        .Calculation = vCalculation
+        .EnableEvents = bEnableEvents
+    End With
+
+End Sub
+
+Private Sub btnEstimatePrice_Click()
+
+End Sub
+
+Private Sub btnReadPrice_Click()
+'RM 이론가 및 기준가 조회
+
+    Dim target_date As Date
+    target_date = Range("target_date").value
+    
+    Dim rng As Range
+    Set rng = Range("TBL_ELS_PRICING_LIST")
+
+    Dim adoCon As New adoDB.Connection
+    Dim oCmd As New adoDB.Command
+    Dim oRS As New adoDB.Recordset
+    
+    Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)
+    
+    Dim bind_variable() As String
+    Dim bind_value() As Variant
+    ReDim bind_variable(2) As String
+    ReDim bind_value(2) As Variant
+    bind_variable(1) = ":tdate"
+    bind_variable(2) = ":code"
+    bind_value(1) = date2str(target_date)
+    
+    Dim i As Integer
+    Dim sql As String
+        
+    For i = 1 To rng.Rows.count
+    
+        If IsEmpty(rng(i, ELS_COL.SQ)) = False Then
+            
+            bind_value(2) = rng(i, ELS_PRICING_COL.FO_ELS_D).value
+            
+            'sql = getSQL(SQL_PATH_ELS_PRICE, bind_variable, bind_value)
+            sql = "select code, theory_price, market_price from ras.rm_els_data where tdate = '" + bind_value(1) + "' and code = '" + bind_value(2) + "'"
+    
+            With oCmd
+            
+                .ActiveConnection = adoCon
+                .CommandType = adCmdText
+                .CommandText = sql
+                
+                oRS.Open .Execute
+            
+            End With
+            
+            Do Until oRS.EOF
+                rng(i, ELS_PRICING_COL.els_price_theo) = oRS(1)
+                rng(i, ELS_PRICING_COL.els_price_mtm) = oRS(2)
+                oRS.MoveNext
+            Loop
+            
+            oRS.Close
+            
+        End If
+        
+    Next i
+    
+    Call disconnectDB(adoCon)
+    
+End Sub
+
+Public Sub btnReadTargetELS_Click()
+
+    SET_GLOBAL
+
+    Dim target_date As Date
+    target_date = Range("target_date").value
+    
+    Dim tdate_str As String
+    tdate_str = date2str(target_date)
+                
+    Dim tbl As Range
+    Set tbl = shtELSList.Range("TBL_ELS_LIST")
+    
+    Dim rng As Range
+    Set rng = Range("TBL_ELS_PRICING_LIST")
+    rng.ClearContents
+    
+    Range("cur_seq").ClearContents
+    Range("elapsed_time").ClearContents
+    
+    Dim els_pricing_list As Variant
+    els_pricing_list = rng.value
+
+    Dim adoCon As New adoDB.Connection
+'    Dim oCmd As New adoDB.Command
+'    Dim oRS As New adoDB.Recordset
+    
+    Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)
+    
+'    Dim bind_variable() As String
+'    Dim bind_value() As Variant
+'    ReDim bind_variable(2) As String
+'    ReDim bind_value(2) As Variant
+'    bind_variable(1) = ":tdate"
+'    bind_value(1) = tdate_str
+    
+    Dim i As Integer
+    Dim j As Integer
+    Dim k As Integer
+    Dim sql As String
+    
+    Dim ua_pct_price() As Double
+    Dim ua_wp As String
+    Dim ua_wp_pct_price As Double
+    Dim ac_deal_ticket As clsACDealTicket
+    Dim latest_call_date As Date
+    Dim latest_bus_date As Date
+    Dim spot_date As Date
+    Dim is_delayed_spot As Boolean
+    
+    'latest_bus_date = get_latest_bus_date(target_date)
+    latest_bus_date = shtMarket.Range("market_prevdate").value 'temp
+    
+    Dim rtn(4) As Variant
+    
+    j = 1
+    
+    Application.Calculation = xlCalculationManual
+    Application.ScreenUpdating = False
+    
+    With rng.Interior
+        .Pattern = xlNone
+        .TintAndShade = 0
+        .PatternTintAndShade = 0
+    End With
+    
+    Dim prod_code As String
+    
+    For i = 1 To tbl.Rows.count
+    
+        'If tbl(i, ELS_COL.HEDG_TR_TYPE_CODE).value = 1 Then
+        'If tbl(i, ELS_COL.HEDG_TR_TYPE_CODE).value = 2 Then
+        If tbl(i, ELS_COL.HEDG_TR_TYPE_CODE).value = 1 Or (tbl(i, ELS_COL.HEDG_TR_TYPE_CODE).value = 2 And tbl(i, ELS_COL.IO_FRN_H) <> "" And tbl(i, ELS_COL.PROD_CLS_CODE) <> "ELB" And tbl(i, ELS_COL.PRC_APLY_CLS_CODE) = "D") Then '자체헤지 + unfunded BTB(ex.ELB) & 자체평가
+            
+            els_pricing_list(j, ELS_PRICING_COL.SQ) = j
+            els_pricing_list(j, ELS_PRICING_COL.NO) = i
+            els_pricing_list(j, ELS_PRICING_COL.HEDG_TR_TYPE_CODE) = tbl(i, ELS_COL.HEDG_TR_TYPE_CODE).value
+            
+            els_pricing_list(j, ELS_PRICING_COL.PROD_CLS_CODE) = tbl(i, ELS_COL.PROD_CLS_CODE).value
+            els_pricing_list(j, ELS_PRICING_COL.FO_ELS_D) = tbl(i, ELS_COL.FO_ELS_D).value
+            
+            els_pricing_list(j, ELS_PRICING_COL.PROD_CLS_CODE_H) = tbl(i, ELS_COL.PROD_CLS_CODE_H).value
+            els_pricing_list(j, ELS_PRICING_COL.IO_ESWAP_H) = tbl(i, ELS_COL.IO_ESWAP_H).value
+            els_pricing_list(j, ELS_PRICING_COL.IO_ESWAP_T) = tbl(i, ELS_COL.IO_ESWAP_T).value
+            
+            els_pricing_list(j, ELS_PRICING_COL.KOR_ISNM) = tbl(i, ELS_COL.KOR_ISNM).value
+            els_pricing_list(j, ELS_PRICING_COL.STLM_CRCD) = tbl(i, ELS_COL.STLM_CRCD).value
+            els_pricing_list(j, ELS_PRICING_COL.NOTIONAL_CCY) = tbl(i, ELS_COL.NOTIONAL_CCY).value
+            
+            'els_pricing_list(j, ELS_PRICING_COL.HEDG_BUF) = tbl(i, ELS_COL.HEDG_BUF).value
+            els_pricing_list(j, ELS_PRICING_COL.DAY1_PL_D) = tbl(i, ELS_COL.HEDG_BUF_D).value * tbl(i, ELS_COL.NOTIONAL_CCY).value * (tbl(i, ELS_COL.MTRT_DATE).value - target_date) / (tbl(i, ELS_COL.MTRT_DATE).value - tbl(i, ELS_COL.PBLC_DATE).value)
+            els_pricing_list(j, ELS_PRICING_COL.DAY1_PL_H) = tbl(i, ELS_COL.HEDG_BUF_H).value * tbl(i, ELS_COL.NOTIONAL_CCY).value * (tbl(i, ELS_COL.MTRT_DATE).value - target_date) / (tbl(i, ELS_COL.MTRT_DATE).value - tbl(i, ELS_COL.PBLC_DATE).value)
+
+            '/<------ pricing 가능 기초자산 판단 목적
+            If tbl(i, ELS_COL.HEDG_TR_TYPE_CODE).value = 1 Then
+                prod_code = tbl(i, ELS_COL.IO_ESWAP_T).value '자체 E.swap IO~T
+            ElseIf tbl(i, ELS_COL.HEDG_TR_TYPE_CODE).value = 2 Then
+                prod_code = tbl(i, ELS_COL.IO_ESWAP_H).value '백투백 ELS IO~H
+            End If
+
+            'deal ticket 생성
+            Set ac_deal_ticket = get_ac_deal_ticket(prod_code, target_date, False, False, adoCon) '회계처리일이 아닌 계약 상 실제 조기상환결정일 기준: eval_date_lag = false
+            'Set ac_deal_ticket = get_ac_deal_ticket(prod_code, target_date, False, False, adoCon, , True)
+
+            'pricing 불가능 기초자산 종목은 제외
+            'For k = 1 To tbl(i, ELS_COL.NUM_UNAS)
+            For k = 1 To ac_deal_ticket.no_of_ul
+                If is_active_ua(ac_deal_ticket.ul_code(k)) = False Then
+                    GoTo JUMP_TO_NEXT_PROD
+                End If
+            Next k
+            '------->/
+
+            If Range("check_autocall").value = True Then
+                
+                'target_date 포함 이전 최직근 call_date
+                latest_call_date = ac_deal_ticket.value_date
+                For k = 1 To ac_deal_ticket.no_of_schedule
+                    If target_date >= ac_deal_ticket.autocall_schedules(k).call_date Then
+                        latest_call_date = ac_deal_ticket.autocall_schedules(k).call_date
+                    End If
+                Next k
+                
+                spot_date = target_date
+                is_delayed_spot = True
+                    
+                If ac_deal_ticket.has_eval_shift_ul = True Then
+                
+                    '1 거래일: latest_bus_date < value_date = latest_call_date = target_date                  -> spot_date = target_date, is_delayed_spot = true
+                    '2 발행일: latest_bus_date <= value_date = latest_call_date <= target_date                -> spot_date = target_date, is_delayed_spot = true
+                    '1/2: latest_bus_date <= latest_call_date <= target_date & value_date = latest_call_date
+                    
+                    '3 평상시: latest_call_date < latest_bus_date < target_date                               -> spot_date = target_date, is_delayed_spot = true
+                    '4 조기상환평가일 도래했으나 일부 종가 미형성: latest_bus_date < latest_call_date = target_date       -> spot_date = target_date, is_delayed_spot = true
+                                        
+                    '5 조기상환평가 회계적용일: latest_bus_date = latest_call_date < target_date                  -> spot_date = latest_call_date, is_delayed_spot = false
+                    '6 한국 연휴기간 중 조기상환평가일 도래: latest_bus_date < latest_call_date < target_date         -> spot_date = latest_call_date, is_delayed_spot = false
+                    '5/6: latest_bus_date <= latest_call_date < target_date & value_date < latest_call_date
+                    
+                    If latest_bus_date <= latest_call_date And latest_call_date < target_date And ac_deal_ticket.value_date < latest_call_date Then
+                        spot_date = latest_call_date
+                        is_delayed_spot = False
+                    End If
+                
+                End If
+                
+                '기초자산 현재가
+                'ReDim ua_pct_price(tbl(i, ELS_COL.NUM_UNAS)) As Double
+                ReDim ua_pct_price(ac_deal_ticket.no_of_ul) As Double
+                ua_wp_pct_price = MAX_UA_PCT_PRICE
+                
+                'For k = 1 To tbl(i, ELS_COL.NUM_UNAS)
+                For k = 1 To ac_deal_ticket.no_of_ul
+                               
+                    'ua_pct_price(k) = get_spot(ac_deal_ticket.ul_code(k), target_date, True, adoCon) / ac_deal_ticket.reference_price(k)
+                    ua_pct_price(k) = get_spot(ac_deal_ticket.ul_code(k), spot_date, is_delayed_spot, adoCon) / ac_deal_ticket.reference_price(k)
+    
+                    If ua_pct_price(k) < ua_wp_pct_price Then
+                        ua_wp = ac_deal_ticket.ul_code(k)
+                        ua_wp_pct_price = ua_pct_price(k)
+                    End If
+    
+                    els_pricing_list(j, ELS_PRICING_COL.ua_pct_price + get_ua_ofs(ac_deal_ticket.ul_code(k))) = ua_pct_price(k)
+                Next k
+    
+                'Worst performer
+                els_pricing_list(j, ELS_PRICING_COL.UA_WORST) = ua_wp
+                els_pricing_list(j, ELS_PRICING_COL.UA_WORST_PCT_PRICE) = ua_wp_pct_price
+    
+                '기준일 이벤트
+                'els_pricing_list(j, ELS_PRICING_COL.TODAY_EVENT) = ac_deal_ticket.comment
+                'els_pricing_list(j, ELS_PRICING_COL.TODAY_EVENT) = check_event(ac_deal_ticket, target_date, ua_pct_price)
+    
+                For k = 1 To ac_deal_ticket.no_of_schedule
+    
+                    'If ac_deal_ticket.autocall_schedules(k).call_date >= target_date Then
+                    If ac_deal_ticket.autocall_schedules(k).call_date >= spot_date Then
+                    
+                        If eval_next_autocall(ac_deal_ticket, ac_deal_ticket.autocall_schedules(k).call_date, ua_pct_price, rtn) = True Then
+    
+                            els_pricing_list(j, ELS_PRICING_COL.REDEEMABLE_NO) = rtn(1)
+                            els_pricing_list(j, ELS_PRICING_COL.REDEEMABLE_DATE) = ac_deal_ticket.autocall_schedules(CInt(rtn(1))).call_date
+                            els_pricing_list(j, ELS_PRICING_COL.REDEEMABLE_DAYS_LEFT) = ac_deal_ticket.autocall_schedules(CInt(rtn(1))).call_date - target_date
+                            els_pricing_list(j, ELS_PRICING_COL.REDEEMABLE_BARRIER) = rtn(2)
+                            els_pricing_list(j, ELS_PRICING_COL.REDEEMABLE_RATIO) = rtn(3)
+                            els_pricing_list(j, ELS_PRICING_COL.REDEEMABLE_MARGIN) = rtn(4) - rtn(2) '베리어까지 버퍼(+: 조기상환, -: 조기상환 실패 또는 만기손실상환)
+    
+                            '만기 판단 조건
+                            If els_pricing_list(j, ELS_PRICING_COL.REDEEMABLE_DATE) = ac_deal_ticket.autocall_schedules(ac_deal_ticket.no_of_schedule).call_date Then
+                                els_pricing_list(j, ELS_PRICING_COL.IS_MATURITY) = "Y"
+                            End If
+    
+                            Exit For
+                        End If
+    
+                    End If
+    
+                Next k
+    
+                '다음 조기상환 회차
+                'Call eval_next_autocall(ac_deal_ticket, target_date, ua_pct_price, rtn)
+                Call eval_next_autocall(ac_deal_ticket, spot_date, ua_pct_price, rtn)
+                
+                If rtn(1) > 0 Then
+                    els_pricing_list(j, ELS_PRICING_COL.next_ac_no) = rtn(1)
+                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_DATE) = ac_deal_ticket.autocall_schedules(CInt(rtn(1))).call_date
+                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_DAYS_LEFT) = ac_deal_ticket.autocall_schedules(CInt(rtn(1))).call_date - target_date
+                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_BARRIER) = rtn(2)
+                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_REDEEM_RATIO) = rtn(3)
+                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_MARGIN) = rtn(4) - rtn(2) '베리어까지 버퍼(+: 조기상환, -: 조기상환 실패 또는 만기손실상환)
+                End If
+    
+                'Check event
+                'check_event ac_deal_ticket, target_date, ua_pct_price, next_ac_no
+    
+                '상환 / PIN 판단 조건
+                If els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_DAYS_LEFT) < 14 And Abs(els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_MARGIN)) < 0.03 Then
+                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_AVAILABLE) = "PIN"
+                ElseIf els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_DATE) = ac_deal_ticket.autocall_schedules(ac_deal_ticket.no_of_schedule).call_date Then
+                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_AVAILABLE) = "만기"
+                ElseIf els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_MARGIN) > 0 Then
+                    els_pricing_list(j, ELS_PRICING_COL.NEXT_AC_AVAILABLE) = "Y"
+                End If
+            
+            End If
+            
+            If j Mod 2 = 0 Then
+                With rng.Rows(j).Interior
+                    .Pattern = xlSolid
+                    .PatternColorIndex = xlAutomatic
+                    .ThemeColor = xlThemeColorAccent3
+                    .TintAndShade = 0.799981688894314
+                    .PatternTintAndShade = 0
+                End With
+            End If
+            
+            j = j + 1
+        
+        End If
+        
+JUMP_TO_NEXT_PROD:
+        
+    Next i
+    
+    rng.value = els_pricing_list
+    
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+    
+    Call disconnectDB(adoCon)
+    
+    Range("from_seq") = 1
+    Range("to_seq") = WorksheetFunction.CountA(Range("TBL_ELS_PRICING_LIST").Columns(1))
+    
+    
+End Sub
+
+Private Function get_ua_ofs(ua_code As String) As Integer
+
+    Dim rtn As Integer
+    
+    Select Case get_ua_idx(ua_code)
+    Case ua.KOSPI200: rtn = 0
+    Case ua.NKY: rtn = 1
+    Case ua.HSCEI: rtn = 2
+    Case ua.SX5E: rtn = 3
+    Case ua.SPX: rtn = 4
+    Case ua.TSLA: rtn = 5
+    End Select
+
+    get_ua_ofs = rtn
+    
+End Function
+
+Private Function check_event(ac_deal_ticket As clsACDealTicket, target_date As Date, ua_pct_price() As Double, next_ac_no As Integer) As String
+    
+    Dim rtn As String
+
+    '[발행관련]
+    
+    '신규거래
+    If target_date = ac_deal_ticket.value_date Then
+        rtn = "신규 거래"
+        '발행취소
+'        If ac_deal_ticket.alive_yn Then
+'            rtn = "발행 취소"
+'        End If
+    End If
+    
+    '신규발행
+    If target_date = ac_deal_ticket.settlement_date Then
+        rtn = "신규 발행"
+    End If
+
+    '[상환관련]
+    
+    '상환평가일: 상환실패
+    '상환평가일: 종가 미확정
+    '상환확정: 상환확정(#차)
+    '상환확정: 만기
+    '상환확정: 만기손실
+    
+    'ac_deal_ticket에는 eval_shift가 적용되어 있지 않다고 가정.
+    
+    '상환평가일: 종가 미확정, 상환 실패
+    If target_date = ac_deal_ticket.autocall_schedules(next_ac_no).call_date Then
+
+        Select Case ac_deal_ticket.autocall_schedules(next_ac_no).performance_type
+        Case 0: rtn = "상환평가일: 종가 미확정" 'avg -> 무조건 미확정
+        Case -1, 1: rtn = "상환평가일: 종가 미확정" 'min, max -> EVAL_SHIFT_UA이 아닌 기초지산 종가 체크 -> 1) 하나라도 만족 못하면 상환실패 2) 모두 만족하면, 미확정
+
+            Dim u As Integer
+            For u = 1 To ac_deal_ticket.no_of_ul
+                If is_eval_shift_ua(ac_deal_ticket.ul_code(u)) = False Then
+                
+                    eval_next_autocall
+                
+                    '29 EarlyExit
+                    Dim ee_touched_array() As Long
+                    ee_touched_array = ac_deal_ticket.early_exit_touched_flags
+                    
+                    If (ee_touched_array(ee_no) = 0) And (ua_pct_price(u) < ac_deal_ticket.early_exit_barrier(ee_no)) Then
+                        rtn = "상환평가일: 상환실패"
+                    End If
+                    
+                    '01 HiFive, 02 StepDown, 17 SafeStepDown, 22 CouponStepDown, 29 EarlyExit, 36 A-win, 38 Five Wins
+                    If ua_pct_price(u) < ac_deal_ticket.autocall_schedules(next_ac_no).percent_strike Then
+                        rtn = "상환평가일: 상환실패"
+                    End If
+                    
+                    Exit For
+                End If
+            Next u
+            
+        End Select
+
+    End If
+    
+    '상환평가일: 상환확정
+    If target_date > ac_deal_ticket.autocall_schedules(next_ac_no).call_date Then
+    
+    End If
+    
+    '모두 해외지수이고 call_date가 국내 연휴기간 중인 경우, target_date > 조기상환결정일(TRTH_CLRD_DTRM_DATE)+1 이더라도 상환여부 판단 필요.
+    '이 경우, 해당 기간 중 해외지수 종가가 동일하게 국내 비영업일 기준으로 하루 지연되어 입수되어야 함.
+    
+
+    
+    '[베리어 관련]
+    'KI touch
+        Select Case ac_deal_ticket.ki_performance_type
+        Case -1: ki_det_price = WorksheetFunction.min(ua_pct_price)
+        Case 0: ki_det_price = WorksheetFunction.avg(ua_pct_price)
+        Case 1: ki_det_price = WorksheetFunction.max(ua_pct_price)
+        End Select
+    'EE touch
+    
+    '[현금흐름 관련]
+    '월 쿠폰지급
+    
+    '변동금리 수취
+    '변동금리 스케줄 관리 -> floating_settlement_date
+    Dim bind_variable() As String
+    Dim bind_value() As Variant
+    ReDim bind_variable(1) As String
+    ReDim bind_value(1) As Variant
+    bind_variable(1) = ":indv_iscd"
+    bind_value(1) = ac_deal_ticket.asset_code
+    
+    Dim sql As String
+    sql = getSQL(SQL_PATH_FLOATING_LEG, bind_variable, bind_value)
+    
+    With oCmd
+    
+        .ActiveConnection = adoCon
+        .CommandType = adCmdText
+        .CommandText = sql
+        
+        oRS.Open .Execute
+    
+    End With
+    
+    Do Until oRS.EOF
+        
+        If oRS("PRVS_DATE") = date2str(target_date) Then
+            rtn = rtn + "변동금리 수취"
+            Exit Do
+        End If
+        
+        oRS.MoveNext
+    Loop
+    
+    oRS.Close
+    
+    check_event = rtn
+    
+End Function
+
+Private Function eval_next_autocall(ac_deal_ticket As clsACDealTicket, target_date As Date, ua_pct_price() As Double, rtn() As Variant) As Boolean
+    
+    '조기상환유형
+    '01 HiFive
+    '02 StepDown
+    '17 SafeStepDown
+    '22 CouponStepDown
+    '29 EarlyExit
+    '36 A-win
+    '38 Five Wins
+    
+    'out
+    'rtn(1) = 조기상환 회차
+    'rtn(2) = barrier(%)
+    'rtn(3) = 상환 지급율
+    'rtn(4) = 기초자산 평가기준가
+    
+    eval_next_autocall = False
+    
+    'check barrier
+    Dim autocall_no As Integer
+    Dim barrier As Double
+    Dim redeem_ratio As Double
+    
+    Dim i As Integer
+    
+    autocall_no = 0 '기본값
+    
+    For i = 1 To ac_deal_ticket.no_of_schedule
+        If ac_deal_ticket.autocall_schedules(i).call_date >= target_date Then
+            autocall_no = i
+            Exit For
+        End If
+    Next i
+    
+    If autocall_no > 0 Then
+    
+    '기초자산 평가방법
+    Dim ua_det_price As Double
+    Dim ki_det_price As Double
+    
+    Select Case ac_deal_ticket.ki_performance_type
+    Case -1: ki_det_price = WorksheetFunction.min(ua_pct_price)
+    Case 0: ki_det_price = WorksheetFunction.avg(ua_pct_price)
+    Case 1: ki_det_price = WorksheetFunction.max(ua_pct_price)
+    End Select
+    
+    Select Case ac_deal_ticket.autocall_schedules(autocall_no).performance_type
+    Case -1: ua_det_price = WorksheetFunction.min(ua_pct_price)
+    Case 0: ua_det_price = WorksheetFunction.avg(ua_pct_price)
+    Case 1: ua_det_price = WorksheetFunction.max(ua_pct_price)
+    End Select
+    
+    Dim ac_success As Boolean
+    ac_success = (ac_deal_ticket.autocall_schedules(autocall_no).percent_strike < ua_det_price)
+    
+    If ac_deal_ticket.early_exit_flag = 1 Then
+
+        Dim ee_no As Integer
+        For i = 1 To ac_deal_ticket.no_of_early_exit_schedule
+            If ac_deal_ticket.early_exit_date(ee_no) >= target_date Then
+                ee_no = i
+                Exit For
+            End If
+        Next i
+        
+        Dim ee_touched_array() As Long
+        ee_touched_array = ac_deal_ticket.early_exit_touched_flags
+        
+        Dim ee_success As Boolean
+        If ee_no > 0 Then
+            ee_success = (ee_touched_array(ee_no) = 0) And (ac_deal_ticket.early_exit_barrier(ee_no) < ua_det_price)
+        Else
+            ee_success = False
+        End If
+        
+    End If
+    
+    If ac_deal_ticket.monthly_coupon_flag = 1 Then
+
+        Dim m_cpn_no As Integer
+        For i = 1 To ac_deal_ticket.no_of_coupon_schedule
+            If ac_deal_ticket.monthly_coupon_schedules(i).call_date >= target_date Then
+                m_cpn_no = i
+                Exit For
+            End If
+        Next i
+            
+        Dim m_cpn_success As Boolean
+        If m_cpn_no > 0 Then '2024.02.26
+            m_cpn_success = (ac_deal_ticket.monthly_coupon_schedules(m_cpn_no).percent_strike < ua_det_price)
+        End If
+        
+    End If
+    
+    'update barrier touch
+    If ac_deal_ticket.ki_barrier_flag = 1 Then
+        Dim ki_touched As Boolean
+        ki_touched = (ac_deal_ticket.ki_touched_flag = 1) Or (ac_deal_ticket.ki_barrier > ki_det_price)
+    End If
+    
+    '조건 적용 순서
+    '29 EarlyExit
+    If ee_success Then
+    
+        eval_next_autocall = True
+    
+        barrier = ac_deal_ticket.early_exit_barrier(ee_no)
+        redeem_ratio = 1 + ac_deal_ticket.early_exit_coupon(ee_no)
+    
+    Else
+        barrier = ac_deal_ticket.autocall_schedules(autocall_no).percent_strike
+        
+        '01 HiFive, 02 StepDown, 17 SafeStepDown, 22 CouponStepDown, 29 EarlyExit, 36 A-win, 38 Five Wins
+        If ac_success Then
+            
+            eval_next_autocall = True
+
+            redeem_ratio = 1 + ac_deal_ticket.autocall_schedules(autocall_no).coupon_on_call
+            
+            If m_cpn_success Then
+                redeem_ratio = redeem_ratio + ac_deal_ticket.monthly_coupon_schedules(m_cpn_no).coupon_on_call
+            End If
+        
+        Else
+            redeem_ratio = 0
+            
+            '만기상환
+            'If ac_deal_ticket.autocall_schedules(autocall_no).call_date = ac_deal_ticket.maturity_date Then
+            If autocall_no = ac_deal_ticket.no_of_schedule Then
+            
+                eval_next_autocall = True
+                
+                If ac_deal_ticket.ki_barrier_flag = 0 Then
+                    redeem_ratio = ua_det_price
+                Else
+                    If ki_touched Then
+                        redeem_ratio = ua_det_price
+                    Else
+                        barrier = ac_deal_ticket.ki_barrier
+                        redeem_ratio = 1 + ac_deal_ticket.autocall_schedules(autocall_no).coupon_on_call
+                    End If
+                End If
+                
+            End If
+            
+        End If
+        
+    End If
+    
+    End If
+    
+    rtn(1) = autocall_no
+    rtn(2) = barrier
+    rtn(3) = redeem_ratio
+    rtn(4) = ua_det_price
+
+End Function
+
+Private Sub btnInsertPrice_Click()
+
+    Dim from_seq As Integer
+    Dim to_seq As Integer
+    from_seq = Range("from_seq").value
+    to_seq = Range("to_seq").value
+    
+    If vbYes = MsgBox("지금 화면에 출력된 SEQ=" & from_seq & "~" & to_seq & " ELS 가격을 DB에 입력하겠습니까?", vbYesNo) Then
+    
+        Dim rng As Range
+        Set rng = Range("TBL_ELS_PRICING_LIST")
+    
+        Dim rng2 As Range
+        Set rng2 = shtELSList.Range("TBL_ELS_LIST")
+        
+        Dim sql As String
+        
+        Dim i, j As Integer
+        Dim hedge_buf As Double
+        Dim hedge_buf_h As Double
+        Dim str_db As String
+        
+        Dim oCmd As New adoDB.Command
+        Dim oRS As New adoDB.Recordset
+        
+        Dim target_date As Date
+        target_date = Range("target_date").value
+        
+        Dim tdate_str As String
+        tdate_str = date2str(target_date)
+   
+        Dim adoCon As New adoDB.Connection
+        Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)
+        'Call connectDB(adoCon, TNS_SERVICE_NAME_TEST, USER_ID, PASSWORD) 'for TEST DB
+        
+        Dim prod_cls_name As String
+        Dim prod_seq As String
+        Dim deal_name As String
+        
+        Dim unit_notional As Double
+        Dim ccy As String
+        Dim payoff_desc As String
+        Dim value_date As String
+        Dim issue_date As String
+        Dim deal_price As Double
+        
+'        Dim els_code As String
+'        Dim eswap_code As String
+'        Dim eswap_code_t As String
+'
+'        Dim els_theo_price As Double
+'        Dim els_market_price As Double
+'        Dim eswap_theo_price As Double
+'        Dim eswap_market_price As Double
+
+        Dim io_code As String
+
+        Dim fo_code_d As String
+        Dim io_code_h As String
+        Dim io_code_t As String
+        
+        Dim theo_price_d As Double
+        Dim theo_price_h As Double
+        Dim mtm_price_d As Double
+        Dim mtm_price_h As Double
+        
+        Dim tag As String
+        
+        For i = from_seq To to_seq
+            
+            fo_code_d = rng(i, ELS_PRICING_COL.FO_ELS_D)
+            io_code_h = rng(i, ELS_PRICING_COL.IO_ESWAP_H)
+            io_code_t = rng(i, ELS_PRICING_COL.IO_ESWAP_T)
+            
+            sql = "delete from ras.rm_pricing_data where tdate = '" + tdate_str + "' and code in ('" + fo_code_d + "','" + io_code_h + "','" + io_code_t + "') "
+            adoCon.Execute (sql)
+            
+            theo_price_d = rng(i, ELS_PRICING_COL.PRICE_THEO_D)
+            theo_price_h = rng(i, ELS_PRICING_COL.PRICE_THEO_H)
+            mtm_price_d = rng(i, ELS_PRICING_COL.PRICE_MTM_D)
+            mtm_price_h = rng(i, ELS_PRICING_COL.PRICE_MTM_H)
+            
+            If rng(i, ELS_PRICING_COL.PROD_CLS_CODE) = "스왑" Then
+                tag = "eq_ac_swap"
+            Else
+                tag = "eq_ac_note"
+            End If
+            
+            sql = "insert into ras.rm_pricing_data values ('" + tdate_str + "','" + fo_code_d + "', " & theo_price_d & ", " & mtm_price_d & ", SYSDATE, '" & tag & "') "
+            adoCon.Execute (sql)
+            
+            If rng(i, ELS_PRICING_COL.PROD_CLS_CODE_H) = "스왑" Then
+                tag = "eq_ac_swap"
+            Else
+                tag = "eq_ac_note"
+            End If
+            
+            'SP 종목
+            sql = "insert into ras.rm_pricing_data values ('" + tdate_str + "','" + io_code_h + "', " & theo_price_h & ", " & mtm_price_h & ", SYSDATE, '" & tag & "') "
+            adoCon.Execute (sql)
+            io_code = io_code_h
+                            
+            'E파 종목
+            If io_code_t <> "" Then
+                sql = "insert into ras.rm_pricing_data values ('" + tdate_str + "','" + io_code_t + "', " & theo_price_h & ", " & mtm_price_h & ", SYSDATE, '" & tag & "') "
+                adoCon.Execute (sql)
+                io_code = io_code_t
+            End If
+                        
+            '신규종목 입력
+            If target_date = rng2(rng(i, ELS_PRICING_COL.NO), ELS_COL.PBLC_DATE) Then
+
+                sql = "select a.PROD_CLS_CODE, a.FUND_PBLC_TIMS, a.REAL_PBLC_FCAM, a.STLM_CRCD, a.BRIF_EXPL, a.FRST_STND_PRC_FIN_DATE, a.PBLC_DATE, c.PERC_APLY_THPR, replace(b.ENG_ISNM,'SY'), a.FUND_PBLC_UNPR/a.REAL_PBLC_FCAM from BSYS.TBSIMO100M00@GDW a, BSYS.TBSIMM100M00@GDW b, BSYS.TBSIMO201M00@GDW c where a.OTC_FUND_ISCD = '" + fo_code_d + "' and a.OTC_FUND_ISCD = c.OTC_FUND_ISCD and a.OTC_FUND_ISCD = b.ISCD"
+
+                With oCmd
+
+                    .ActiveConnection = adoCon
+                    .CommandType = adCmdText
+                    .CommandText = sql
+
+                    oRS.Open .Execute
+
+                End With
+
+                Do Until oRS.EOF
+'                    Select Case oRS(0)
+'                    Case "04", "09": prod_cls_name = "OTC"
+'                    Case "07": prod_cls_name = "ELS"
+'                    Case "13": prod_cls_name = "ELB"
+'                    End Select
+'
+'                    prod_seq = oRS(1)
+                    unit_notional = oRS(2)
+                    ccy = oRS(3)
+                    payoff_desc = oRS(4)
+                    value_date = oRS(5)
+                    issue_date = oRS(6)
+                    If oRS(0) = "04" Then 'swap인 경우, note 기준 장부가
+                        deal_price = oRS(9)
+                    Else
+                        deal_price = oRS(7)
+                    End If
+                    deal_name = oRS(8)
+
+                    oRS.MoveNext
+                Loop
+
+                oRS.Close
+
+                'deal_name = prod_cls_name + prod_seq
+
+                hedge_buf = Round((mtm_price_d - theo_price_d) / unit_notional, 6)
+                hedge_buf_h = Round((mtm_price_h - theo_price_h) / unit_notional, 6)
+
+                str_db = ", ras.rm_els_info"
+
+                sql = "MERGE INTO RAS.RM_ELS_INFO USING dual ON (deal_name = '" + deal_name + "') WHEN MATCHED THEN Update SET code = '" + fo_code_d + "', hedge_buf = " & hedge_buf & ", hedge_buf_h = " & hedge_buf_h & ", inserttime = sysdate, indv_iscd = '" + io_code + "', status = '발행 완료' "
+                sql = sql & " WHEN NOT MATCHED THEN INSERT (code, hedge_buf, hedge_buf_h, inserttime, indv_iscd, payoff_desc, ccy, value_date, issue_date, deal_price, status, deal_name) VALUES ('" + fo_code_d + "'," & hedge_buf & "," & hedge_buf_h & ", SYSDATE, '" + io_code + "', '" + payoff_desc + "','" + ccy + "','" + value_date + "','" + issue_date + "'," & deal_price & ",'발행 완료','" + deal_name + "')"
+
+                adoCon.Execute (sql)
+
+            End If
+        
+        Next i
+        
+        Call disconnectDB(adoCon)
+        
+        Set oCmd = Nothing
+        Set oRS = Nothing
+        Set adoCon = Nothing
+        
+        'MsgBox ("insert 완료: excel -> ras.rm_els_data" & str_db)
+        MsgBox ("insert 완료: excel -> ras.rm_pricing_data" & str_db)
+        
+    End If
+    
+End Sub
+
+Private Function is_completed(prod_code As String, target_date As Date, scenario_id As String, adoCon As adoDB.Connection) As Boolean
+    
+    Dim rtn As Boolean
+    
+    Dim oCmd As New adoDB.Command
+    Dim oRS As New adoDB.Recordset
+    
+    Dim sql As String
+    
+    sql = "select count(a.stk_code) from rcs.pml_position_st a, rcs.pml_greek_st b, rms.mr_scenario_detail_data c where a.tdate = b.tdate" _
+        & " and a.tdate=c.tdate and a.stk_code=b.stk_code and a.stk_code=c.code and a.scenarioid=b.scenarioid and a.scenarioid=c.scenarioid and a.tdate='" + date2str(target_date) + "' and a.scenarioid='" + scenario_id + "' and a.stk_code ='" + prod_code + "'"
+
+    With oCmd
+        .ActiveConnection = adoCon
+        .CommandType = adCmdText
+        .CommandText = sql
+        oRS.Open .Execute
+    End With
+    
+    Do Until oRS.EOF
+        If oRS(0) = 0 Then
+            rtn = False
+        Else
+            rtn = True
+        End If
+        oRS.MoveNext
+    Loop
+    
+    oRS.Close
+    
+    is_completed = rtn
+            
+End Function

@@ -1,1 +1,18 @@
-Sub ScheduledMacro()nn    Dim time_value As Daten    time_value = TimeValue(shtELS.Range("Scheduled_Time").Text)n    n    Application.OnTime time_value, "Batch"n    Application.StatusBar = "The batch procedure is supposed to run at " & CStr(time_value)n    nEnd SubnnSub Batch()nn    shtMarket.btnReadMarketData_Clickn    shtLocalVol.btnReadLocalVol_Clickn    shtELS.btnCalculatePriceELS_Clickn    Application.StatusBar = Falsen    nEnd Subn
+Sub ScheduledMacro()
+
+    Dim time_value As Date
+    time_value = TimeValue(shtELS.Range("Scheduled_Time").Text)
+    
+    Application.OnTime time_value, "Batch"
+    Application.StatusBar = "The batch procedure is supposed to run at " & CStr(time_value)
+    
+End Sub
+
+Sub Batch()
+
+    shtMarket.btnReadMarketData_Click
+    shtLocalVol.btnReadLocalVol_Click
+    shtELS.btnCalculatePriceELS_Click
+    Application.StatusBar = False
+    
+End Sub

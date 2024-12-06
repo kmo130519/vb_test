@@ -1,1 +1,105 @@
-Option ExplicitnnnnPrivate abscissa_() As DoublenPrivate data_() As DoublennPublic Function copy_obj() As clsLinearInterpolatornnnn    Dim obj As clsLinearInterpolatorn    Dim new_dates() As Longn    Dim new_dcfs() As Doublen    Dim inx As Longn    nOn Error GoTo ErrorHandlernn    Set obj = New clsLinearInterpolatorn    n    obj.initialize abscissa_, data_n    n    Set copy_obj = objn    n    n    Exit Functionn    nErrorHandler:nn    raise_err "clsLinearInterpolator.copy_obj", Err.descriptionn    nEnd FunctionnnPublic Sub initialize(abscissa() As Double, data() As Double)nn    Dim inx As Integern    n    Dim no_of_abscissa As Integern    Dim no_of_data As Integern        nOn Error GoTo ErrorHandlernn    no_of_abscissa = get_array_size_double(abscissa)n    no_of_data = get_array_size_double(data)n    n    If no_of_abscissa = no_of_data Thenn    n        ReDim abscissa_(LBound(abscissa) To UBound(abscissa)) As Doublen        ReDim data_(LBound(data) To UBound(data)) As Doublen        n        For inx = LBound(abscissa) To UBound(abscissa)n            n            abscissa_(inx) = abscissa(inx)n        n        Next inxn        n       n        For inx = (LBound(data)) To UBound(data)n            n            data_(inx) = data(inx)n        n        Next inxn    n    Elsen    n        raise_err "clsLinearINterpolator.initialize", "Array size mismatch.."n        n    End Ifn    n    Exit Subn    nErrorHandler:nnn    raise_err "clsLinearInterpolator.initialize", Err.descriptionnnnEnd SubnnPublic Function interpolated_value(x_value As Double) As Doublenn    Dim inx As Integern    Dim rtn_value As Doublen    nOn Error GoTo ErrorHandlernn    inx = find_location(abscissa_, x_value)n    n    If inx < LBound(abscissa_) Thenn        rtn_value = data_(LBound(abscissa_))n    ElseIf inx >= UBound(abscissa_) Thenn        rtn_value = data_(UBound(abscissa_))n    Elsen        rtn_value = ((x_value - abscissa_(inx)) * data_(inx + 1) + (abscissa_(inx + 1) - x_value) * data_(inx)) / (abscissa_(inx + 1) - abscissa_(inx))n    End Ifnn    interpolated_value = rtn_valuen    n    Exit Functionn    nErrorHandler:n    n    raise_err "clsLinearInterpolator.interpolated_value", Err.descriptionnnEnd Functionnn
+Option Explicit
+
+
+
+Private abscissa_() As Double
+Private data_() As Double
+
+Public Function copy_obj() As clsLinearInterpolator
+
+
+
+    Dim obj As clsLinearInterpolator
+    Dim new_dates() As Long
+    Dim new_dcfs() As Double
+    Dim inx As Long
+    
+On Error GoTo ErrorHandler
+
+    Set obj = New clsLinearInterpolator
+    
+    obj.initialize abscissa_, data_
+    
+    Set copy_obj = obj
+    
+    
+    Exit Function
+    
+ErrorHandler:
+
+    raise_err "clsLinearInterpolator.copy_obj", Err.description
+    
+End Function
+
+Public Sub initialize(abscissa() As Double, data() As Double)
+
+    Dim inx As Integer
+    
+    Dim no_of_abscissa As Integer
+    Dim no_of_data As Integer
+        
+On Error GoTo ErrorHandler
+
+    no_of_abscissa = get_array_size_double(abscissa)
+    no_of_data = get_array_size_double(data)
+    
+    If no_of_abscissa = no_of_data Then
+    
+        ReDim abscissa_(LBound(abscissa) To UBound(abscissa)) As Double
+        ReDim data_(LBound(data) To UBound(data)) As Double
+        
+        For inx = LBound(abscissa) To UBound(abscissa)
+            
+            abscissa_(inx) = abscissa(inx)
+        
+        Next inx
+        
+       
+        For inx = (LBound(data)) To UBound(data)
+            
+            data_(inx) = data(inx)
+        
+        Next inx
+    
+    Else
+    
+        raise_err "clsLinearINterpolator.initialize", "Array size mismatch.."
+        
+    End If
+    
+    Exit Sub
+    
+ErrorHandler:
+
+
+    raise_err "clsLinearInterpolator.initialize", Err.description
+
+
+End Sub
+
+Public Function interpolated_value(x_value As Double) As Double
+
+    Dim inx As Integer
+    Dim rtn_value As Double
+    
+On Error GoTo ErrorHandler
+
+    inx = find_location(abscissa_, x_value)
+    
+    If inx < LBound(abscissa_) Then
+        rtn_value = data_(LBound(abscissa_))
+    ElseIf inx >= UBound(abscissa_) Then
+        rtn_value = data_(UBound(abscissa_))
+    Else
+        rtn_value = ((x_value - abscissa_(inx)) * data_(inx + 1) + (abscissa_(inx + 1) - x_value) * data_(inx)) / (abscissa_(inx + 1) - abscissa_(inx))
+    End If
+
+    interpolated_value = rtn_value
+    
+    Exit Function
+    
+ErrorHandler:
+    
+    raise_err "clsLinearInterpolator.interpolated_value", Err.description
+
+End Function

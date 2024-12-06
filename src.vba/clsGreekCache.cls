@@ -1,1 +1,242 @@
-Option ExplicitnnPublic asset_code As StringnnPublic initialized As BooleannnPrivate abscissa_() As Double ' abscissa of precalculated greeksnPrivate greeks_() As clsGreeks ' This is 2 dimension array.nnPublic Function lower_bound_of_abscissa() As Integern    n    lower_bound_of_abscissa = LBound(abscissa_)nnnEnd FunctionnnPublic Function upper_bound_of_abscissa() As Integern    n    upper_bound_of_abscissa = UBound(abscissa_)nnnEnd FunctionnnPublic Function abscissa(inx As Integer) As Doublenn    abscissa = abscissa_(inx)nnEnd FunctionnnPublic Function greeks(inx As Integer) As clsGreeksnn    Set greeks = greeks_(inx)nnEnd FunctionnnPublic Sub initialize(abscissa() As Double, greeks() As clsGreeks, Optional deal_in As clsCliquetDealTicket)nnOn Error GoTo ErrorHandlernn    initialized = Falsen    n'    If Not IsNull(deal_in) And Not deal_in Is Nothing Thenn'        set_deal deal_inn'    End Ifn        n    set_abscissa abscissan    set_greeks greeksnn    initialized = Truen    n    Exit Subn    nErrorHandler:nn    initialized = Falsenn    raise_err "clsGreekCache.initialize"nnEnd SubnnPublic Sub null_greek(Optional deal_in As clsCliquetDealTicket)n    n    Dim null_abs(1 To 2) As Doublen    Dim greeks(1 To 2) As clsGreeksn    n    null_abs(1) = 0n    null_abs(2) = 10000n    n    Set greeks(1) = New clsGreeksn    Set greeks(2) = New clsGreeksn    n    initialize null_abs, greeks, deal_innnnEnd Subnn'Public Sub set_deal(deal_in As clsCliquetDealTicket)n'n'On Error GoTo ErrorHandlern'n'    Set deal = deal_in.copy_objn'n'    Exit Subn'n'ErrorHandler:n'n'    raise_err " clsGreekCache.set_deal"n'n'n'End SubnnPublic Sub set_abscissa(abscissa() As Double)nn    Dim inx As Integern    nOn Error GoTo ErrorHandlern    n    ReDim abscissa_(LBound(abscissa) To UBound(abscissa)) As Doublen        n    For inx = LBound(abscissa) To UBound(abscissa)n    n        abscissa_(inx) = abscissa(inx)n    n    Next inxn    n    Exit Subn    n        nErrorHandler:nn    If Err.number = 9 Thenn    n        Exit Subn        n    End Ifnn    raise_err "clsGreekCache.set_abscissa"nnnEnd SubnnnPublic Sub set_greeks(greeks() As clsGreeks)nn    Dim inx As Integern    nOn Error GoTo ErrorHandlern    n    ReDim greeks_(LBound(greeks) To UBound(greeks)) As clsGreeksn    n    For inx = LBound(greeks) To UBound(greeks)n    n        Set greeks_(inx) = greeks(inx).copy_objn    n    Next inxn    n    Exit Subn    nErrorHandler:nn    If Err.number = 9 Thenn    n        Exit Subn        n    End Ifnn    raise_err "clsGreekCache.set_greeks"nnnEnd SubnnPublic Function get_greeks(stock_price As Double) As clsGreeksnn    Dim rtn_greeks As clsGreeksn    Dim inx As Integern    nOn Error GoTo ErrorHandlern    n    Set rtn_greeks = New clsGreeksn    n    inx = find_location(stock_price)n    n    rtn_greeks.value = linear_interpolation(abscissa_(inx), abscissa_(inx + 1), greeks_(inx).value, greeks_(inx + 1).value, stock_price)n    rtn_greeks.delta = linear_interpolation(abscissa_(inx), abscissa_(inx + 1), greeks_(inx).delta, greeks_(inx + 1).delta, stock_price)n    rtn_greeks.gamma = linear_interpolation(abscissa_(inx), abscissa_(inx + 1), greeks_(inx).gamma, greeks_(inx + 1).gamma, stock_price)n    n    rtn_greeks.vega = greeks_(LBound(greeks_)).vegan    rtn_greeks.theta = greeks_(LBound(greeks_)).thetan    rtn_greeks.skew_s = greeks_(LBound(greeks_)).skew_sn    n    Set get_greeks = rtn_greeksn    n    Exit Functionn    nErrorHandler:nn    raise_err "clsGreekCache.get_greeks"n    nnEnd FunctionnPrivate Function linear_interpolation(x1 As Double, x2 As Double, y1 As Double, y2 As Double, x) As Doublenn    linear_interpolation = (x - x1) / (x2 - x1) * y2 + (x2 - x) / (x2 - x1) * y1nnEnd FunctionnnnPrivate Function find_location(stock_price As Double) As Integernn    Dim inx_up As Integern    Dim inx_low As Integern    Dim inx_mid As Integern    n    Dim rtn_inx As Integern    nOn Error GoTo ErrorHandlern    n    inx_low = LBound(abscissa_) - 1n    inx_up = UBound(abscissa_) + 1n    n    Do While inx_up - inx_low > 1n    n        inx_mid = Int((inx_up + inx_low) / 2)n        n        If stock_price >= abscissa_(inx_mid) Thenn        n            inx_low = inx_midn        n        Elsen            n            inx_up = inx_midn            n        End Ifnn    Loopn    n    n    If stock_price = abscissa_(LBound(abscissa_)) Thenn    n        rtn_inx = LBound(abscissa_)n        n    ElseIf stock_price = abscissa_(UBound(abscissa_)) Thenn        n        rtn_inx = UBound(abscissa_) - 1n        n    Elsen    n        rtn_inx = inx_lown    n    End Ifn    n    n    find_location = rtn_inxn    n    Exit Functionn    n    nErrorHandler:nn    raise_err "clsGreekCache.find_location"nnEnd Function
+Option Explicit
+
+Public asset_code As String
+
+Public initialized As Boolean
+
+Private abscissa_() As Double ' abscissa of precalculated greeks
+Private greeks_() As clsGreeks ' This is 2 dimension array.
+
+Public Function lower_bound_of_abscissa() As Integer
+    
+    lower_bound_of_abscissa = LBound(abscissa_)
+
+
+End Function
+
+Public Function upper_bound_of_abscissa() As Integer
+    
+    upper_bound_of_abscissa = UBound(abscissa_)
+
+
+End Function
+
+Public Function abscissa(inx As Integer) As Double
+
+    abscissa = abscissa_(inx)
+
+End Function
+
+Public Function greeks(inx As Integer) As clsGreeks
+
+    Set greeks = greeks_(inx)
+
+End Function
+
+Public Sub initialize(abscissa() As Double, greeks() As clsGreeks, Optional deal_in As clsCliquetDealTicket)
+
+On Error GoTo ErrorHandler
+
+    initialized = False
+    
+'    If Not IsNull(deal_in) And Not deal_in Is Nothing Then
+'        set_deal deal_in
+'    End If
+        
+    set_abscissa abscissa
+    set_greeks greeks
+
+    initialized = True
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    initialized = False
+
+    raise_err "clsGreekCache.initialize"
+
+End Sub
+
+Public Sub null_greek(Optional deal_in As clsCliquetDealTicket)
+    
+    Dim null_abs(1 To 2) As Double
+    Dim greeks(1 To 2) As clsGreeks
+    
+    null_abs(1) = 0
+    null_abs(2) = 10000
+    
+    Set greeks(1) = New clsGreeks
+    Set greeks(2) = New clsGreeks
+    
+    initialize null_abs, greeks, deal_in
+
+
+End Sub
+
+'Public Sub set_deal(deal_in As clsCliquetDealTicket)
+'
+'On Error GoTo ErrorHandler
+'
+'    Set deal = deal_in.copy_obj
+'
+'    Exit Sub
+'
+'ErrorHandler:
+'
+'    raise_err " clsGreekCache.set_deal"
+'
+'
+'End Sub
+
+Public Sub set_abscissa(abscissa() As Double)
+
+    Dim inx As Integer
+    
+On Error GoTo ErrorHandler
+    
+    ReDim abscissa_(LBound(abscissa) To UBound(abscissa)) As Double
+        
+    For inx = LBound(abscissa) To UBound(abscissa)
+    
+        abscissa_(inx) = abscissa(inx)
+    
+    Next inx
+    
+    Exit Sub
+    
+        
+ErrorHandler:
+
+    If Err.number = 9 Then
+    
+        Exit Sub
+        
+    End If
+
+    raise_err "clsGreekCache.set_abscissa"
+
+
+End Sub
+
+
+Public Sub set_greeks(greeks() As clsGreeks)
+
+    Dim inx As Integer
+    
+On Error GoTo ErrorHandler
+    
+    ReDim greeks_(LBound(greeks) To UBound(greeks)) As clsGreeks
+    
+    For inx = LBound(greeks) To UBound(greeks)
+    
+        Set greeks_(inx) = greeks(inx).copy_obj
+    
+    Next inx
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    If Err.number = 9 Then
+    
+        Exit Sub
+        
+    End If
+
+    raise_err "clsGreekCache.set_greeks"
+
+
+End Sub
+
+Public Function get_greeks(stock_price As Double) As clsGreeks
+
+    Dim rtn_greeks As clsGreeks
+    Dim inx As Integer
+    
+On Error GoTo ErrorHandler
+    
+    Set rtn_greeks = New clsGreeks
+    
+    inx = find_location(stock_price)
+    
+    rtn_greeks.value = linear_interpolation(abscissa_(inx), abscissa_(inx + 1), greeks_(inx).value, greeks_(inx + 1).value, stock_price)
+    rtn_greeks.delta = linear_interpolation(abscissa_(inx), abscissa_(inx + 1), greeks_(inx).delta, greeks_(inx + 1).delta, stock_price)
+    rtn_greeks.gamma = linear_interpolation(abscissa_(inx), abscissa_(inx + 1), greeks_(inx).gamma, greeks_(inx + 1).gamma, stock_price)
+    
+    rtn_greeks.vega = greeks_(LBound(greeks_)).vega
+    rtn_greeks.theta = greeks_(LBound(greeks_)).theta
+    rtn_greeks.skew_s = greeks_(LBound(greeks_)).skew_s
+    
+    Set get_greeks = rtn_greeks
+    
+    Exit Function
+    
+ErrorHandler:
+
+    raise_err "clsGreekCache.get_greeks"
+    
+
+End Function
+Private Function linear_interpolation(x1 As Double, x2 As Double, y1 As Double, y2 As Double, x) As Double
+
+    linear_interpolation = (x - x1) / (x2 - x1) * y2 + (x2 - x) / (x2 - x1) * y1
+
+End Function
+
+
+Private Function find_location(stock_price As Double) As Integer
+
+    Dim inx_up As Integer
+    Dim inx_low As Integer
+    Dim inx_mid As Integer
+    
+    Dim rtn_inx As Integer
+    
+On Error GoTo ErrorHandler
+    
+    inx_low = LBound(abscissa_) - 1
+    inx_up = UBound(abscissa_) + 1
+    
+    Do While inx_up - inx_low > 1
+    
+        inx_mid = Int((inx_up + inx_low) / 2)
+        
+        If stock_price >= abscissa_(inx_mid) Then
+        
+            inx_low = inx_mid
+        
+        Else
+            
+            inx_up = inx_mid
+            
+        End If
+
+    Loop
+    
+    
+    If stock_price = abscissa_(LBound(abscissa_)) Then
+    
+        rtn_inx = LBound(abscissa_)
+        
+    ElseIf stock_price = abscissa_(UBound(abscissa_)) Then
+        
+        rtn_inx = UBound(abscissa_) - 1
+        
+    Else
+    
+        rtn_inx = inx_low
+    
+    End If
+    
+    
+    find_location = rtn_inx
+    
+    Exit Function
+    
+    
+ErrorHandler:
+
+    raise_err "clsGreekCache.find_location"
+
+End Function

@@ -1,1 +1,305 @@
-Option Explicitn'------------------------------------------------------------------------------------------n' Class: clsMarketn' Handles market data associated with an indexn'------------------------------------------------------------------------------------------nPublic sabr_surface_ As clsSABRSurfacenPublic rate_curve_ As clsRateCurvenPublic drift_adjust_ As clsRateCurve 'drift adjustment 추가: 2023.11.21nPublic s_ As DoublenPublic prev_s_ As DoublenPublic div_schedule_ As clsDividendSchedulenPublic div_yield_ As DoublenPublic heston_parameters_ As clsHestonParameternnPublic index_name As StringnnPublic ul_currency As Stringn'Public ul_currency_vol As DoublenPrivate ul_currency_vol_() As DoublennPublic vol_index As StringnPublic vol_index_value As DoublennPublic vix_delta_alpha As DoublenPublic vix_delta_beta As DoublennPublic option_maturity_time As DatenPublic market_open_time As DatenPublic market_close_time As DatennPublic option_maturity_date As IntegernPublic market_open_date As IntegernPublic market_close_date As IntegernnPublic refPriceForDividend As Double '2018.7.19n'Public iv_surface_ As clsImpliedVolSurfacennPublic lambda_neutral As Double 'local correlation 추가 2019.3.27nnPrivate futures_quote_() As clsQuotennnnPublic Function copy_obj(Optional rate_curve_shift As Long = 0) As clsMarketnn    Dim rtn_obj As clsMarketn    Dim inx As Integernn    Set rtn_obj = New clsMarketnn    If Not sabr_surface_ Is Nothing Thenn        Set rtn_obj.sabr_surface_ = sabr_surface_.copy_obj()n    End Ifnn    If Not rate_curve_ Is Nothing Thenn        Set rtn_obj.rate_curve_ = rate_curve_.copy_obj(rate_curve_shift)n    End Ifn    n    'drift adjustment 추가: 2023.11.21n    If Not drift_adjust_ Is Nothing Thenn        Set rtn_obj.drift_adjust_ = drift_adjust_.copy_obj(rate_curve_shift)n    End Ifnn    rtn_obj.s_ = s_n    rtn_obj.prev_s_ = prev_s_nn    If Not div_schedule_ Is Nothing Thenn        Set rtn_obj.div_schedule_ = div_schedule_.copy_objn    End Ifnn    rtn_obj.div_yield_ = div_yield_nn    rtn_obj.index_name = index_namen    rtn_obj.ul_currency = ul_currencyn    n    For inx = 1 To NUM_DCFn        rtn_obj.set_ul_currency_vol inx, ul_currency_vol_(inx)n    Next inxnn    If Not heston_parameters_ Is Nothing Thenn        Set rtn_obj.heston_parameters_ = heston_parameters_.copy_objn    End Ifnn    'Set rtn_obj.iv_surface_ = iv_surface_.copy_objnn    rtn_obj.vol_index = vol_indexn    rtn_obj.vol_index_value = vol_index_valuen    rtn_obj.vix_delta_alpha = vix_delta_alphan    rtn_obj.vix_delta_beta = vix_delta_betann    rtn_obj.option_maturity_time = option_maturity_timen    rtn_obj.market_open_time = market_open_timen    rtn_obj.market_close_time = market_close_timenn    rtn_obj.option_maturity_date = option_maturity_daten    rtn_obj.market_open_date = market_open_daten    rtn_obj.market_close_date = market_close_datenn    rtn_obj.refPriceForDividend = refPriceForDividend '2018.7.19n    rtn_obj.lambda_neutral = lambda_neutral 'local correlation 추가 2019.3.27nnOn Error Resume Nextnn    Dim no_of_futures As Integernn    no_of_futures = UBound(futures_quote_)nn    If Err.number = 8 Thenn        no_of_futures = 0n    End Ifnn    For inx = 1 To no_of_futuresn        rtn_obj.set_futures_quote futures_quote_(inx)n    Next inxnnnn    Set copy_obj = rtn_objnnnEnd FunctionnnPublic Function ul_currency_vol(in_index As Integer) As Doublen   n    ul_currency_vol = ul_currency_vol_(in_index)nnEnd FunctionnnPublic Sub set_ul_currency_vol(in_index As Integer, in_vol As Double)n   n    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextnn    Dim temp_inx As Integern    temp_inx = UBound(ul_currency_vol_)n    n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = 1n        initial_ubound = in_indexn    Elsen        initial_lbound = LBound(ul_currency_vol_)n        initial_ubound = max(UBound(ul_currency_vol_), in_index)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve ul_currency_vol_(initial_lbound To initial_ubound) As Doublen    n    ul_currency_vol_(in_index) = in_voln    n    Exit Subn    nErrorHandler:nn    raise_err "set_ul_currency_vol"n    nEnd SubnnnPublic Function get_futures_value(asset_code As String, Optional theo_price As Boolean = True) As Doublenn    Dim rtn_value As Doublen    Dim futures_index As Integern    n    futures_index = find_futures_index(asset_code, futures_quote_)n    n    If futures_index > 0 Thenn    n        If theo_price Thenn            rtn_value = futures_quote_(futures_index).theo_pricen        Elsen            rtn_value = futures_quote_(futures_index).last_pricen        End Ifn    n    End Ifn    n    get_futures_value = rtn_valuennnEnd FunctionnnPublic Function get_futures_quotes() As clsQuote()nn    n    nOn Error GoTo ErrorHandlernn    get_futures_quotes = futures_quote_nn    Exit Functionn    nErrorHandler:nn    raise_err "clsMarket.get_futures_quotes", Err.descriptionnnEnd FunctionnnnnPublic Sub set_futures_quotes(quotes() As clsQuote)n    n    n    Dim no_of_quotes As Integern    Dim inx As Integern    nOn Error Resume Nextnn    no_of_quotes = UBound(quotes)n        n    If Err.number = 9 Thenn        no_of_quotes = 0n    End Ifn    n    For inx = 1 To no_of_quotesn        n        set_futures_quote quotes(inx)n    n    Next inxn    n    n    nnEnd SubnPublic Sub set_futures_quote(clsQuote As clsQuote)n    n    Dim futures_index As Integern    n    futures_index = find_futures_index(clsQuote.asset_code, futures_quote_)n    n    If futures_index > 0 Thenn        Set futures_quote_(futures_index) = clsQuote.copy_obj()n        n    Elsen        push_back_clsquote futures_quote_, clsQuote.copy_obj()n    End IfnnEnd SubnnnPrivate Function find_futures_index(ByVal asset_code As String, find_from() As clsQuote) As Integernn    Dim rtn_value As Integern    Dim inx As Integern    nOn Error GoTo ErrorHandlernn    rtn_value = -1n    n    For inx = 1 To get_array_size_clsQuote(find_from)n    n        If find_from(inx).asset_code = asset_code Thenn            n            rtn_value = inxn            Exit Forn        n        End Ifn    n    Next inxn    n    find_futures_index = rtn_valuenn    Exit Functionn    nErrorHandler:nn    raise_err "clsMarket.find_futures_index", Err.descriptionnnEnd FunctionnnnPublic Sub set_market(rate_curve As clsRateCurve, s As Double, div_schedule As clsDividendSchedule, heston_param As clsHestonParameter, Optional div_yield As Double = 0, Optional prev_s As Double)nn    On Error GoTo ErrorHandlern    n    Set rate_curve_ = rate_curven    n    s_ = sn    prev_s_ = prev_sn    n    Set div_schedule_ = div_schedulen    n    Set heston_parameters_ = heston_paramn    n    div_yield_ = div_yieldn    n    Exit Subn    nErrorHandler:nn    raise_err "clsMarket.set_market"nnEnd SubnnnPublic Function get_drift_adjust(tdate As Date) As Doublenn    Dim ref_date As Daten    ref_date = CDate(drift_adjust_.rate_dates()(0))n    n    get_drift_adjust = -Log(drift_adjust_.get_discount_factor(ref_date, tdate)) / (tdate - ref_date) * 365nnEnd Function
+Option Explicit
+'------------------------------------------------------------------------------------------
+' Class: clsMarket
+' Handles market data associated with an index
+'------------------------------------------------------------------------------------------
+Public sabr_surface_ As clsSABRSurface
+Public rate_curve_ As clsRateCurve
+Public drift_adjust_ As clsRateCurve 'drift adjustment 추가: 2023.11.21
+Public s_ As Double
+Public prev_s_ As Double
+Public div_schedule_ As clsDividendSchedule
+Public div_yield_ As Double
+Public heston_parameters_ As clsHestonParameter
+
+Public index_name As String
+
+Public ul_currency As String
+'Public ul_currency_vol As Double
+Private ul_currency_vol_() As Double
+
+Public vol_index As String
+Public vol_index_value As Double
+
+Public vix_delta_alpha As Double
+Public vix_delta_beta As Double
+
+Public option_maturity_time As Date
+Public market_open_time As Date
+Public market_close_time As Date
+
+Public option_maturity_date As Integer
+Public market_open_date As Integer
+Public market_close_date As Integer
+
+Public refPriceForDividend As Double '2018.7.19
+'Public iv_surface_ As clsImpliedVolSurface
+
+Public lambda_neutral As Double 'local correlation 추가 2019.3.27
+
+Private futures_quote_() As clsQuote
+
+
+
+Public Function copy_obj(Optional rate_curve_shift As Long = 0) As clsMarket
+
+    Dim rtn_obj As clsMarket
+    Dim inx As Integer
+
+    Set rtn_obj = New clsMarket
+
+    If Not sabr_surface_ Is Nothing Then
+        Set rtn_obj.sabr_surface_ = sabr_surface_.copy_obj()
+    End If
+
+    If Not rate_curve_ Is Nothing Then
+        Set rtn_obj.rate_curve_ = rate_curve_.copy_obj(rate_curve_shift)
+    End If
+    
+    'drift adjustment 추가: 2023.11.21
+    If Not drift_adjust_ Is Nothing Then
+        Set rtn_obj.drift_adjust_ = drift_adjust_.copy_obj(rate_curve_shift)
+    End If
+
+    rtn_obj.s_ = s_
+    rtn_obj.prev_s_ = prev_s_
+
+    If Not div_schedule_ Is Nothing Then
+        Set rtn_obj.div_schedule_ = div_schedule_.copy_obj
+    End If
+
+    rtn_obj.div_yield_ = div_yield_
+
+    rtn_obj.index_name = index_name
+    rtn_obj.ul_currency = ul_currency
+    
+    For inx = 1 To NUM_DCF
+        rtn_obj.set_ul_currency_vol inx, ul_currency_vol_(inx)
+    Next inx
+
+    If Not heston_parameters_ Is Nothing Then
+        Set rtn_obj.heston_parameters_ = heston_parameters_.copy_obj
+    End If
+
+    'Set rtn_obj.iv_surface_ = iv_surface_.copy_obj
+
+    rtn_obj.vol_index = vol_index
+    rtn_obj.vol_index_value = vol_index_value
+    rtn_obj.vix_delta_alpha = vix_delta_alpha
+    rtn_obj.vix_delta_beta = vix_delta_beta
+
+    rtn_obj.option_maturity_time = option_maturity_time
+    rtn_obj.market_open_time = market_open_time
+    rtn_obj.market_close_time = market_close_time
+
+    rtn_obj.option_maturity_date = option_maturity_date
+    rtn_obj.market_open_date = market_open_date
+    rtn_obj.market_close_date = market_close_date
+
+    rtn_obj.refPriceForDividend = refPriceForDividend '2018.7.19
+    rtn_obj.lambda_neutral = lambda_neutral 'local correlation 추가 2019.3.27
+
+On Error Resume Next
+
+    Dim no_of_futures As Integer
+
+    no_of_futures = UBound(futures_quote_)
+
+    If Err.number = 8 Then
+        no_of_futures = 0
+    End If
+
+    For inx = 1 To no_of_futures
+        rtn_obj.set_futures_quote futures_quote_(inx)
+    Next inx
+
+
+
+    Set copy_obj = rtn_obj
+
+
+End Function
+
+Public Function ul_currency_vol(in_index As Integer) As Double
+   
+    ul_currency_vol = ul_currency_vol_(in_index)
+
+End Function
+
+Public Sub set_ul_currency_vol(in_index As Integer, in_vol As Double)
+   
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+
+    Dim temp_inx As Integer
+    temp_inx = UBound(ul_currency_vol_)
+    
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = 1
+        initial_ubound = in_index
+    Else
+        initial_lbound = LBound(ul_currency_vol_)
+        initial_ubound = max(UBound(ul_currency_vol_), in_index)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve ul_currency_vol_(initial_lbound To initial_ubound) As Double
+    
+    ul_currency_vol_(in_index) = in_vol
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "set_ul_currency_vol"
+    
+End Sub
+
+
+Public Function get_futures_value(asset_code As String, Optional theo_price As Boolean = True) As Double
+
+    Dim rtn_value As Double
+    Dim futures_index As Integer
+    
+    futures_index = find_futures_index(asset_code, futures_quote_)
+    
+    If futures_index > 0 Then
+    
+        If theo_price Then
+            rtn_value = futures_quote_(futures_index).theo_price
+        Else
+            rtn_value = futures_quote_(futures_index).last_price
+        End If
+    
+    End If
+    
+    get_futures_value = rtn_value
+
+
+End Function
+
+Public Function get_futures_quotes() As clsQuote()
+
+    
+    
+On Error GoTo ErrorHandler
+
+    get_futures_quotes = futures_quote_
+
+    Exit Function
+    
+ErrorHandler:
+
+    raise_err "clsMarket.get_futures_quotes", Err.description
+
+End Function
+
+
+
+Public Sub set_futures_quotes(quotes() As clsQuote)
+    
+    
+    Dim no_of_quotes As Integer
+    Dim inx As Integer
+    
+On Error Resume Next
+
+    no_of_quotes = UBound(quotes)
+        
+    If Err.number = 9 Then
+        no_of_quotes = 0
+    End If
+    
+    For inx = 1 To no_of_quotes
+        
+        set_futures_quote quotes(inx)
+    
+    Next inx
+    
+    
+    
+
+End Sub
+Public Sub set_futures_quote(clsQuote As clsQuote)
+    
+    Dim futures_index As Integer
+    
+    futures_index = find_futures_index(clsQuote.asset_code, futures_quote_)
+    
+    If futures_index > 0 Then
+        Set futures_quote_(futures_index) = clsQuote.copy_obj()
+        
+    Else
+        push_back_clsquote futures_quote_, clsQuote.copy_obj()
+    End If
+
+End Sub
+
+
+Private Function find_futures_index(ByVal asset_code As String, find_from() As clsQuote) As Integer
+
+    Dim rtn_value As Integer
+    Dim inx As Integer
+    
+On Error GoTo ErrorHandler
+
+    rtn_value = -1
+    
+    For inx = 1 To get_array_size_clsQuote(find_from)
+    
+        If find_from(inx).asset_code = asset_code Then
+            
+            rtn_value = inx
+            Exit For
+        
+        End If
+    
+    Next inx
+    
+    find_futures_index = rtn_value
+
+    Exit Function
+    
+ErrorHandler:
+
+    raise_err "clsMarket.find_futures_index", Err.description
+
+End Function
+
+
+Public Sub set_market(rate_curve As clsRateCurve, s As Double, div_schedule As clsDividendSchedule, heston_param As clsHestonParameter, Optional div_yield As Double = 0, Optional prev_s As Double)
+
+    On Error GoTo ErrorHandler
+    
+    Set rate_curve_ = rate_curve
+    
+    s_ = s
+    prev_s_ = prev_s
+    
+    Set div_schedule_ = div_schedule
+    
+    Set heston_parameters_ = heston_param
+    
+    div_yield_ = div_yield
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "clsMarket.set_market"
+
+End Sub
+
+
+Public Function get_drift_adjust(tdate As Date) As Double
+
+    Dim ref_date As Date
+    ref_date = CDate(drift_adjust_.rate_dates()(0))
+    
+    get_drift_adjust = -Log(drift_adjust_.get_discount_factor(ref_date, tdate)) / (tdate - ref_date) * 365
+
+End Function

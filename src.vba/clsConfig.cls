@@ -1,1 +1,167 @@
-Option ExplicitnnPublic ip_address_ As StringnnPublic next_date_ As DatenPublic last_date_ As DatenPublic date_before_yesterday_ As DatenPublic two_days_before_yesterday_ As DatenPublic current_date_ As DatennPublic date_week_ago_ As DatenPublic date_month_ago_ As DatenPublic date_3_month_ago_ As DatenPublic date_6_month_ago_ As DatennPublic time_step_closing_ As IntegernPublic no_of_trials_closing_ As LongnPublic required_tolerance_closing_ As DoublennPublic time_step_ As IntegernPublic no_of_trials_ As LongnPublic required_tolerance_ As DoublennPublic grid_interval_ As DoublennPublic min_s_ As DoublenPublic max_s_ As DoublennPublic market_refresh_interval_ As LongnPublic auto_calculation_ As BooleannPublic intra_day_greek_ As StringnPublic neglect_barrier_smoothing_ As BooleannnPublic x_grid_ As IntegernPublic v_grid_ As IntegernPublic time_step_per_day As DoublenPublic fdm_scheme_ As IntegernnPublic vega_reference_maturity As DoublenPublic empirical_vega_weighting As DoublennPublic file_path_ As StringnnPublic sparse_grid_level As IntegernPublic sparse_grid_min As DoublenPublic sparse_grid_max As DoublennPublic dll_version_ As StringnnPublic no_of_strike_grid As IntegernPublic width_of_strike As DoublennPublic max_retrial_count_ As IntegernPublic snapshot_file_extension As StringnPublic position_file_extension As StringnPublic position_summary_file_extension As StringnPublic realtime_file_name As StringnnPublic adjust_strike_shift_percent As DoublennPublic batch_size As IntegernnPrivate term_vega_tenor_() As DatennnnPublic Sub set_term_vega_tenor(term_vega_tenor() As Date)nn    Dim inx As Integern    n    ReDim term_vega_tenor_(1 To get_array_size_date(term_vega_tenor))n    n    n    For inx = 1 To get_array_size_date(term_vega_tenor)n        term_vega_tenor_(inx) = term_vega_tenor(inx)n    Next inxnnEnd SubnnPublic Function term_vega_tenor(inx As Integer) As Datenn    term_vega_tenor = term_vega_tenor_(inx)n    nEnd FunctionnnPublic Function term_vega_tenor_array() As Date()nn    term_vega_tenor_array = term_vega_tenor_n    nEnd FunctionnnnnnnPublic Function copy_obj() As clsConfignn    Dim rtn_obj As clsConfign    n    Set rtn_obj = New clsConfignn    rtn_obj.ip_address_ = ip_address_n    n    rtn_obj.next_date_ = next_date_n    rtn_obj.last_date_ = last_date_n    rtn_obj.date_before_yesterday_ = date_before_yesterday_n    rtn_obj.two_days_before_yesterday_ = two_days_before_yesterday_n    rtn_obj.current_date_ = current_date_n    n    rtn_obj.date_week_ago_ = date_week_ago_n    rtn_obj.date_month_ago_ = date_month_ago_n    rtn_obj.date_3_month_ago_ = date_3_month_ago_n    rtn_obj.date_6_month_ago_ = date_6_month_ago_n    n    rtn_obj.time_step_closing_ = time_step_closing_n    rtn_obj.no_of_trials_closing_ = no_of_trials_closing_n    rtn_obj.required_tolerance_closing_ = required_tolerance_closing_n    n    rtn_obj.time_step_ = time_step_n    rtn_obj.no_of_trials_ = no_of_trials_n    rtn_obj.required_tolerance_ = required_tolerance_n    n    rtn_obj.grid_interval_ = grid_interval_n    n    rtn_obj.min_s_ = min_s_n    rtn_obj.max_s_ = max_s_n    n    rtn_obj.market_refresh_interval_ = market_refresh_interval_n    rtn_obj.auto_calculation_ = auto_calculation_n    rtn_obj.intra_day_greek_ = intra_day_greek_n    rtn_obj.neglect_barrier_smoothing_ = neglect_barrier_smoothing_n    n    rtn_obj.x_grid_ = x_grid_n    rtn_obj.v_grid_ = v_grid_n    rtn_obj.time_step_per_day = time_step_per_dayn    rtn_obj.fdm_scheme_ = fdm_scheme_n    n    rtn_obj.vega_reference_maturity = vega_reference_maturityn    rtn_obj.empirical_vega_weighting = empirical_vega_weightingn    n    rtn_obj.file_path_ = file_path_n    n    rtn_obj.sparse_grid_level = sparse_grid_leveln    rtn_obj.sparse_grid_min = sparse_grid_minn    rtn_obj.sparse_grid_max = sparse_grid_maxn    n    rtn_obj.dll_version_ = dll_version_n    n    rtn_obj.no_of_strike_grid = no_of_strike_gridn    rtn_obj.width_of_strike = width_of_striken    n    rtn_obj.max_retrial_count_ = max_retrial_count_n    rtn_obj.snapshot_file_extension = snapshot_file_extensionn    rtn_obj.position_file_extension = position_file_extensionn    rtn_obj.position_summary_file_extension = position_summary_file_extensionn    rtn_obj.realtime_file_name = realtime_file_namen    n    rtn_obj.adjust_strike_shift_percent = adjust_strike_shift_percentn    n    n    rtn_obj.set_term_vega_tenor term_vega_tenor_n    n    rtn_obj.batch_size = batch_sizenn    Set copy_obj = rtn_objnnEnd Functionnn
+Option Explicit
+
+Public ip_address_ As String
+
+Public next_date_ As Date
+Public last_date_ As Date
+Public date_before_yesterday_ As Date
+Public two_days_before_yesterday_ As Date
+Public current_date_ As Date
+
+Public date_week_ago_ As Date
+Public date_month_ago_ As Date
+Public date_3_month_ago_ As Date
+Public date_6_month_ago_ As Date
+
+Public time_step_closing_ As Integer
+Public no_of_trials_closing_ As Long
+Public required_tolerance_closing_ As Double
+
+Public time_step_ As Integer
+Public no_of_trials_ As Long
+Public required_tolerance_ As Double
+
+Public grid_interval_ As Double
+
+Public min_s_ As Double
+Public max_s_ As Double
+
+Public market_refresh_interval_ As Long
+Public auto_calculation_ As Boolean
+Public intra_day_greek_ As String
+Public neglect_barrier_smoothing_ As Boolean
+
+Public x_grid_ As Integer
+Public v_grid_ As Integer
+Public time_step_per_day As Double
+Public fdm_scheme_ As Integer
+
+Public vega_reference_maturity As Double
+Public empirical_vega_weighting As Double
+
+Public file_path_ As String
+
+Public sparse_grid_level As Integer
+Public sparse_grid_min As Double
+Public sparse_grid_max As Double
+
+Public dll_version_ As String
+
+Public no_of_strike_grid As Integer
+Public width_of_strike As Double
+
+Public max_retrial_count_ As Integer
+Public snapshot_file_extension As String
+Public position_file_extension As String
+Public position_summary_file_extension As String
+Public realtime_file_name As String
+
+Public adjust_strike_shift_percent As Double
+
+Public batch_size As Integer
+
+Private term_vega_tenor_() As Date
+
+
+
+Public Sub set_term_vega_tenor(term_vega_tenor() As Date)
+
+    Dim inx As Integer
+    
+    ReDim term_vega_tenor_(1 To get_array_size_date(term_vega_tenor))
+    
+    
+    For inx = 1 To get_array_size_date(term_vega_tenor)
+        term_vega_tenor_(inx) = term_vega_tenor(inx)
+    Next inx
+
+End Sub
+
+Public Function term_vega_tenor(inx As Integer) As Date
+
+    term_vega_tenor = term_vega_tenor_(inx)
+    
+End Function
+
+Public Function term_vega_tenor_array() As Date()
+
+    term_vega_tenor_array = term_vega_tenor_
+    
+End Function
+
+
+
+
+
+Public Function copy_obj() As clsConfig
+
+    Dim rtn_obj As clsConfig
+    
+    Set rtn_obj = New clsConfig
+
+    rtn_obj.ip_address_ = ip_address_
+    
+    rtn_obj.next_date_ = next_date_
+    rtn_obj.last_date_ = last_date_
+    rtn_obj.date_before_yesterday_ = date_before_yesterday_
+    rtn_obj.two_days_before_yesterday_ = two_days_before_yesterday_
+    rtn_obj.current_date_ = current_date_
+    
+    rtn_obj.date_week_ago_ = date_week_ago_
+    rtn_obj.date_month_ago_ = date_month_ago_
+    rtn_obj.date_3_month_ago_ = date_3_month_ago_
+    rtn_obj.date_6_month_ago_ = date_6_month_ago_
+    
+    rtn_obj.time_step_closing_ = time_step_closing_
+    rtn_obj.no_of_trials_closing_ = no_of_trials_closing_
+    rtn_obj.required_tolerance_closing_ = required_tolerance_closing_
+    
+    rtn_obj.time_step_ = time_step_
+    rtn_obj.no_of_trials_ = no_of_trials_
+    rtn_obj.required_tolerance_ = required_tolerance_
+    
+    rtn_obj.grid_interval_ = grid_interval_
+    
+    rtn_obj.min_s_ = min_s_
+    rtn_obj.max_s_ = max_s_
+    
+    rtn_obj.market_refresh_interval_ = market_refresh_interval_
+    rtn_obj.auto_calculation_ = auto_calculation_
+    rtn_obj.intra_day_greek_ = intra_day_greek_
+    rtn_obj.neglect_barrier_smoothing_ = neglect_barrier_smoothing_
+    
+    rtn_obj.x_grid_ = x_grid_
+    rtn_obj.v_grid_ = v_grid_
+    rtn_obj.time_step_per_day = time_step_per_day
+    rtn_obj.fdm_scheme_ = fdm_scheme_
+    
+    rtn_obj.vega_reference_maturity = vega_reference_maturity
+    rtn_obj.empirical_vega_weighting = empirical_vega_weighting
+    
+    rtn_obj.file_path_ = file_path_
+    
+    rtn_obj.sparse_grid_level = sparse_grid_level
+    rtn_obj.sparse_grid_min = sparse_grid_min
+    rtn_obj.sparse_grid_max = sparse_grid_max
+    
+    rtn_obj.dll_version_ = dll_version_
+    
+    rtn_obj.no_of_strike_grid = no_of_strike_grid
+    rtn_obj.width_of_strike = width_of_strike
+    
+    rtn_obj.max_retrial_count_ = max_retrial_count_
+    rtn_obj.snapshot_file_extension = snapshot_file_extension
+    rtn_obj.position_file_extension = position_file_extension
+    rtn_obj.position_summary_file_extension = position_summary_file_extension
+    rtn_obj.realtime_file_name = realtime_file_name
+    
+    rtn_obj.adjust_strike_shift_percent = adjust_strike_shift_percent
+    
+    
+    rtn_obj.set_term_vega_tenor term_vega_tenor_
+    
+    rtn_obj.batch_size = batch_size
+
+    Set copy_obj = rtn_obj
+
+End Function

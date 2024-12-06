@@ -1,1 +1,1021 @@
-'Minpack Copyright Notice (1999) University of Chicago.  All rights reservedn'n'Redistribution and use in source and binary forms, with orn'without modification, are permitted provided that then'following conditions are met:n'n'1. Redistributions of source code must retain the aboven'copyright notice, this list of conditions and the followingn'disclaimer.n'n'2. Redistributions in binary form must reproduce the aboven'copyright notice, this list of conditions and the followingn'disclaimer in the documentation and/or other materialsn'provided with the distribution.n'n'3. The end-user documentation included with then'redistribution, if any, must include the followingn'acknowledgment:n'n'   "This product includes software developed by then'   University of Chicago, as Operator of Argonne Nationaln'   Laboratory.n'n'Alternately, this acknowledgment may appear in the softwaren'itself, if and wherever such third-party acknowledgmentsn'normally appear.n'n'4. WARRANTY DISCLAIMER. THE SOFTWARE IS SUPPLIED "AS IS"n'WITHOUT WARRANTY OF ANY KIND. THE COPYRIGHT HOLDER, THEn'UNITED STATES, THE UNITED STATES DEPARTMENT OF ENERGY, ANDn'THEIR EMPLOYEES: (1) DISCLAIM ANY WARRANTIES, EXPRESS ORn'IMPLIED, INCLUDING BUT NOT LIMITED TO ANY IMPLIED WARRANTIESn'OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLEn'OR NON-INFRINGEMENT, (2) DO NOT ASSUME ANY LEGAL LIABILITYn'OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, ORn'USEFULNESS OF THE SOFTWARE, (3) DO NOT REPRESENT THAT USE OFn'THE SOFTWARE WOULD NOT INFRINGE PRIVATELY OWNED RIGHTS, (4)n'DO NOT WARRANT THAT THE SOFTWARE WILL FUNCTIONn'UNINTERRUPTED, THAT IT IS ERROR-FREE OR THAT ANY ERRORS WILLn'BE CORRECTED.n'n'5. LIMITATION OF LIABILITY. IN NO EVENT WILL THE COPYRIGHTn'HOLDER, THE UNITED STATES, THE UNITED STATES DEPARTMENT OFn'ENERGY, OR THEIR EMPLOYEES: BE LIABLE FOR ANY INDIRECT,n'INCIDENTAL, CONSEQUENTIAL, SPECIAL OR PUNITIVE DAMAGES OFn'ANY KIND OR NATURE, INCLUDING BUT NOT LIMITED TO LOSS OFn'PROFITS OR LOSS OF DATA, FOR ANY REASON WHATSOEVER, WHETHERn'SUCH LIABILITY IS ASSERTED ON THE BASIS OF CONTRACT, TORTn'(INCLUDING NEGLIGENCE OR STRICT LIABILITY), OR OTHERWISE,n'EVEN IF ANY OF SAID PARTIES HAS BEEN WARNED OF THEn'POSSIBILITY OF SUCH LOSS OR DAMAGES.nnnnOption ExplicitnPrivate FunctionName_ As StringnPrivate fvec_ As VariantnPrivate IndependentVariables_ As VariantnPrivate ObservedVariables_ As VariantnPrivate iflag_ As VariantnnPrivate Sub lmdif(fcn As String, m As Single, n As Single, x As Variant, fvec As Variant, _n      ftol As Double, xtol As Double, gtol As Double, maxfev As Single, epsfcn As Double, _n      diag As Variant, mode As Single, factor As Double, nprint As Single, _n      info As Variant, nfev As Variant, fjac As Variant, ldfjac As Single, _n      ipvt As Variant, qtf As Variant, wa1 As Variant, wa2 As Variant, _n      wa3 As Variant, wa4 As Variant)nDim i As SinglenDim iflag As SinglenDim ij As SinglenDim jj As SinglenDim iter As SinglenDim j As SinglenDim l As SinglenDim actred As DoublenDim delta As Doublendelta = 0nDim dirder As DoublenDim fnorm As DoublenDim fnorm1 As DoublenDim gnorm As DoublenDim par As DoublenDim pnorm As DoublenDim prered As DoublenDim Ratio As DoublenDim sum As DoublenDim temp As DoublenDim temp1 As DoublenDim temp2 As DoublenDim temp3 As DoublenDim xnorm As Doublenxnorm = 0nDim one As DoublenDim p1 As DoublenDim p5 As DoublenDim p25 As DoublenDim p75 As DoublenDim p0001 As DoublenDim zero As Doublenone = 1np1 = 0.1np5 = 0.5np25 = 0.25np75 = 0.75np0001 = 0.0001nzero = 0nDim epsmch As Doublen'     epsmch is the machine precision.nepsmch = 1E-16nn      info = 0n      iflag = 0n      nfev = 0nn'     check the input parameters for errors.n      If ((n <= 0) Or (m < n) Or (ldfjac < m) _n         Or (ftol < zero) Or (xtol < zero) Or (gtol < zero) _n         Or (maxfev <= 0) Or (factor <= zero)) Then GoTo L300n      If (mode <> 2) Then GoTo L20n      For j = 1 To nn         If (diag(j) <= zero) Then GoTo L300n      Next jn      nL20:n'     evaluate the function at the starting pointn'     and calculate its norm.n      iflag = 1n      LevenbergCostFunction m, n, x, fvec, iflagn      nfev = 1n      If (iflag < 0) Then GoTo L300n      fnorm = myenorm(m, fvec)nn'     initialize levenberg-marquardt parameter and iteration counter.nn      par = zeron      iter = 1nn'     beginning of the outer loop.n'nL30:nn'        calculate the jacobian matrix.nn         iflag = 2n         fdjac2 m, n, x, fvec, fjac, ldfjac, iflag, epsfcn, wa4n         nfev = nfev + nn         If (iflag < 0) Then GoTo L300nn'        if requested, call fcn to enable printing of iterates.nn         If (nprint <= 0) Then GoTo L40n         iflag = 0n         If (mymod(iter - 1, nprint) = 0) Then LevenbergCostFunction m, n, x, fvec, iflagn         If (iflag < 0) Then GoTo L300nL40:n'n'        compute the qr factorization of the jacobian.n'n         qrfac m, n, fjac, ldfjac, True, ipvt, n, wa1, wa2, wa3n'n'        on the first iteration and if mode is 1, scale accordingn'        to the norms of the columns of the initial jacobian.n'n         If (iter <> 1) Then GoTo L80n         If (mode = 2) Then GoTo L60n         For j = 1 To nn            diag(j) = wa2(j)n            If (wa2(j) = zero) Then diag(j) = onen         Next jnL60:n'n'        on the first iteration, calculate the norm of the scaled xn'        and initialize the step bound delta.n'n         For j = 1 To nn            wa3(j) = diag(j) * x(j)n         Next jn         xnorm = myenorm(n, wa3)n         delta = factor * xnormn         If (delta = zero) Then delta = factornnL80:n'n'        form (q transpose)*fvec and store the first n components inn'        qtf.n'n         For i = 1 To mn            wa4(i) = fvec(i)n         Next in         For j = 1 To nn            If (fjac(j, j) = zero) Then GoTo L120n            sum = zeron            For i = j To mn               sum = sum + fjac(i, j) * wa4(i)n            Next in            temp = -sum / fjac(j, j)n            For i = j To mn               wa4(i) = wa4(i) + fjac(i, j) * tempn            Next inL120:n            fjac(j, j) = wa1(j)n            qtf(j) = wa4(j)n         Next jn'n'        compute the norm of the scaled gradient.n'n         gnorm = zeron         If (fnorm = zero) Then GoTo L170n         For j = 1 To nn            l = ipvt(j)n            If (wa2(l) = zero) Then GoTo L150n            sum = zeron            For i = 1 To jn               sum = sum + fjac(i, j) * (qtf(i) / fnorm)n            Next in            gnorm = dmax1(gnorm, dabs(sum / wa2(l)))nL150:n         Next jnL170:n'n'        test for convergence of the gradient norm.n'n         If (gnorm <= gtol) Then info = 4n         If (info <> 0) Then GoTo L300n'n'        rescale if necessary.n'n         If (mode = 2) Then GoTo L190n         For j = 1 To nn            diag(j) = dmax1(CDbl(diag(j)), CDbl(wa2(j)))n         Next jnL190:n'n'        beginning of the inner loop.n'nL200:n'n'           determine the levenberg-marquardt parameter.n'n            lmpar n, fjac, ldfjac, ipvt, diag, qtf, delta, par, wa1, wa2, wa3, wa4n'n'           store the direction p and x + p. calculate the norm of p.n'n            For j = 1 To nn               wa1(j) = -wa1(j)n               wa2(j) = x(j) + wa1(j)n               wa3(j) = diag(j) * wa1(j)n            Next jn            pnorm = myenorm(n, wa3)n'n'           on the first iteration, adjust the initial step bound.n'n            If (iter = 1) Then delta = dmin1(delta, pnorm)n'n'           evaluate the function at x + p and calculate its norm.n'n            iflag = 1n            LevenbergCostFunction m, n, wa2, wa4, iflagn            nfev = nfev + 1n            If (iflag < 0) Then GoTo L300n            fnorm1 = myenorm(m, wa4)n'n'           compute the scaled actual reduction.n'n            actred = -onen            If (p1 * fnorm1 < fnorm) Then actred = one - (fnorm1 / fnorm) * (fnorm1 / fnorm)n'n'           compute the scaled predicted reduction andn'           the scaled directional derivative.n'n            For j = 1 To nn               wa3(j) = zeron               l = ipvt(j)n               temp = wa1(l)n               For i = 1 To jn                  wa3(i) = wa3(i) + fjac(i, j) * tempn               Next in            Next jn            temp1 = myenorm(n, wa3) / fnormn            temp2 = (dsqrt(par) * pnorm) / fnormn            prered = temp1 * temp1 + (temp2 * temp2) / p5n            dirder = dirder - (temp1 * temp1 + temp2 * temp2)n'n'           compute the ratio of the actual to the predictedn'           reduction.n'n            Ratio = zeron            If (prered <> zero) Then Ratio = actred / preredn'n'           update the step bound.n'n            If (Ratio > p25) Then GoTo L240n               If (actred >= zero) Then temp = p5n               If (actred < zero) Then _n                 temp = p5 * dirder / (dirder + p5 * actred)n               If ((p1 * fnorm1 >= fnorm) Or (temp < p1)) Then temp = p1n               delta = temp * dmin1(delta, pnorm / p1)n               par = par / tempn               GoTo L260nL240:n               If ((par <> zero) And (Ratio < p75)) Then GoTo L250n               delta = pnorm / p5n               par = p5 * parnL250:nL260:n'n'           test for successful iteration.n'n            If (Ratio < p0001) Then GoTo L290n'n'           successful iteration. update x, fvec, and their norms.n'n            For j = 1 To nn               x(j) = wa2(j)n               wa2(j) = diag(j) * x(j)n            Next jn            For i = 1 To mn               fvec(i) = wa4(i)n            Next in            xnorm = myenorm(n, wa2)n            fnorm = fnorm1n            iter = iter + 1nL290:n'n'           tests for convergence.n'n            If ((dabs(actred) <= ftol) And (prered <= ftol) _n               And (p5 * Ratio <= one)) Then info = 1n            If (delta <= xtol * xnorm) Then info = 2n            If ((dabs(actred) <= ftol) And (prered <= ftol) _n               And (p5 * Ratio <= one) And (info = 2)) Then info = 3n            If (info <> 0) Then GoTo L300n'n'           tests for termination and stringent tolerances.n'n            If (nfev >= maxfev) Then info = 5n            If ((dabs(actred) <= epsmch) And (prered <= epsmch) _n               And (p5 * Ratio <= one)) Then info = 6n            If (delta <= epsmch * xnorm) Then info = 7n            If (gnorm <= epsmch) Then info = 8n            If (info <> 0) Then GoTo L300n'n'           end of the inner loop. repeat if iteration unsuccessful.n'n            If (Ratio < p0001) Then GoTo L200n'n'        end of the outer loop.n'n         GoTo L30nL300:n'n'     termination, either normal or user imposed.n'n      If (iflag < 0) Then info = iflagn      iflag = 0n      If (nprint > 0) Then LevenbergCostFunction m, n, x, fvec, iflagn      'Returnn'n'     last card of subroutine lmdif.n'n      nEnd SubnnPrivate Function dsqrt(x As Double) As Doublendsqrt = x ^ 0.5nEnd FunctionnPrivate Function dmax1(a As Double, b As Double)nIf a >= b Thenn  dmax1 = anElsen  dmax1 = bnEnd IfnEnd FunctionnPrivate Function dmin1(a As Double, b As Double)nIf a <= b Thenn  dmin1 = anElsen  dmin1 = bnEnd IfnEnd FunctionnnPrivate Function min1single(a As Single, b As Single)nIf a <= b Thenn  min1single = anElsen  min1single = bnEnd IfnEnd FunctionnnPrivate Function dabs(x As Double) As Doublendabs = Abs(x)nEnd FunctionnnPrivate Sub testenorm(x As Variant)nnEnd Subn Private Sub qrfac(m As Single, n As Single, ByRef a As Variant, lda As Single, _n   pivot As Boolean, ByRef ipvt As Variant, lipvt As Single, ByRef rdiag As Variant, _n    ByRef acnorm As Variant, ByRef wa As Variant)n    Dim i As Singlen    Dim j As Singlen    Dim k As Singlen    Dim jp1 As Singlen    Dim kmax As Singlen    Dim minmn As Singlen    Dim ajnorm As Doublen    Dim epsmch As Doublen    Dim one As Doublen    Dim p05 As Doublen    Dim sum As Doublen    Dim temp As Doublen    Dim zero As Doublen    Dim dpmpar As Doublen    Dim enorm As Doublen    one = 1n    p05 = 0.05n    zero = 0n    n    ReDim tmpaarr(1 To m) As Variantn    Dim tmpj As Singlen    n'n'     epsmch is the machine precision.n'n      epsmch = 1.2E-16n'n'     compute the initial column norms and initialize several arrays.n'n      For j = 1 To nn         For tmpj = 1 To mn           tmpaarr(tmpj) = a(tmpj, j)n         Next tmpjn         'acnorm(j) = enorm(m, a(1, j))n         n         'a3 = enorm(m, a2)n         'testenorm tmpaarrn         acnorm(j) = myenorm(m, tmpaarr)n         rdiag(j) = acnorm(j)n         wa(j) = rdiag(j)n         If (pivot) Then ipvt(j) = jn      Next jn'n'     reduce a to r with householder transformations.n'n      minmn = min1single(m, n)n      For j = 1 To minmnn         If (Not pivot) Then GoTo L40n'n'        bring the column of largest norm into the pivot position.n'n         kmax = jn         For k = j To nn            If (rdiag(k) > rdiag(kmax)) Then kmax = kn         Next kn         If (kmax = j) Then GoTo L40n         For i = 1 To mn            temp = a(i, j)n            a(i, j) = a(i, kmax)n            a(i, kmax) = tempn         Next in         rdiag(kmax) = rdiag(j)n         wa(kmax) = wa(j)n         k = ipvt(j)n         ipvt(j) = ipvt(kmax)n         ipvt(kmax) = knL40:n'n'        compute the householder transformation to reduce then'        j-th column of a to a multiple of the j-th unit vector.n'n         ReDim tmpaarr(1 To m - j + 1) As Variantn         For tmpj = 1 To m - j + 1n           tmpaarr(tmpj) = a(tmpj + j - 1, j)n         Next tmpjn         'ajnorm = myenorm(m - j + 1, a(j, j))n         ajnorm = myenorm(m - j + 1, tmpaarr)n         If (ajnorm = zero) Then GoTo L100n         If (a(j, j) < zero) Then ajnorm = -ajnormn         For i = j To mn            a(i, j) = a(i, j) / ajnormn         Next in         a(j, j) = a(j, j) + onen'n'        apply the transformation to the remaining columnsn'        and update the norms.n'n         jp1 = j + 1n         If (n < jp1) Then GoTo L100n         For k = jp1 To nn            sum = zeron            For i = j To mn               sum = sum + a(i, j) * a(i, k)n            Next in            temp = sum / a(j, j)n            For i = j To mn               a(i, k) = a(i, k) - temp * a(i, j)n            Next in            If ((Not pivot) Or (rdiag(k) = zero)) Then GoTo L80n            temp = a(j, k) / rdiag(k)n            rdiag(k) = rdiag(k) * dsqrt(dmax1(zero, one - temp * temp))n            If (p05 * (rdiag(k) / wa(k)) ^ 2 > epsmch) Then GoTo L80n            rdiag(k) = myenorm(m - j, a(jp1, k))n            wa(k) = rdiag(k)nL80:n         Next knL100:n         rdiag(j) = -ajnormn      Next jn      'Returnn'n'     last card of subroutine qrfac.n'n End SubnPrivate Function mymod(x As Single, y As Single) As Singlenmymod = 1nEnd FunctionnnPrivate Function myenorm(n As Single, x As Variant) As Doublen      Dim i As Singlen      Dim agiant As Doublen      Dim floatn As Doublen      Dim one As Doublen      Dim rdwarf As Doublen      Dim rgiant As Doublen      Dim s1 As Doublen      Dim s2 As Doublen      Dim s3 As Doublen      Dim xabs As Doublen      Dim x1max As Doublen      Dim x3max As Doublen      Dim zero As Doublen      n      one = 1n      zero = 0n      rdwarf = 3.834E-20n      rgiant = 1.304E+19n      s1 = zeron      s2 = zeron      s3 = zeron      x1max = zeron      x3max = zeron      floatn = nn      agiant = rgiant / floatnn      For i = 1 To nn         xabs = dabs(CDbl(x(i)))n         If ((xabs > rdwarf) And (xabs < agiant)) Then GoTo L70n            If (xabs <= rdwarf) Then GoTo L30n'n'              sum for large components.n'n               If (xabs <= x1max) Then GoTo L10n                  s1 = one + s1 * (x1max / xabs) ^ 2n                  x1max = xabsn                  GoTo L20nL10:n                  s1 = s1 + (xabs / x1max) ^ 2nL20:n               GoTo L60nL30:n'n'              sum for small components.n'n               If (xabs <= x3max) Then GoTo L40n                  s3 = one + s3 * (x3max / xabs) ^ 2n                  x3max = xabsn                  GoTo L50nL40:n                  If (xabs <> zero) Then s3 = s3 + (xabs / x3max) ^ 2nL50:nL60:n            GoTo L80nL70:n'n'           sum for intermediate components.n'n            s2 = s2 + xabs ^ 2nL80:n      Next in'n'     calculation of norm.n'n      If (s1 = zero) Then GoTo L100n         myenorm = x1max * dsqrt(s1 + (s2 / x1max) / x1max)n         GoTo L130nL100:n         If (s2 = zero) Then GoTo L110n            If (s2 >= x3max) Then _n              myenorm = dsqrt(s2 * (one + (x3max / s2) * (x3max * s3)))n            If (s2 < x3max) Then _n              myenorm = dsqrt(x3max * ((s2 / x3max) + (x3max * s3)))n            GoTo L120nL110:n            myenorm = x3max * dsqrt(s3)nL120:nL130:n'n'     last card of function enorm.n'nEnd FunctionnnPrivate Sub lmpar(n As Single, ByRef r As Variant, ldr As Single, ipvt As Variant, _n  diag As Variant, qtb As Variant, delta As Double, ByRef par As Double, _n  ByRef x As Variant, ByRef sdiag As Variant, ByRef wa1 As Variant, ByRef wa2 As Variant)n      Dim i As Singlen      Dim iter As Singlen      Dim j As Singlen      Dim jm1 As Singlen      Dim jp1 As Singlen      Dim k As Singlen      Dim l As Singlen      Dim nsing As Singlen      Dim dxnorm As Doublen      Dim dwarf As Doublen      Dim fp As Doublen      Dim gnorm As Doublen      Dim parc As Doublen      Dim parl As Doublen      Dim paru As Doublen      Dim p1 As Doublen      Dim p001 As Doublen      Dim sum As Doublen      Dim temp As Doublen      Dim zero As Doublen      Dim dmppar As Doublen      Dim enorm As Doublen      p1 = 0.1n      p001 = 0.001n      zero = 0n'n'     dwarf is the smallest positive magnitude.n'n      dwarf = 1E-38n'n'     compute and store in x the gauss-newton direction. if then'     jacobian is rank-deficient, obtain a least squares solution.n'n      nsing = nn      For j = 1 To nn         wa1(j) = qtb(j)n         If ((r(j, j) = zero) And (nsing = n)) Then nsing = j - 1n         If (nsing < n) Then wa1(j) = zeron      Next jn      If (nsing < 1) Then GoTo L50n      For k = 1 To nsingn         j = nsing - k + 1n         wa1(j) = wa1(j) / r(j, j)n         temp = wa1(j)n         jm1 = j - 1n         If (jm1 < 1) Then GoTo L30n         For i = 1 To jm1n            wa1(i) = wa1(i) - r(i, j) * tempn         Next inL30:n      Next knL50:n      For j = 1 To nn         l = ipvt(j)n         x(l) = wa1(j)n      Next jn'n'     initialize the iteration counter.n'     evaluate the function at the origin, and testn'     for acceptance of the gauss-newton direction.n'n      iter = 0n      For j = 1 To nn         wa2(j) = diag(j) * x(j)n      Next jn      dxnorm = myenorm(n, wa2)n      fp = dxnorm - deltan      If (fp <= p1 * delta) Then GoTo L220n'n'     if the jacobian is not rank deficient, the newtonn'     step provides a lower bound, parl, for the zero ofn'     the function. otherwise set this bound to zero.n'n      parl = zeron      If (nsing < n) Then GoTo L120n      For j = 1 To nn         l = ipvt(j)n         wa1(j) = diag(l) * (wa2(l) / dxnorm)n      Next jn      For j = 1 To nn         sum = zeron         jm1 = j - 1n         If (jm1 < 1) Then GoTo L100n         For i = 1 To jm1n            sum = sum + r(i, j) * wa1(i)n         Next inL100:n         wa1(j) = (wa1(j) - sum) / r(j, j)n      Next jn      temp = myenorm(n, wa1)n      parl = ((fp / delta) / temp) / tempnL120:n'n'     calculate an upper bound, paru, for the zero of the function.n'n      For j = 1 To nn         sum = zeron         For i = 1 To jn            sum = sum + r(i, j) * qtb(i)n         Next in         l = ipvt(j)n         wa1(j) = sum / diag(l)n      Next jn      gnorm = myenorm(n, wa1)n      paru = gnorm / deltan      If (paru = zero) Then paru = dwarf / dmin1(delta, p1)n'n'     if the input par lies outside of the interval (parl,paru),n'     set par to the closer endpoint.n'n      par = dmax1(par, parl)n      par = dmin1(par, paru)n      If (par = zero) Then par = gnorm / dxnormn'n'     beginning of an iteration.n'nL150:n         iter = iter + 1n'n'        evaluate the function at the current value of par.n'n         If (par = zero) Then par = dmax1(dwarf, p001 * paru)n         temp = dsqrt(par)n         For j = 1 To nn            wa1(j) = temp * diag(j)n         Next jn         qrsolv n, r, ldr, ipvt, wa1, qtb, x, sdiag, wa2n         For j = 1 To nn            wa2(j) = diag(j) * x(j)n         Next jn         dxnorm = myenorm(n, wa2)n         temp = fpn         fp = dxnorm - deltan'n'        if the function is small enough, accept the current valuen'        of par. also test for the exceptional cases where parln'        is zero or the number of iterations has reached 10.n'n         If ((dabs(fp) <= p1 * delta) _n            Or ((parl = zero) And (fp <= temp) And (temp < zero)) _n            Or (iter = 10)) Then GoTo L220n'n'        compute the newton correction.n'n         For j = 1 To nn            l = ipvt(j)n            wa1(j) = diag(l) * (wa2(l) / dxnorm)n         Next jn         For j = 1 To nn            wa1(j) = wa1(j) / sdiag(j)n            temp = wa1(j)n            jp1 = j + 1n            If (n < jp1) Then GoTo L200n            For i = jp1 To nn               wa1(i) = wa1(i) - r(i, j) * tempn            Next inL200:n         Next jn         temp = myenorm(n, wa1)n         parc = ((fp / delta) / temp) / tempn'n'        depending on the sign of the function, update parl or paru.n'n         If (fp > zero) Then parl = dmax1(parl, par)n         If (fp < zero) Then paru = dmin1(paru, par)n'n'        compute an improved estimate for par.n'n         par = dmax1(parl, par + parc)n'n'        end of an iteration.n'n         GoTo L150nL220:n'n'     termination.n'n      If (iter = 0) Then par = zeron'n'     last card of subroutine lmpar.n'nEnd Subn  nPrivate Sub qrsolv(n As Single, ByRef r As Variant, ldr As Single, ByRef ipvt As Variant, _nByRef diag As Variant, ByRef qtb As Variant, ByRef x As Variant, ByRef sdiag As Variant, ByRef wa As Variant)n      Dim i As Singlen      Dim j As Singlen      Dim jp1 As Singlen      Dim k As Singlen      Dim kp1 As Singlen      Dim l As Singlen      Dim nsing As Singlen      Dim mycos As Doublen      Dim mycotan As Doublen      Dim p5 As Doublen      Dim p25 As Doublen      Dim qtbpj As Doublen      Dim mysin As Doublen      Dim sum As Doublen      Dim mytan As Doublen      Dim temp As Doublen      Dim zero As Doublen      p5 = 0.5n      p25 = 0.25n      zero = 0nn'n'     copy r and (q transpose)*b to preserve input and initialize s.n'     in particular, save the diagonal elements of r in x.n'n      For j = 1 To nn         For i = j To nn            r(i, j) = r(j, i)n         Next in         x(j) = r(j, j)n         wa(j) = qtb(j)n      Next jn'n'     eliminate the diagonal matrix d using a givens rotation.n'n      For j = 1 To nn'n'        prepare the row of d to be eliminated, locating then'        diagonal element using p from the qr factorization.n'n         l = ipvt(j)n         If (diag(l) = zero) Then GoTo L90n         For k = j To nn            sdiag(k) = zeron         Next kn         sdiag(j) = diag(l)n'n'        the transformations to eliminate the row of dn'        modify only a single element of (q transpose)*bn'        beyond the first n, which is initially zero.n'n         qtbpj = zeron         For k = j To nn'n'           determine a givens rotation which eliminates then'           appropriate element in the current row of d.n'n            If (sdiag(k) = zero) Then GoTo L70n            If (dabs(CDbl(r(k, k))) >= dabs(CDbl(sdiag(k)))) Then GoTo L40n               mycotan = r(k, k) / sdiag(k)n               mysin = p5 / dsqrt(p25 + p25 * mycotan ^ 2)n               mycos = mysin * mycotann               GoTo L50nL40:n               mytan = sdiag(k) / r(k, k)n               mycos = p5 / dsqrt(p25 + p25 * mytan ^ 2)n               mysin = mycos * mytannL50:n'n'           compute the modified diagonal element of r andn'           the modified element of ((q transpose)*b,0).n'n            r(k, k) = mycos * r(k, k) + mysin * sdiag(k)n            temp = mycos * wa(k) + mysin * qtbpjn            qtbpj = -mysin * wa(k) + mycos * qtbpjn            wa(k) = tempn'n'           accumulate the tranformation in the row of s.n'n            kp1 = k + 1n            If (n < kp1) Then GoTo L70n            For i = kp1 To nn               temp = mycos * r(i, k) + mysin * sdiag(i)n               sdiag(i) = -mysin * r(i, k) + mycos * sdiag(i)n               r(i, k) = tempn            Next inL70:nL80:n          Next knL90:n'n'        store the diagonal element of s and restoren'        the corresponding diagonal element of r.n'n         sdiag(j) = r(j, j)n         r(j, j) = x(j)n      Next jn'n'     solve the triangular system for z. if the system isn'     singular, then obtain a least squares solution.n'n      nsing = nn      For j = 1 To nn         If (sdiag(j) = zero And nsing = n) Then nsing = j - 1n         If (nsing < n) Then wa(j) = zeron      Next jn      If (nsing < 1) Then GoTo L150n      For k = 1 To nsingn         j = nsing - k + 1n         sum = zeron         jp1 = j + 1n         If (nsing < jp1) Then GoTo L130n         For i = jp1 To nsingn            sum = sum + r(i, j) * wa(i)n         Next inL130:n         wa(j) = (wa(j) - sum) / sdiag(j)n      Next knL150:n'n'     permute the components of z back to components of x.n'n      For j = 1 To nn         l = ipvt(j)n         x(l) = wa(j)n      Next jn      n'n'     last card of subroutine qrsolv.n'n nnEnd SubnnPrivate Sub fdjac2(m As Single, n As Single, x As Variant, _n  fvec As Variant, ByRef fjac As Variant, ldfjac As Single, iflag As Single, _n  epsfcn As Double, wa As Variant)n  Dim i As Singlen  Dim j As Singlen  Dim eps As Doublen  Dim epsmch As Doublen  Dim h As Doublen  Dim temp As Doublen  Dim zero As Doublen  zero = 0n  n  '     epsmch is the machine precision.n  epsmch = 1E-16n'n      eps = dsqrt(dmax1(epsfcn, epsmch))n      For j = 1 To nn         temp = x(j)n         h = eps * dabs(temp)n         If (h = zero) Then h = epsn         x(j) = temp + hn         LevenbergCostFunction m, n, x, wa, iflagn         If (iflag = 0) Then GoTo L30n         x(j) = tempn         For i = 1 To mn            fjac(i, j) = (wa(i) - fvec(i)) / hn         Next in      Next jnL30:n'     last card of subroutine fdjac2.n  End SubnnPrivate Sub LevenbergCostFunction(m As Single, n As Single, x As Variant, _n              ByRef fvec As Variant, ByRef iflag As Single)n  fvec = Application.run(FunctionName_, x, IndependentVariables_)n  Dim i As Singlen  For i = 1 To mn    fvec(i) = fvec(i) - ObservedVariables_(i)n  Next inEnd SubnnPublic Function CalibrateParameters(FunctionName As String, xvec As Variant, yvec As Variant, params As Variant) As Variantn  FunctionName_ = FunctionNamen  Dim m As Singlen  Dim n As Singlen  m = UBound(xvec)n  n = UBound(params)n  'm = 10n  'n = 3n  IndependentVariables_ = xvecn  ObservedVariables_ = yvecn  Dim x As Variantn  x = paramsn  'ReDim x(1 To n)n  'x(1) = 0.1n  'x(2) = 0.1n  'x(3) = 0.1n  n  n  ReDim fvec(1 To m)n  Dim ftol As Doublen  ftol = 0.00000001n  Dim xtol As Doublen  xtol = 0.00000001n  n  Dim gtol As Doublen  gtol = 0.00000001n  n  Dim maxfeval As Singlen  maxfeval = 400n  Dim epsfcn As Doublen  epsfcn = 0.00000001n  n  ReDim diag(1 To n)n  Dim mode As Singlen  mode = 1n  Dim factor As Doublen  factor = 1n  Dim nprint As Singlen  nprint = 0n  n  Dim info As Singlen  Dim nfeval As Singlen  Dim ldfjac As Singlen  ldfjac = mn  ReDim fjac(1 To ldfjac, 1 To n)n  ReDim ipvt(1 To n)n  ReDim qtf(1 To n)n  ReDim wa1(1 To n)n  ReDim wa2(1 To n)n  ReDim wa3(1 To n)n  ReDim wa4(1 To m)n  n  lmdif "MyFunction", m, n, x, fvec, ftol, xtol, gtol, maxfeval, epsfcn, diag, mode, factor, nprint, info, nfeval _n        , fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4n  n  CalibrateParameters = xnnEnd Function
+'Minpack Copyright Notice (1999) University of Chicago.  All rights reserved
+'
+'Redistribution and use in source and binary forms, with or
+'without modification, are permitted provided that the
+'following conditions are met:
+'
+'1. Redistributions of source code must retain the above
+'copyright notice, this list of conditions and the following
+'disclaimer.
+'
+'2. Redistributions in binary form must reproduce the above
+'copyright notice, this list of conditions and the following
+'disclaimer in the documentation and/or other materials
+'provided with the distribution.
+'
+'3. The end-user documentation included with the
+'redistribution, if any, must include the following
+'acknowledgment:
+'
+'   "This product includes software developed by the
+'   University of Chicago, as Operator of Argonne National
+'   Laboratory.
+'
+'Alternately, this acknowledgment may appear in the software
+'itself, if and wherever such third-party acknowledgments
+'normally appear.
+'
+'4. WARRANTY DISCLAIMER. THE SOFTWARE IS SUPPLIED "AS IS"
+'WITHOUT WARRANTY OF ANY KIND. THE COPYRIGHT HOLDER, THE
+'UNITED STATES, THE UNITED STATES DEPARTMENT OF ENERGY, AND
+'THEIR EMPLOYEES: (1) DISCLAIM ANY WARRANTIES, EXPRESS OR
+'IMPLIED, INCLUDING BUT NOT LIMITED TO ANY IMPLIED WARRANTIES
+'OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE
+'OR NON-INFRINGEMENT, (2) DO NOT ASSUME ANY LEGAL LIABILITY
+'OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR
+'USEFULNESS OF THE SOFTWARE, (3) DO NOT REPRESENT THAT USE OF
+'THE SOFTWARE WOULD NOT INFRINGE PRIVATELY OWNED RIGHTS, (4)
+'DO NOT WARRANT THAT THE SOFTWARE WILL FUNCTION
+'UNINTERRUPTED, THAT IT IS ERROR-FREE OR THAT ANY ERRORS WILL
+'BE CORRECTED.
+'
+'5. LIMITATION OF LIABILITY. IN NO EVENT WILL THE COPYRIGHT
+'HOLDER, THE UNITED STATES, THE UNITED STATES DEPARTMENT OF
+'ENERGY, OR THEIR EMPLOYEES: BE LIABLE FOR ANY INDIRECT,
+'INCIDENTAL, CONSEQUENTIAL, SPECIAL OR PUNITIVE DAMAGES OF
+'ANY KIND OR NATURE, INCLUDING BUT NOT LIMITED TO LOSS OF
+'PROFITS OR LOSS OF DATA, FOR ANY REASON WHATSOEVER, WHETHER
+'SUCH LIABILITY IS ASSERTED ON THE BASIS OF CONTRACT, TORT
+'(INCLUDING NEGLIGENCE OR STRICT LIABILITY), OR OTHERWISE,
+'EVEN IF ANY OF SAID PARTIES HAS BEEN WARNED OF THE
+'POSSIBILITY OF SUCH LOSS OR DAMAGES.
+
+
+
+Option Explicit
+Private FunctionName_ As String
+Private fvec_ As Variant
+Private IndependentVariables_ As Variant
+Private ObservedVariables_ As Variant
+Private iflag_ As Variant
+
+Private Sub lmdif(fcn As String, m As Single, n As Single, x As Variant, fvec As Variant, _
+      ftol As Double, xtol As Double, gtol As Double, maxfev As Single, epsfcn As Double, _
+      diag As Variant, mode As Single, factor As Double, nprint As Single, _
+      info As Variant, nfev As Variant, fjac As Variant, ldfjac As Single, _
+      ipvt As Variant, qtf As Variant, wa1 As Variant, wa2 As Variant, _
+      wa3 As Variant, wa4 As Variant)
+Dim i As Single
+Dim iflag As Single
+Dim ij As Single
+Dim jj As Single
+Dim iter As Single
+Dim j As Single
+Dim l As Single
+Dim actred As Double
+Dim delta As Double
+delta = 0
+Dim dirder As Double
+Dim fnorm As Double
+Dim fnorm1 As Double
+Dim gnorm As Double
+Dim par As Double
+Dim pnorm As Double
+Dim prered As Double
+Dim Ratio As Double
+Dim sum As Double
+Dim temp As Double
+Dim temp1 As Double
+Dim temp2 As Double
+Dim temp3 As Double
+Dim xnorm As Double
+xnorm = 0
+Dim one As Double
+Dim p1 As Double
+Dim p5 As Double
+Dim p25 As Double
+Dim p75 As Double
+Dim p0001 As Double
+Dim zero As Double
+one = 1
+p1 = 0.1
+p5 = 0.5
+p25 = 0.25
+p75 = 0.75
+p0001 = 0.0001
+zero = 0
+Dim epsmch As Double
+'     epsmch is the machine precision.
+epsmch = 1E-16
+
+      info = 0
+      iflag = 0
+      nfev = 0
+
+'     check the input parameters for errors.
+      If ((n <= 0) Or (m < n) Or (ldfjac < m) _
+         Or (ftol < zero) Or (xtol < zero) Or (gtol < zero) _
+         Or (maxfev <= 0) Or (factor <= zero)) Then GoTo L300
+      If (mode <> 2) Then GoTo L20
+      For j = 1 To n
+         If (diag(j) <= zero) Then GoTo L300
+      Next j
+      
+L20:
+'     evaluate the function at the starting point
+'     and calculate its norm.
+      iflag = 1
+      LevenbergCostFunction m, n, x, fvec, iflag
+      nfev = 1
+      If (iflag < 0) Then GoTo L300
+      fnorm = myenorm(m, fvec)
+
+'     initialize levenberg-marquardt parameter and iteration counter.
+
+      par = zero
+      iter = 1
+
+'     beginning of the outer loop.
+'
+L30:
+
+'        calculate the jacobian matrix.
+
+         iflag = 2
+         fdjac2 m, n, x, fvec, fjac, ldfjac, iflag, epsfcn, wa4
+         nfev = nfev + n
+         If (iflag < 0) Then GoTo L300
+
+'        if requested, call fcn to enable printing of iterates.
+
+         If (nprint <= 0) Then GoTo L40
+         iflag = 0
+         If (mymod(iter - 1, nprint) = 0) Then LevenbergCostFunction m, n, x, fvec, iflag
+         If (iflag < 0) Then GoTo L300
+L40:
+'
+'        compute the qr factorization of the jacobian.
+'
+         qrfac m, n, fjac, ldfjac, True, ipvt, n, wa1, wa2, wa3
+'
+'        on the first iteration and if mode is 1, scale according
+'        to the norms of the columns of the initial jacobian.
+'
+         If (iter <> 1) Then GoTo L80
+         If (mode = 2) Then GoTo L60
+         For j = 1 To n
+            diag(j) = wa2(j)
+            If (wa2(j) = zero) Then diag(j) = one
+         Next j
+L60:
+'
+'        on the first iteration, calculate the norm of the scaled x
+'        and initialize the step bound delta.
+'
+         For j = 1 To n
+            wa3(j) = diag(j) * x(j)
+         Next j
+         xnorm = myenorm(n, wa3)
+         delta = factor * xnorm
+         If (delta = zero) Then delta = factor
+
+L80:
+'
+'        form (q transpose)*fvec and store the first n components in
+'        qtf.
+'
+         For i = 1 To m
+            wa4(i) = fvec(i)
+         Next i
+         For j = 1 To n
+            If (fjac(j, j) = zero) Then GoTo L120
+            sum = zero
+            For i = j To m
+               sum = sum + fjac(i, j) * wa4(i)
+            Next i
+            temp = -sum / fjac(j, j)
+            For i = j To m
+               wa4(i) = wa4(i) + fjac(i, j) * temp
+            Next i
+L120:
+            fjac(j, j) = wa1(j)
+            qtf(j) = wa4(j)
+         Next j
+'
+'        compute the norm of the scaled gradient.
+'
+         gnorm = zero
+         If (fnorm = zero) Then GoTo L170
+         For j = 1 To n
+            l = ipvt(j)
+            If (wa2(l) = zero) Then GoTo L150
+            sum = zero
+            For i = 1 To j
+               sum = sum + fjac(i, j) * (qtf(i) / fnorm)
+            Next i
+            gnorm = dmax1(gnorm, dabs(sum / wa2(l)))
+L150:
+         Next j
+L170:
+'
+'        test for convergence of the gradient norm.
+'
+         If (gnorm <= gtol) Then info = 4
+         If (info <> 0) Then GoTo L300
+'
+'        rescale if necessary.
+'
+         If (mode = 2) Then GoTo L190
+         For j = 1 To n
+            diag(j) = dmax1(CDbl(diag(j)), CDbl(wa2(j)))
+         Next j
+L190:
+'
+'        beginning of the inner loop.
+'
+L200:
+'
+'           determine the levenberg-marquardt parameter.
+'
+            lmpar n, fjac, ldfjac, ipvt, diag, qtf, delta, par, wa1, wa2, wa3, wa4
+'
+'           store the direction p and x + p. calculate the norm of p.
+'
+            For j = 1 To n
+               wa1(j) = -wa1(j)
+               wa2(j) = x(j) + wa1(j)
+               wa3(j) = diag(j) * wa1(j)
+            Next j
+            pnorm = myenorm(n, wa3)
+'
+'           on the first iteration, adjust the initial step bound.
+'
+            If (iter = 1) Then delta = dmin1(delta, pnorm)
+'
+'           evaluate the function at x + p and calculate its norm.
+'
+            iflag = 1
+            LevenbergCostFunction m, n, wa2, wa4, iflag
+            nfev = nfev + 1
+            If (iflag < 0) Then GoTo L300
+            fnorm1 = myenorm(m, wa4)
+'
+'           compute the scaled actual reduction.
+'
+            actred = -one
+            If (p1 * fnorm1 < fnorm) Then actred = one - (fnorm1 / fnorm) * (fnorm1 / fnorm)
+'
+'           compute the scaled predicted reduction and
+'           the scaled directional derivative.
+'
+            For j = 1 To n
+               wa3(j) = zero
+               l = ipvt(j)
+               temp = wa1(l)
+               For i = 1 To j
+                  wa3(i) = wa3(i) + fjac(i, j) * temp
+               Next i
+            Next j
+            temp1 = myenorm(n, wa3) / fnorm
+            temp2 = (dsqrt(par) * pnorm) / fnorm
+            prered = temp1 * temp1 + (temp2 * temp2) / p5
+            dirder = dirder - (temp1 * temp1 + temp2 * temp2)
+'
+'           compute the ratio of the actual to the predicted
+'           reduction.
+'
+            Ratio = zero
+            If (prered <> zero) Then Ratio = actred / prered
+'
+'           update the step bound.
+'
+            If (Ratio > p25) Then GoTo L240
+               If (actred >= zero) Then temp = p5
+               If (actred < zero) Then _
+                 temp = p5 * dirder / (dirder + p5 * actred)
+               If ((p1 * fnorm1 >= fnorm) Or (temp < p1)) Then temp = p1
+               delta = temp * dmin1(delta, pnorm / p1)
+               par = par / temp
+               GoTo L260
+L240:
+               If ((par <> zero) And (Ratio < p75)) Then GoTo L250
+               delta = pnorm / p5
+               par = p5 * par
+L250:
+L260:
+'
+'           test for successful iteration.
+'
+            If (Ratio < p0001) Then GoTo L290
+'
+'           successful iteration. update x, fvec, and their norms.
+'
+            For j = 1 To n
+               x(j) = wa2(j)
+               wa2(j) = diag(j) * x(j)
+            Next j
+            For i = 1 To m
+               fvec(i) = wa4(i)
+            Next i
+            xnorm = myenorm(n, wa2)
+            fnorm = fnorm1
+            iter = iter + 1
+L290:
+'
+'           tests for convergence.
+'
+            If ((dabs(actred) <= ftol) And (prered <= ftol) _
+               And (p5 * Ratio <= one)) Then info = 1
+            If (delta <= xtol * xnorm) Then info = 2
+            If ((dabs(actred) <= ftol) And (prered <= ftol) _
+               And (p5 * Ratio <= one) And (info = 2)) Then info = 3
+            If (info <> 0) Then GoTo L300
+'
+'           tests for termination and stringent tolerances.
+'
+            If (nfev >= maxfev) Then info = 5
+            If ((dabs(actred) <= epsmch) And (prered <= epsmch) _
+               And (p5 * Ratio <= one)) Then info = 6
+            If (delta <= epsmch * xnorm) Then info = 7
+            If (gnorm <= epsmch) Then info = 8
+            If (info <> 0) Then GoTo L300
+'
+'           end of the inner loop. repeat if iteration unsuccessful.
+'
+            If (Ratio < p0001) Then GoTo L200
+'
+'        end of the outer loop.
+'
+         GoTo L30
+L300:
+'
+'     termination, either normal or user imposed.
+'
+      If (iflag < 0) Then info = iflag
+      iflag = 0
+      If (nprint > 0) Then LevenbergCostFunction m, n, x, fvec, iflag
+      'Return
+'
+'     last card of subroutine lmdif.
+'
+      
+End Sub
+
+Private Function dsqrt(x As Double) As Double
+dsqrt = x ^ 0.5
+End Function
+Private Function dmax1(a As Double, b As Double)
+If a >= b Then
+  dmax1 = a
+Else
+  dmax1 = b
+End If
+End Function
+Private Function dmin1(a As Double, b As Double)
+If a <= b Then
+  dmin1 = a
+Else
+  dmin1 = b
+End If
+End Function
+
+Private Function min1single(a As Single, b As Single)
+If a <= b Then
+  min1single = a
+Else
+  min1single = b
+End If
+End Function
+
+Private Function dabs(x As Double) As Double
+dabs = Abs(x)
+End Function
+
+Private Sub testenorm(x As Variant)
+
+End Sub
+ Private Sub qrfac(m As Single, n As Single, ByRef a As Variant, lda As Single, _
+   pivot As Boolean, ByRef ipvt As Variant, lipvt As Single, ByRef rdiag As Variant, _
+    ByRef acnorm As Variant, ByRef wa As Variant)
+    Dim i As Single
+    Dim j As Single
+    Dim k As Single
+    Dim jp1 As Single
+    Dim kmax As Single
+    Dim minmn As Single
+    Dim ajnorm As Double
+    Dim epsmch As Double
+    Dim one As Double
+    Dim p05 As Double
+    Dim sum As Double
+    Dim temp As Double
+    Dim zero As Double
+    Dim dpmpar As Double
+    Dim enorm As Double
+    one = 1
+    p05 = 0.05
+    zero = 0
+    
+    ReDim tmpaarr(1 To m) As Variant
+    Dim tmpj As Single
+    
+'
+'     epsmch is the machine precision.
+'
+      epsmch = 1.2E-16
+'
+'     compute the initial column norms and initialize several arrays.
+'
+      For j = 1 To n
+         For tmpj = 1 To m
+           tmpaarr(tmpj) = a(tmpj, j)
+         Next tmpj
+         'acnorm(j) = enorm(m, a(1, j))
+         
+         'a3 = enorm(m, a2)
+         'testenorm tmpaarr
+         acnorm(j) = myenorm(m, tmpaarr)
+         rdiag(j) = acnorm(j)
+         wa(j) = rdiag(j)
+         If (pivot) Then ipvt(j) = j
+      Next j
+'
+'     reduce a to r with householder transformations.
+'
+      minmn = min1single(m, n)
+      For j = 1 To minmn
+         If (Not pivot) Then GoTo L40
+'
+'        bring the column of largest norm into the pivot position.
+'
+         kmax = j
+         For k = j To n
+            If (rdiag(k) > rdiag(kmax)) Then kmax = k
+         Next k
+         If (kmax = j) Then GoTo L40
+         For i = 1 To m
+            temp = a(i, j)
+            a(i, j) = a(i, kmax)
+            a(i, kmax) = temp
+         Next i
+         rdiag(kmax) = rdiag(j)
+         wa(kmax) = wa(j)
+         k = ipvt(j)
+         ipvt(j) = ipvt(kmax)
+         ipvt(kmax) = k
+L40:
+'
+'        compute the householder transformation to reduce the
+'        j-th column of a to a multiple of the j-th unit vector.
+'
+         ReDim tmpaarr(1 To m - j + 1) As Variant
+         For tmpj = 1 To m - j + 1
+           tmpaarr(tmpj) = a(tmpj + j - 1, j)
+         Next tmpj
+         'ajnorm = myenorm(m - j + 1, a(j, j))
+         ajnorm = myenorm(m - j + 1, tmpaarr)
+         If (ajnorm = zero) Then GoTo L100
+         If (a(j, j) < zero) Then ajnorm = -ajnorm
+         For i = j To m
+            a(i, j) = a(i, j) / ajnorm
+         Next i
+         a(j, j) = a(j, j) + one
+'
+'        apply the transformation to the remaining columns
+'        and update the norms.
+'
+         jp1 = j + 1
+         If (n < jp1) Then GoTo L100
+         For k = jp1 To n
+            sum = zero
+            For i = j To m
+               sum = sum + a(i, j) * a(i, k)
+            Next i
+            temp = sum / a(j, j)
+            For i = j To m
+               a(i, k) = a(i, k) - temp * a(i, j)
+            Next i
+            If ((Not pivot) Or (rdiag(k) = zero)) Then GoTo L80
+            temp = a(j, k) / rdiag(k)
+            rdiag(k) = rdiag(k) * dsqrt(dmax1(zero, one - temp * temp))
+            If (p05 * (rdiag(k) / wa(k)) ^ 2 > epsmch) Then GoTo L80
+            rdiag(k) = myenorm(m - j, a(jp1, k))
+            wa(k) = rdiag(k)
+L80:
+         Next k
+L100:
+         rdiag(j) = -ajnorm
+      Next j
+      'Return
+'
+'     last card of subroutine qrfac.
+'
+ End Sub
+Private Function mymod(x As Single, y As Single) As Single
+mymod = 1
+End Function
+
+Private Function myenorm(n As Single, x As Variant) As Double
+      Dim i As Single
+      Dim agiant As Double
+      Dim floatn As Double
+      Dim one As Double
+      Dim rdwarf As Double
+      Dim rgiant As Double
+      Dim s1 As Double
+      Dim s2 As Double
+      Dim s3 As Double
+      Dim xabs As Double
+      Dim x1max As Double
+      Dim x3max As Double
+      Dim zero As Double
+      
+      one = 1
+      zero = 0
+      rdwarf = 3.834E-20
+      rgiant = 1.304E+19
+      s1 = zero
+      s2 = zero
+      s3 = zero
+      x1max = zero
+      x3max = zero
+      floatn = n
+      agiant = rgiant / floatn
+      For i = 1 To n
+         xabs = dabs(CDbl(x(i)))
+         If ((xabs > rdwarf) And (xabs < agiant)) Then GoTo L70
+            If (xabs <= rdwarf) Then GoTo L30
+'
+'              sum for large components.
+'
+               If (xabs <= x1max) Then GoTo L10
+                  s1 = one + s1 * (x1max / xabs) ^ 2
+                  x1max = xabs
+                  GoTo L20
+L10:
+                  s1 = s1 + (xabs / x1max) ^ 2
+L20:
+               GoTo L60
+L30:
+'
+'              sum for small components.
+'
+               If (xabs <= x3max) Then GoTo L40
+                  s3 = one + s3 * (x3max / xabs) ^ 2
+                  x3max = xabs
+                  GoTo L50
+L40:
+                  If (xabs <> zero) Then s3 = s3 + (xabs / x3max) ^ 2
+L50:
+L60:
+            GoTo L80
+L70:
+'
+'           sum for intermediate components.
+'
+            s2 = s2 + xabs ^ 2
+L80:
+      Next i
+'
+'     calculation of norm.
+'
+      If (s1 = zero) Then GoTo L100
+         myenorm = x1max * dsqrt(s1 + (s2 / x1max) / x1max)
+         GoTo L130
+L100:
+         If (s2 = zero) Then GoTo L110
+            If (s2 >= x3max) Then _
+              myenorm = dsqrt(s2 * (one + (x3max / s2) * (x3max * s3)))
+            If (s2 < x3max) Then _
+              myenorm = dsqrt(x3max * ((s2 / x3max) + (x3max * s3)))
+            GoTo L120
+L110:
+            myenorm = x3max * dsqrt(s3)
+L120:
+L130:
+'
+'     last card of function enorm.
+'
+End Function
+
+Private Sub lmpar(n As Single, ByRef r As Variant, ldr As Single, ipvt As Variant, _
+  diag As Variant, qtb As Variant, delta As Double, ByRef par As Double, _
+  ByRef x As Variant, ByRef sdiag As Variant, ByRef wa1 As Variant, ByRef wa2 As Variant)
+      Dim i As Single
+      Dim iter As Single
+      Dim j As Single
+      Dim jm1 As Single
+      Dim jp1 As Single
+      Dim k As Single
+      Dim l As Single
+      Dim nsing As Single
+      Dim dxnorm As Double
+      Dim dwarf As Double
+      Dim fp As Double
+      Dim gnorm As Double
+      Dim parc As Double
+      Dim parl As Double
+      Dim paru As Double
+      Dim p1 As Double
+      Dim p001 As Double
+      Dim sum As Double
+      Dim temp As Double
+      Dim zero As Double
+      Dim dmppar As Double
+      Dim enorm As Double
+      p1 = 0.1
+      p001 = 0.001
+      zero = 0
+'
+'     dwarf is the smallest positive magnitude.
+'
+      dwarf = 1E-38
+'
+'     compute and store in x the gauss-newton direction. if the
+'     jacobian is rank-deficient, obtain a least squares solution.
+'
+      nsing = n
+      For j = 1 To n
+         wa1(j) = qtb(j)
+         If ((r(j, j) = zero) And (nsing = n)) Then nsing = j - 1
+         If (nsing < n) Then wa1(j) = zero
+      Next j
+      If (nsing < 1) Then GoTo L50
+      For k = 1 To nsing
+         j = nsing - k + 1
+         wa1(j) = wa1(j) / r(j, j)
+         temp = wa1(j)
+         jm1 = j - 1
+         If (jm1 < 1) Then GoTo L30
+         For i = 1 To jm1
+            wa1(i) = wa1(i) - r(i, j) * temp
+         Next i
+L30:
+      Next k
+L50:
+      For j = 1 To n
+         l = ipvt(j)
+         x(l) = wa1(j)
+      Next j
+'
+'     initialize the iteration counter.
+'     evaluate the function at the origin, and test
+'     for acceptance of the gauss-newton direction.
+'
+      iter = 0
+      For j = 1 To n
+         wa2(j) = diag(j) * x(j)
+      Next j
+      dxnorm = myenorm(n, wa2)
+      fp = dxnorm - delta
+      If (fp <= p1 * delta) Then GoTo L220
+'
+'     if the jacobian is not rank deficient, the newton
+'     step provides a lower bound, parl, for the zero of
+'     the function. otherwise set this bound to zero.
+'
+      parl = zero
+      If (nsing < n) Then GoTo L120
+      For j = 1 To n
+         l = ipvt(j)
+         wa1(j) = diag(l) * (wa2(l) / dxnorm)
+      Next j
+      For j = 1 To n
+         sum = zero
+         jm1 = j - 1
+         If (jm1 < 1) Then GoTo L100
+         For i = 1 To jm1
+            sum = sum + r(i, j) * wa1(i)
+         Next i
+L100:
+         wa1(j) = (wa1(j) - sum) / r(j, j)
+      Next j
+      temp = myenorm(n, wa1)
+      parl = ((fp / delta) / temp) / temp
+L120:
+'
+'     calculate an upper bound, paru, for the zero of the function.
+'
+      For j = 1 To n
+         sum = zero
+         For i = 1 To j
+            sum = sum + r(i, j) * qtb(i)
+         Next i
+         l = ipvt(j)
+         wa1(j) = sum / diag(l)
+      Next j
+      gnorm = myenorm(n, wa1)
+      paru = gnorm / delta
+      If (paru = zero) Then paru = dwarf / dmin1(delta, p1)
+'
+'     if the input par lies outside of the interval (parl,paru),
+'     set par to the closer endpoint.
+'
+      par = dmax1(par, parl)
+      par = dmin1(par, paru)
+      If (par = zero) Then par = gnorm / dxnorm
+'
+'     beginning of an iteration.
+'
+L150:
+         iter = iter + 1
+'
+'        evaluate the function at the current value of par.
+'
+         If (par = zero) Then par = dmax1(dwarf, p001 * paru)
+         temp = dsqrt(par)
+         For j = 1 To n
+            wa1(j) = temp * diag(j)
+         Next j
+         qrsolv n, r, ldr, ipvt, wa1, qtb, x, sdiag, wa2
+         For j = 1 To n
+            wa2(j) = diag(j) * x(j)
+         Next j
+         dxnorm = myenorm(n, wa2)
+         temp = fp
+         fp = dxnorm - delta
+'
+'        if the function is small enough, accept the current value
+'        of par. also test for the exceptional cases where parl
+'        is zero or the number of iterations has reached 10.
+'
+         If ((dabs(fp) <= p1 * delta) _
+            Or ((parl = zero) And (fp <= temp) And (temp < zero)) _
+            Or (iter = 10)) Then GoTo L220
+'
+'        compute the newton correction.
+'
+         For j = 1 To n
+            l = ipvt(j)
+            wa1(j) = diag(l) * (wa2(l) / dxnorm)
+         Next j
+         For j = 1 To n
+            wa1(j) = wa1(j) / sdiag(j)
+            temp = wa1(j)
+            jp1 = j + 1
+            If (n < jp1) Then GoTo L200
+            For i = jp1 To n
+               wa1(i) = wa1(i) - r(i, j) * temp
+            Next i
+L200:
+         Next j
+         temp = myenorm(n, wa1)
+         parc = ((fp / delta) / temp) / temp
+'
+'        depending on the sign of the function, update parl or paru.
+'
+         If (fp > zero) Then parl = dmax1(parl, par)
+         If (fp < zero) Then paru = dmin1(paru, par)
+'
+'        compute an improved estimate for par.
+'
+         par = dmax1(parl, par + parc)
+'
+'        end of an iteration.
+'
+         GoTo L150
+L220:
+'
+'     termination.
+'
+      If (iter = 0) Then par = zero
+'
+'     last card of subroutine lmpar.
+'
+End Sub
+  
+Private Sub qrsolv(n As Single, ByRef r As Variant, ldr As Single, ByRef ipvt As Variant, _
+ByRef diag As Variant, ByRef qtb As Variant, ByRef x As Variant, ByRef sdiag As Variant, ByRef wa As Variant)
+      Dim i As Single
+      Dim j As Single
+      Dim jp1 As Single
+      Dim k As Single
+      Dim kp1 As Single
+      Dim l As Single
+      Dim nsing As Single
+      Dim mycos As Double
+      Dim mycotan As Double
+      Dim p5 As Double
+      Dim p25 As Double
+      Dim qtbpj As Double
+      Dim mysin As Double
+      Dim sum As Double
+      Dim mytan As Double
+      Dim temp As Double
+      Dim zero As Double
+      p5 = 0.5
+      p25 = 0.25
+      zero = 0
+
+'
+'     copy r and (q transpose)*b to preserve input and initialize s.
+'     in particular, save the diagonal elements of r in x.
+'
+      For j = 1 To n
+         For i = j To n
+            r(i, j) = r(j, i)
+         Next i
+         x(j) = r(j, j)
+         wa(j) = qtb(j)
+      Next j
+'
+'     eliminate the diagonal matrix d using a givens rotation.
+'
+      For j = 1 To n
+'
+'        prepare the row of d to be eliminated, locating the
+'        diagonal element using p from the qr factorization.
+'
+         l = ipvt(j)
+         If (diag(l) = zero) Then GoTo L90
+         For k = j To n
+            sdiag(k) = zero
+         Next k
+         sdiag(j) = diag(l)
+'
+'        the transformations to eliminate the row of d
+'        modify only a single element of (q transpose)*b
+'        beyond the first n, which is initially zero.
+'
+         qtbpj = zero
+         For k = j To n
+'
+'           determine a givens rotation which eliminates the
+'           appropriate element in the current row of d.
+'
+            If (sdiag(k) = zero) Then GoTo L70
+            If (dabs(CDbl(r(k, k))) >= dabs(CDbl(sdiag(k)))) Then GoTo L40
+               mycotan = r(k, k) / sdiag(k)
+               mysin = p5 / dsqrt(p25 + p25 * mycotan ^ 2)
+               mycos = mysin * mycotan
+               GoTo L50
+L40:
+               mytan = sdiag(k) / r(k, k)
+               mycos = p5 / dsqrt(p25 + p25 * mytan ^ 2)
+               mysin = mycos * mytan
+L50:
+'
+'           compute the modified diagonal element of r and
+'           the modified element of ((q transpose)*b,0).
+'
+            r(k, k) = mycos * r(k, k) + mysin * sdiag(k)
+            temp = mycos * wa(k) + mysin * qtbpj
+            qtbpj = -mysin * wa(k) + mycos * qtbpj
+            wa(k) = temp
+'
+'           accumulate the tranformation in the row of s.
+'
+            kp1 = k + 1
+            If (n < kp1) Then GoTo L70
+            For i = kp1 To n
+               temp = mycos * r(i, k) + mysin * sdiag(i)
+               sdiag(i) = -mysin * r(i, k) + mycos * sdiag(i)
+               r(i, k) = temp
+            Next i
+L70:
+L80:
+          Next k
+L90:
+'
+'        store the diagonal element of s and restore
+'        the corresponding diagonal element of r.
+'
+         sdiag(j) = r(j, j)
+         r(j, j) = x(j)
+      Next j
+'
+'     solve the triangular system for z. if the system is
+'     singular, then obtain a least squares solution.
+'
+      nsing = n
+      For j = 1 To n
+         If (sdiag(j) = zero And nsing = n) Then nsing = j - 1
+         If (nsing < n) Then wa(j) = zero
+      Next j
+      If (nsing < 1) Then GoTo L150
+      For k = 1 To nsing
+         j = nsing - k + 1
+         sum = zero
+         jp1 = j + 1
+         If (nsing < jp1) Then GoTo L130
+         For i = jp1 To nsing
+            sum = sum + r(i, j) * wa(i)
+         Next i
+L130:
+         wa(j) = (wa(j) - sum) / sdiag(j)
+      Next k
+L150:
+'
+'     permute the components of z back to components of x.
+'
+      For j = 1 To n
+         l = ipvt(j)
+         x(l) = wa(j)
+      Next j
+      
+'
+'     last card of subroutine qrsolv.
+'
+ 
+
+End Sub
+
+Private Sub fdjac2(m As Single, n As Single, x As Variant, _
+  fvec As Variant, ByRef fjac As Variant, ldfjac As Single, iflag As Single, _
+  epsfcn As Double, wa As Variant)
+  Dim i As Single
+  Dim j As Single
+  Dim eps As Double
+  Dim epsmch As Double
+  Dim h As Double
+  Dim temp As Double
+  Dim zero As Double
+  zero = 0
+  
+  '     epsmch is the machine precision.
+  epsmch = 1E-16
+'
+      eps = dsqrt(dmax1(epsfcn, epsmch))
+      For j = 1 To n
+         temp = x(j)
+         h = eps * dabs(temp)
+         If (h = zero) Then h = eps
+         x(j) = temp + h
+         LevenbergCostFunction m, n, x, wa, iflag
+         If (iflag = 0) Then GoTo L30
+         x(j) = temp
+         For i = 1 To m
+            fjac(i, j) = (wa(i) - fvec(i)) / h
+         Next i
+      Next j
+L30:
+'     last card of subroutine fdjac2.
+  End Sub
+
+Private Sub LevenbergCostFunction(m As Single, n As Single, x As Variant, _
+              ByRef fvec As Variant, ByRef iflag As Single)
+  fvec = Application.run(FunctionName_, x, IndependentVariables_)
+  Dim i As Single
+  For i = 1 To m
+    fvec(i) = fvec(i) - ObservedVariables_(i)
+  Next i
+End Sub
+
+Public Function CalibrateParameters(FunctionName As String, xvec As Variant, yvec As Variant, params As Variant) As Variant
+  FunctionName_ = FunctionName
+  Dim m As Single
+  Dim n As Single
+  m = UBound(xvec)
+  n = UBound(params)
+  'm = 10
+  'n = 3
+  IndependentVariables_ = xvec
+  ObservedVariables_ = yvec
+  Dim x As Variant
+  x = params
+  'ReDim x(1 To n)
+  'x(1) = 0.1
+  'x(2) = 0.1
+  'x(3) = 0.1
+  
+  
+  ReDim fvec(1 To m)
+  Dim ftol As Double
+  ftol = 0.00000001
+  Dim xtol As Double
+  xtol = 0.00000001
+  
+  Dim gtol As Double
+  gtol = 0.00000001
+  
+  Dim maxfeval As Single
+  maxfeval = 400
+  Dim epsfcn As Double
+  epsfcn = 0.00000001
+  
+  ReDim diag(1 To n)
+  Dim mode As Single
+  mode = 1
+  Dim factor As Double
+  factor = 1
+  Dim nprint As Single
+  nprint = 0
+  
+  Dim info As Single
+  Dim nfeval As Single
+  Dim ldfjac As Single
+  ldfjac = m
+  ReDim fjac(1 To ldfjac, 1 To n)
+  ReDim ipvt(1 To n)
+  ReDim qtf(1 To n)
+  ReDim wa1(1 To n)
+  ReDim wa2(1 To n)
+  ReDim wa3(1 To n)
+  ReDim wa4(1 To m)
+  
+  lmdif "MyFunction", m, n, x, fvec, ftol, xtol, gtol, maxfeval, epsfcn, diag, mode, factor, nprint, info, nfeval _
+        , fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4
+  
+  CalibrateParameters = x
+
+End Function

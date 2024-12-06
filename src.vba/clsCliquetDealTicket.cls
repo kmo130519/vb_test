@@ -1,1 +1,612 @@
-Option Explicitnn'#######################################################n' Class: clsCliquetDealTicketn' This class contains information on the cliquet deal.n' Fixing schedules and fixing values, if any, are also included.n'#######################################################nnPublic asset_code As StringnPublic fund_code_m As StringnPublic fund_code_c As StringnPublic ul_code As StringnnPublic fixing_index As Integer '0 if no fixing has occured. Indicates next fixing index.nnPrivate fixing_schedule_() As clsCliquetFixingnnPublic current_date As DatenPublic value_date As DatenPublic Maturity As IntegernPublic maturity_date As DatenPublic settlement_date As DatenPublic reset_freq As IntegernnPublic ini_fixing_inx As IntegernnPublic global_cap As DoublenPublic global_floor As DoublennPublic confirmed_yn As StringnPublic alive_yn As StringnnnPublic time_step As IntegernPublic no_of_trials As LongnPublic required_tolerance As DoublennPublic last_fixing As DoublenPublic previous_performance As DoublennPublic comment As StringnnPublic notional As DoublennPublic spread As Doublen'---------------------------nPublic issue_cost As Doublen'---------------------------nPublic bump_vega As StringnPublic bump_theta As StringnPublic bump_skew As StringnnPublic day_fraction_ As DoublennPrivate period_performances_() As DoublennPublic cliquet_type As StringnnPublic r_cliquet_cap As DoublenPublic replace_period_no As IntegernnnPrivate func As New Functionsn nPublic current_date_origin_ As DatennPublic Function copy_obj() As clsCliquetDealTicketnn    Dim obj As clsCliquetDealTicketn    Dim inx As Integern    n    Set obj = New clsCliquetDealTicketn    n    obj.fixing_index = fixing_indexn    n    For inx = LBound(fixing_schedule_) To UBound(fixing_schedule_)n    n        obj.add_fixing_schedule fixing_schedule_(inx).copy_obj()n        'obj.add_fixing_schedule fixing_schedule_(inx)n    n    Next inxn    n    obj.fund_code_m = fund_code_mn    obj.fund_code_c = fund_code_cn    obj.asset_code = asset_coden    obj.notional = notionaln    n    n    obj.current_date = current_daten    obj.current_date_origin_ = current_date_origin_n    obj.value_date = value_daten    obj.Maturity = Maturityn    obj.maturity_date = maturity_daten    obj.settlement_date = settlement_daten    obj.reset_freq = reset_freqn    nn    n    n    n    obj.ini_fixing_inx = ini_fixing_inxn    n    obj.global_cap = global_capn    obj.global_floor = global_floorn    n    obj.time_step = time_stepn    obj.no_of_trials = no_of_trialsn    obj.required_tolerance = required_tolerancen    n    obj.last_fixing = last_fixingn    obj.previous_performance = previous_performancen    n    n    obj.bump_vega = bump_vegan    obj.bump_skew = bump_skewn    obj.bump_theta = bump_thetan    n    obj.cliquet_type = cliquet_typen    obj.r_cliquet_cap = r_cliquet_capn    obj.replace_period_no = replace_period_non    n    obj.spread = spreadn    '--------------------------n    obj.issue_cost = issue_costn    '--------------------------n    obj.initializen    n    obj.day_fraction_ = day_fraction_n        n'    For inx = get_min_period_performance() To get_max_period_performance()n'n'        obj.add_period_performance get_preriod_performance(inx)n'n'n'    Next inxn    n    'objn        n    Set copy_obj = objnnEnd FunctionnnPublic Sub add_period_performance(aPerformance As Double)nn    If IsNull(period_performances_) Or UBound(period_performances_) <= 0 Thenn        ReDim period_performances_(1 To 1) As Doublen        period_performances_(UBound(period_performances_)) = aPerformancen    Elsen        ReDim Preserve period_performances_(LBound(period_performances_) To UBound(period_performances_) + 1) As Doublen        period_performances_(UBound(period_performances_)) = aPerformancen    End Ifn    nnEnd SubnnnnPublic Function get_preriod_performance(ByVal inx As Integer) As Doublennn    get_preriod_performance = period_performances_(inx)nnnEnd FunctionnnPublic Function get_max_period_performance() As Integernn    get_max_period_performance = UBound(period_performances_)nnEnd FunctionnPublic Function get_min_period_performance() As Integernn    get_min_period_performance = LBound(period_performances_)nnEnd Functionnn'set the fixing index to be the first fixing date which is not fixed yet.nPublic Function initialize(Optional default_fixing_value As Double) As Booleann    n    Dim inx As Integern    n    inx = 0n    nOn Error GoTo ErrorHandlern    n    If IsNull(fixing_schedule_) Thenn    n        Err.Raise vbObjectError + 1002, "clsCliquetDealTicket", "Not initialized"n    n    End Ifn    n'    Do While fixing_schedule_(inx).fixing_date < current_daten'n'        ' If the fixing value is not specified for a past fixing date...n'        If fixing_schedule_(inx).fixing_value <= 0 Thenn'n'            fixing_schedule_(inx).fixing_value = default_fixing_valuen'n'        End Ifn'n'        inx = inx + 1n'n'    Loopn    n'    ' If today is a fixing date and the fixing value for today is already specified, increase fixing index to indicate the next onen'    If fixing_schedule_(inx).fixing_date = current_date And fixing_schedule_(inx).fixing_value > 0 Thenn'n'        inx = inx + 1n'n'    End Ifn    n    For inx = 0 To get_max_fixing_indexn    n        If fixing_schedule_(inx).fixing_date > current_date Thenn        n            Exit Forn            n        ElseIf fixing_schedule_(inx).fixing_date = current_date Thenn        n            If fixing_schedule_(inx).fixing_value > 0 Thenn            n                inx = inx + 1n                n            End Ifn            n            Exit Forn            n        End Ifn        n        n        If fixing_schedule_(inx).fixing_value <= 0 Thenn        n            fixing_schedule_(inx).fixing_value = default_fixing_valuen            n        End Ifn    n    Next inxn                n    n    fixing_index = inxn    ini_fixing_inx = inxn    n    ReDim period_performances_(1 To get_max_fixing_index) As Doublen    n    calculate_previous_performancen    n    Exit Functionn    nErrorHandler:nn    MsgBox "Initialization failure in clsCliquetDealTicket" & Err.descriptionn    Exit Functionn            nEnd FunctionnnPublic Sub move_current_date(difference As Integer)nn    current_date = current_date + differencennEnd SubnnPublic Function get_local_floors() As Double()nn    Dim rtn_array() As Doublen    Dim inx As Integern    Dim no_of_fixing_schedule As Integern        n    nOn Error GoTo ErrorHandlern    n    no_of_fixing_schedule = UBound(fixing_schedule_)n    n    If fixing_index <= no_of_fixing_schedule Thenn    n        ReDim rtn_array(0 To no_of_fixing_schedule - fixing_index) As Doublen    n        For inx = fixing_index To no_of_fixing_schedulen        n            rtn_array(inx - fixing_index) = fixing_schedule_(inx).local_floorn        n        Next inxn    n    End Ifn    n    n    get_local_floors = rtn_arrayn    nn    Exit Functionn    nErrorHandler:nn    raise_err "clsCliquetDealTicket.get_local_floors"nnEnd FunctionnnPublic Function get_local_caps() As Double()nn    Dim rtn_array() As Doublen    Dim inx As Integern    Dim no_of_fixing_schedule As Integern        n    nOn Error GoTo ErrorHandlern    n    no_of_fixing_schedule = UBound(fixing_schedule_)n    n    If fixing_index <= no_of_fixing_schedule Thenn    n        ReDim rtn_array(0 To no_of_fixing_schedule - fixing_index) As Doublen    n        For inx = fixing_index To no_of_fixing_schedulen        n            rtn_array(inx - fixing_index) = fixing_schedule_(inx).local_capn        n        Next inxn    n    End Ifn    n    n    get_local_caps = rtn_arrayn    nn    Exit Functionn    nErrorHandler:nn    raise_err "clsCliquetDealTicket.get_local_caps"nnnEnd FunctionnnPublic Function get_reset_dates() As Long()nn    Dim rtn_array() As Longn    Dim inx As Integern    Dim no_of_fixing_schedule As Integern        n    nOn Error GoTo ErrorHandlern    n    no_of_fixing_schedule = UBound(fixing_schedule_)n    n    If fixing_index <= no_of_fixing_schedule Thenn    n        ReDim rtn_array(0 To no_of_fixing_schedule - fixing_index) As Longn    n        For inx = fixing_index To no_of_fixing_schedulen        n            rtn_array(inx - fixing_index) = fixing_schedule_(inx).fixing_daten        n        Next inxn    n    End Ifn    n    n    get_reset_dates = rtn_arrayn    nn    Exit Functionn    nErrorHandler:nn    raise_err "clsCliquetDealTicket.get_reset_dates"nnnEnd FunctionnnPublic Sub rewind_date()nn    current_date = current_date_origin_nnEnd SubnnPublic Sub rewind_fixing_inx()nn    fixing_index = ini_fixing_inxnnEnd SubnnPrivate Sub calculate_previous_performance()nn    Dim inx As Integern    n    previous_performance = 0n    inx = 1n    n    'If fixing ever happenedn    If fixing_index > 0 Thenn    n        ' Find last fixing and claculate previous performance...n        Do While inx <= fixing_index - 1n        n            If fixing_schedule_(inx).fixing_value > 0 Thenn            n                period_performances_(inx) = func.min(func.max(fixing_schedule_(inx).fixing_value / fixing_schedule_(inx - 1).fixing_value - 1 _n                                                                          , fixing_schedule_(inx).local_floor) _n                                                                    , fixing_schedule_(inx).local_cap)n        n                previous_performance = previous_performance + func.min(func.max(fixing_schedule_(inx).fixing_value / fixing_schedule_(inx - 1).fixing_value - 1 _n                                                                          , fixing_schedule_(inx).local_floor) _n                                                                    , fixing_schedule_(inx).local_cap)n                                                                    n                inx = inx + 1n                n            Elsen            n                Exit Don                n            End Ifn        n        Loopn        n        ' Set the last fixing valuen        last_fixing = fixing_schedule_(fixing_index - 1).fixing_valuen        n    End IfnnEnd SubnnPublic Function get_fixing_date(Optional index As Integer = -1) As clsCliquetFixingn    n    If index = -1 Thenn    n        index = fixing_indexn        n    End Ifn    n    If index > UBound(fixing_schedule_) Thenn    n        Set get_fixing_date = Nothingn        n    Elsen    n        Set get_fixing_date = fixing_schedule_(index)n        n    End IfnnEnd FunctionnnPublic Function get_max_fixing_index() As Integernn    get_max_fixing_index = UBound(fixing_schedule_)nnEnd FunctionnnnPublic Sub move_next()nn    fixing_index = fixing_index + 1nnEnd SubnnnPublic Sub set_fixing_schedule(no_of_schedule As Integer, schedule() As Date, floors() As Double, caps() As Double, fixing_values() As Double)nn    Dim inx As Integern    Dim temp_schedule As clsCliquetFixingn    n    For inx = 0 To no_of_schedule - 1n    n        Set temp_schedule = New clsCliquetFixingn        n        temp_schedule.fixing_date = schedule(inx)n        temp_schedule.local_floor = floors(inx)n        temp_schedule.local_cap = caps(inx)n        temp_schedule.fixing_value = fixing_values(inx)n        n        add_fixing_schedule temp_schedulen        n    Next inxn        n    current_date_origin_ = current_daten    nEnd SubnnPublic Sub add_fixing_schedule(a_fixing_schedule As clsCliquetFixing)nn    If IsNull(fixing_schedule_) Thenn        Set fixing_schedule_(UBound(fixing_schedule_)) = a_fixing_schedulen    Elsen        ReDim Preserve fixing_schedule_(LBound(fixing_schedule_) To UBound(fixing_schedule_) + 1) As clsCliquetFixingn        Set fixing_schedule_(UBound(fixing_schedule_)) = a_fixing_schedulen    End Ifn    nnEnd SubnnPublic Sub set_fixing_value(inx As Integer, fixing_value As Double)nn    fixing_schedule_(inx).fixing_value = fixing_valuennEnd SubnnnPublic Function get_local_floor_cap(ByRef local_floor As Double, ByRef local_cap As Double) As BooleannnOn Error GoTo ErrorHandlernn    Dim inx As Integern    Dim homogeneous As Booleann    Dim first_cap As Doublen    Dim first_floor As Doublen    n    homogeneous = Truen    n    local_floor = 0n    local_cap = 0n    n    first_floor = fixing_schedule_(1).local_floorn    first_cap = fixing_schedule_(1).local_capn    n    For inx = 1 To get_max_fixing_indexn    n'        local_floor = local_floor + fixing_schedule_(inx).local_floorn'        local_cap = local_cap + fixing_schedule_(inx).local_capn'n    n        If fixing_schedule_(inx).local_cap <> first_cap Thenn        n            homogeneous = Falsen        n        End Ifn        n        If fixing_schedule_(inx).local_floor <> first_floor Thenn        n            homogeneous = Falsen        n        End Ifn    n    Next inxn    n'    local_floor = local_floor / get_max_fixing_indexn'    local_cap = local_cap / get_max_fixing_indexn    n    If get_max_fixing_index >= fixing_index Thenn        local_floor = fixing_schedule_(fixing_index).local_floorn        local_cap = fixing_schedule_(fixing_index).local_capn    End Ifn        n    get_local_floor_cap = homogeneousnn    Exit Functionn    nErrorHandler:nn    Err.Raise vbObjectError + 10000, "get_local_floor_cap : " & Chr(13) & Err.source, Err.descriptionnnEnd FunctionnnnPublic Sub get_fixing_status(ByRef prev_fixing_value As Double, ByRef next_fixing_date As Date, ByRef remaining_fixing_period As Integer, _n                                  Optional ByVal cur_date As Date = -1)nn    Dim inx As Integern    nOn Error GoTo ErrorHandlernn    inx = 0nn    If cur_date < 0 Thenn    n        cur_date = current_daten        n    End Ifn    n    If fixing_schedule_(0).fixing_date > cur_date Thenn    n        next_fixing_date = fixing_schedule_(0).fixing_daten        prev_fixing_value = -1000n        remaining_fixing_period = get_max_fixing_index + 1n        n    Elsen    n    n        For inx = 1 To get_max_fixing_indexn        n            If fixing_schedule_(inx).fixing_date = cur_date And fixing_schedule_(inx).fixing_value <= 0 Thenn            n                Exit Forn                n            ElseIf fixing_schedule_(inx).fixing_date > cur_date Thenn            n                Exit Forn                n            End Ifn            n        Next inxn        n        n        If inx > get_max_fixing_index Thenn        n            next_fixing_date = -1n            n        Elsen        n            next_fixing_date = fixing_schedule_(inx).fixing_daten            n        End Ifn        n        prev_fixing_value = fixing_schedule_(inx - 1).fixing_valuen        remaining_fixing_period = get_max_fixing_index - inx + 1n        n    End Ifnn    Exit Subn    nErrorHandler:n    n    Err.Raise vbObjectError + 10000, "get_fixing_status : " & Chr(13) & Err.source, Err.descriptionnnEnd Subnn
+Option Explicit
+
+'#######################################################
+' Class: clsCliquetDealTicket
+' This class contains information on the cliquet deal.
+' Fixing schedules and fixing values, if any, are also included.
+'#######################################################
+
+Public asset_code As String
+Public fund_code_m As String
+Public fund_code_c As String
+Public ul_code As String
+
+Public fixing_index As Integer '0 if no fixing has occured. Indicates next fixing index.
+
+Private fixing_schedule_() As clsCliquetFixing
+
+Public current_date As Date
+Public value_date As Date
+Public Maturity As Integer
+Public maturity_date As Date
+Public settlement_date As Date
+Public reset_freq As Integer
+
+Public ini_fixing_inx As Integer
+
+Public global_cap As Double
+Public global_floor As Double
+
+Public confirmed_yn As String
+Public alive_yn As String
+
+
+Public time_step As Integer
+Public no_of_trials As Long
+Public required_tolerance As Double
+
+Public last_fixing As Double
+Public previous_performance As Double
+
+Public comment As String
+
+Public notional As Double
+
+Public spread As Double
+'---------------------------
+Public issue_cost As Double
+'---------------------------
+Public bump_vega As String
+Public bump_theta As String
+Public bump_skew As String
+
+Public day_fraction_ As Double
+
+Private period_performances_() As Double
+
+Public cliquet_type As String
+
+Public r_cliquet_cap As Double
+Public replace_period_no As Integer
+
+
+Private func As New Functions
+ 
+Public current_date_origin_ As Date
+
+Public Function copy_obj() As clsCliquetDealTicket
+
+    Dim obj As clsCliquetDealTicket
+    Dim inx As Integer
+    
+    Set obj = New clsCliquetDealTicket
+    
+    obj.fixing_index = fixing_index
+    
+    For inx = LBound(fixing_schedule_) To UBound(fixing_schedule_)
+    
+        obj.add_fixing_schedule fixing_schedule_(inx).copy_obj()
+        'obj.add_fixing_schedule fixing_schedule_(inx)
+    
+    Next inx
+    
+    obj.fund_code_m = fund_code_m
+    obj.fund_code_c = fund_code_c
+    obj.asset_code = asset_code
+    obj.notional = notional
+    
+    
+    obj.current_date = current_date
+    obj.current_date_origin_ = current_date_origin_
+    obj.value_date = value_date
+    obj.Maturity = Maturity
+    obj.maturity_date = maturity_date
+    obj.settlement_date = settlement_date
+    obj.reset_freq = reset_freq
+    
+
+    
+    
+    
+    obj.ini_fixing_inx = ini_fixing_inx
+    
+    obj.global_cap = global_cap
+    obj.global_floor = global_floor
+    
+    obj.time_step = time_step
+    obj.no_of_trials = no_of_trials
+    obj.required_tolerance = required_tolerance
+    
+    obj.last_fixing = last_fixing
+    obj.previous_performance = previous_performance
+    
+    
+    obj.bump_vega = bump_vega
+    obj.bump_skew = bump_skew
+    obj.bump_theta = bump_theta
+    
+    obj.cliquet_type = cliquet_type
+    obj.r_cliquet_cap = r_cliquet_cap
+    obj.replace_period_no = replace_period_no
+    
+    obj.spread = spread
+    '--------------------------
+    obj.issue_cost = issue_cost
+    '--------------------------
+    obj.initialize
+    
+    obj.day_fraction_ = day_fraction_
+        
+'    For inx = get_min_period_performance() To get_max_period_performance()
+'
+'        obj.add_period_performance get_preriod_performance(inx)
+'
+'
+'    Next inx
+    
+    'obj
+        
+    Set copy_obj = obj
+
+End Function
+
+Public Sub add_period_performance(aPerformance As Double)
+
+    If IsNull(period_performances_) Or UBound(period_performances_) <= 0 Then
+        ReDim period_performances_(1 To 1) As Double
+        period_performances_(UBound(period_performances_)) = aPerformance
+    Else
+        ReDim Preserve period_performances_(LBound(period_performances_) To UBound(period_performances_) + 1) As Double
+        period_performances_(UBound(period_performances_)) = aPerformance
+    End If
+    
+
+End Sub
+
+
+
+Public Function get_preriod_performance(ByVal inx As Integer) As Double
+
+
+    get_preriod_performance = period_performances_(inx)
+
+
+End Function
+
+Public Function get_max_period_performance() As Integer
+
+    get_max_period_performance = UBound(period_performances_)
+
+End Function
+Public Function get_min_period_performance() As Integer
+
+    get_min_period_performance = LBound(period_performances_)
+
+End Function
+
+'set the fixing index to be the first fixing date which is not fixed yet.
+Public Function initialize(Optional default_fixing_value As Double) As Boolean
+    
+    Dim inx As Integer
+    
+    inx = 0
+    
+On Error GoTo ErrorHandler
+    
+    If IsNull(fixing_schedule_) Then
+    
+        Err.Raise vbObjectError + 1002, "clsCliquetDealTicket", "Not initialized"
+    
+    End If
+    
+'    Do While fixing_schedule_(inx).fixing_date < current_date
+'
+'        ' If the fixing value is not specified for a past fixing date...
+'        If fixing_schedule_(inx).fixing_value <= 0 Then
+'
+'            fixing_schedule_(inx).fixing_value = default_fixing_value
+'
+'        End If
+'
+'        inx = inx + 1
+'
+'    Loop
+    
+'    ' If today is a fixing date and the fixing value for today is already specified, increase fixing index to indicate the next one
+'    If fixing_schedule_(inx).fixing_date = current_date And fixing_schedule_(inx).fixing_value > 0 Then
+'
+'        inx = inx + 1
+'
+'    End If
+    
+    For inx = 0 To get_max_fixing_index
+    
+        If fixing_schedule_(inx).fixing_date > current_date Then
+        
+            Exit For
+            
+        ElseIf fixing_schedule_(inx).fixing_date = current_date Then
+        
+            If fixing_schedule_(inx).fixing_value > 0 Then
+            
+                inx = inx + 1
+                
+            End If
+            
+            Exit For
+            
+        End If
+        
+        
+        If fixing_schedule_(inx).fixing_value <= 0 Then
+        
+            fixing_schedule_(inx).fixing_value = default_fixing_value
+            
+        End If
+    
+    Next inx
+                
+    
+    fixing_index = inx
+    ini_fixing_inx = inx
+    
+    ReDim period_performances_(1 To get_max_fixing_index) As Double
+    
+    calculate_previous_performance
+    
+    Exit Function
+    
+ErrorHandler:
+
+    MsgBox "Initialization failure in clsCliquetDealTicket" & Err.description
+    Exit Function
+            
+End Function
+
+Public Sub move_current_date(difference As Integer)
+
+    current_date = current_date + difference
+
+End Sub
+
+Public Function get_local_floors() As Double()
+
+    Dim rtn_array() As Double
+    Dim inx As Integer
+    Dim no_of_fixing_schedule As Integer
+        
+    
+On Error GoTo ErrorHandler
+    
+    no_of_fixing_schedule = UBound(fixing_schedule_)
+    
+    If fixing_index <= no_of_fixing_schedule Then
+    
+        ReDim rtn_array(0 To no_of_fixing_schedule - fixing_index) As Double
+    
+        For inx = fixing_index To no_of_fixing_schedule
+        
+            rtn_array(inx - fixing_index) = fixing_schedule_(inx).local_floor
+        
+        Next inx
+    
+    End If
+    
+    
+    get_local_floors = rtn_array
+    
+
+    Exit Function
+    
+ErrorHandler:
+
+    raise_err "clsCliquetDealTicket.get_local_floors"
+
+End Function
+
+Public Function get_local_caps() As Double()
+
+    Dim rtn_array() As Double
+    Dim inx As Integer
+    Dim no_of_fixing_schedule As Integer
+        
+    
+On Error GoTo ErrorHandler
+    
+    no_of_fixing_schedule = UBound(fixing_schedule_)
+    
+    If fixing_index <= no_of_fixing_schedule Then
+    
+        ReDim rtn_array(0 To no_of_fixing_schedule - fixing_index) As Double
+    
+        For inx = fixing_index To no_of_fixing_schedule
+        
+            rtn_array(inx - fixing_index) = fixing_schedule_(inx).local_cap
+        
+        Next inx
+    
+    End If
+    
+    
+    get_local_caps = rtn_array
+    
+
+    Exit Function
+    
+ErrorHandler:
+
+    raise_err "clsCliquetDealTicket.get_local_caps"
+
+
+End Function
+
+Public Function get_reset_dates() As Long()
+
+    Dim rtn_array() As Long
+    Dim inx As Integer
+    Dim no_of_fixing_schedule As Integer
+        
+    
+On Error GoTo ErrorHandler
+    
+    no_of_fixing_schedule = UBound(fixing_schedule_)
+    
+    If fixing_index <= no_of_fixing_schedule Then
+    
+        ReDim rtn_array(0 To no_of_fixing_schedule - fixing_index) As Long
+    
+        For inx = fixing_index To no_of_fixing_schedule
+        
+            rtn_array(inx - fixing_index) = fixing_schedule_(inx).fixing_date
+        
+        Next inx
+    
+    End If
+    
+    
+    get_reset_dates = rtn_array
+    
+
+    Exit Function
+    
+ErrorHandler:
+
+    raise_err "clsCliquetDealTicket.get_reset_dates"
+
+
+End Function
+
+Public Sub rewind_date()
+
+    current_date = current_date_origin_
+
+End Sub
+
+Public Sub rewind_fixing_inx()
+
+    fixing_index = ini_fixing_inx
+
+End Sub
+
+Private Sub calculate_previous_performance()
+
+    Dim inx As Integer
+    
+    previous_performance = 0
+    inx = 1
+    
+    'If fixing ever happened
+    If fixing_index > 0 Then
+    
+        ' Find last fixing and claculate previous performance...
+        Do While inx <= fixing_index - 1
+        
+            If fixing_schedule_(inx).fixing_value > 0 Then
+            
+                period_performances_(inx) = func.min(func.max(fixing_schedule_(inx).fixing_value / fixing_schedule_(inx - 1).fixing_value - 1 _
+                                                                          , fixing_schedule_(inx).local_floor) _
+                                                                    , fixing_schedule_(inx).local_cap)
+        
+                previous_performance = previous_performance + func.min(func.max(fixing_schedule_(inx).fixing_value / fixing_schedule_(inx - 1).fixing_value - 1 _
+                                                                          , fixing_schedule_(inx).local_floor) _
+                                                                    , fixing_schedule_(inx).local_cap)
+                                                                    
+                inx = inx + 1
+                
+            Else
+            
+                Exit Do
+                
+            End If
+        
+        Loop
+        
+        ' Set the last fixing value
+        last_fixing = fixing_schedule_(fixing_index - 1).fixing_value
+        
+    End If
+
+End Sub
+
+Public Function get_fixing_date(Optional index As Integer = -1) As clsCliquetFixing
+    
+    If index = -1 Then
+    
+        index = fixing_index
+        
+    End If
+    
+    If index > UBound(fixing_schedule_) Then
+    
+        Set get_fixing_date = Nothing
+        
+    Else
+    
+        Set get_fixing_date = fixing_schedule_(index)
+        
+    End If
+
+End Function
+
+Public Function get_max_fixing_index() As Integer
+
+    get_max_fixing_index = UBound(fixing_schedule_)
+
+End Function
+
+
+Public Sub move_next()
+
+    fixing_index = fixing_index + 1
+
+End Sub
+
+
+Public Sub set_fixing_schedule(no_of_schedule As Integer, schedule() As Date, floors() As Double, caps() As Double, fixing_values() As Double)
+
+    Dim inx As Integer
+    Dim temp_schedule As clsCliquetFixing
+    
+    For inx = 0 To no_of_schedule - 1
+    
+        Set temp_schedule = New clsCliquetFixing
+        
+        temp_schedule.fixing_date = schedule(inx)
+        temp_schedule.local_floor = floors(inx)
+        temp_schedule.local_cap = caps(inx)
+        temp_schedule.fixing_value = fixing_values(inx)
+        
+        add_fixing_schedule temp_schedule
+        
+    Next inx
+        
+    current_date_origin_ = current_date
+    
+End Sub
+
+Public Sub add_fixing_schedule(a_fixing_schedule As clsCliquetFixing)
+
+    If IsNull(fixing_schedule_) Then
+        Set fixing_schedule_(UBound(fixing_schedule_)) = a_fixing_schedule
+    Else
+        ReDim Preserve fixing_schedule_(LBound(fixing_schedule_) To UBound(fixing_schedule_) + 1) As clsCliquetFixing
+        Set fixing_schedule_(UBound(fixing_schedule_)) = a_fixing_schedule
+    End If
+    
+
+End Sub
+
+Public Sub set_fixing_value(inx As Integer, fixing_value As Double)
+
+    fixing_schedule_(inx).fixing_value = fixing_value
+
+End Sub
+
+
+Public Function get_local_floor_cap(ByRef local_floor As Double, ByRef local_cap As Double) As Boolean
+
+On Error GoTo ErrorHandler
+
+    Dim inx As Integer
+    Dim homogeneous As Boolean
+    Dim first_cap As Double
+    Dim first_floor As Double
+    
+    homogeneous = True
+    
+    local_floor = 0
+    local_cap = 0
+    
+    first_floor = fixing_schedule_(1).local_floor
+    first_cap = fixing_schedule_(1).local_cap
+    
+    For inx = 1 To get_max_fixing_index
+    
+'        local_floor = local_floor + fixing_schedule_(inx).local_floor
+'        local_cap = local_cap + fixing_schedule_(inx).local_cap
+'
+    
+        If fixing_schedule_(inx).local_cap <> first_cap Then
+        
+            homogeneous = False
+        
+        End If
+        
+        If fixing_schedule_(inx).local_floor <> first_floor Then
+        
+            homogeneous = False
+        
+        End If
+    
+    Next inx
+    
+'    local_floor = local_floor / get_max_fixing_index
+'    local_cap = local_cap / get_max_fixing_index
+    
+    If get_max_fixing_index >= fixing_index Then
+        local_floor = fixing_schedule_(fixing_index).local_floor
+        local_cap = fixing_schedule_(fixing_index).local_cap
+    End If
+        
+    get_local_floor_cap = homogeneous
+
+    Exit Function
+    
+ErrorHandler:
+
+    Err.Raise vbObjectError + 10000, "get_local_floor_cap : " & Chr(13) & Err.source, Err.description
+
+End Function
+
+
+Public Sub get_fixing_status(ByRef prev_fixing_value As Double, ByRef next_fixing_date As Date, ByRef remaining_fixing_period As Integer, _
+                                  Optional ByVal cur_date As Date = -1)
+
+    Dim inx As Integer
+    
+On Error GoTo ErrorHandler
+
+    inx = 0
+
+    If cur_date < 0 Then
+    
+        cur_date = current_date
+        
+    End If
+    
+    If fixing_schedule_(0).fixing_date > cur_date Then
+    
+        next_fixing_date = fixing_schedule_(0).fixing_date
+        prev_fixing_value = -1000
+        remaining_fixing_period = get_max_fixing_index + 1
+        
+    Else
+    
+    
+        For inx = 1 To get_max_fixing_index
+        
+            If fixing_schedule_(inx).fixing_date = cur_date And fixing_schedule_(inx).fixing_value <= 0 Then
+            
+                Exit For
+                
+            ElseIf fixing_schedule_(inx).fixing_date > cur_date Then
+            
+                Exit For
+                
+            End If
+            
+        Next inx
+        
+        
+        If inx > get_max_fixing_index Then
+        
+            next_fixing_date = -1
+            
+        Else
+        
+            next_fixing_date = fixing_schedule_(inx).fixing_date
+            
+        End If
+        
+        prev_fixing_value = fixing_schedule_(inx - 1).fixing_value
+        remaining_fixing_period = get_max_fixing_index - inx + 1
+        
+    End If
+
+    Exit Sub
+    
+ErrorHandler:
+    
+    Err.Raise vbObjectError + 10000, "get_fixing_status : " & Chr(13) & Err.source, Err.description
+
+End Sub

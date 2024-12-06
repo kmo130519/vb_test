@@ -1,1 +1,24 @@
-Option ExplicitnnnnnPublic number As LongnPublic source As StringnPublic description As StringnnPublic Sub setError(ByVal number_in As Long, ByVal source_in As String, ByVal description_in As String)nn    number = number_inn    source = source_inn    description = description_innnEnd SubnnPublic Sub clear()nn    number = 0n    source = ""n    description = ""n    nEnd Subnn
+Option Explicit
+
+
+
+
+Public number As Long
+Public source As String
+Public description As String
+
+Public Sub setError(ByVal number_in As Long, ByVal source_in As String, ByVal description_in As String)
+
+    number = number_in
+    source = source_in
+    description = description_in
+
+End Sub
+
+Public Sub clear()
+
+    number = 0
+    source = ""
+    description = ""
+    
+End Sub

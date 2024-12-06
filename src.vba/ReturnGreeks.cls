@@ -1,1 +1,263 @@
-Option Explicitnn'Each function returns price, delta, gamma, crossgamma, theta, dDeltadt, dGammadt,dgammadspot from node point-ykjeonnnPublic Function ReturnPrice( _nByRef currentprice() As Double, _nByRef initialprice() As Double, _nByRef nodeprice() As Double, _nByRef px() As Double, _nByRef dx() As Double, _nByRef nmin() As Long, _nByRef nmax() As Long) As DoublennDim i As LongnDim Point() As DoublenDim nodecls As New NodeControlnn    ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Doublen    n    For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)n    n        Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)n    n    Next inn    ReturnPrice = nodecls.ReturnValue(Point(), nodeprice(), px(), dx(), nmin(), nmax())n    n    Set nodecls = Nothingn    Erase PointnnEnd FunctionnnPublic Function ReturnDelta( _nByRef currentprice() As Double, _nByRef initialprice() As Double, _nByRef nodeprice() As Double, _nByRef px() As Double, _nByRef dx() As Double, _nByRef nmin() As Long, _nByRef nmax() As Long, _nByVal Axis As Long, _nOptional ByVal Direction As Long = 0, _nOptional ByVal NodeStep As Long = 1) As DoublennDim i As LongnDim Point() As DoublenDim nodecls As New NodeControlnn    ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Doublen    n    For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)n    n        Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)n    n    Next inn    ReturnDelta = nodecls.ReturnTangent(Point(), nodeprice(), px(), dx(), nmin(), nmax(), Axis, _n     Direction, NodeStep) / initialprice(Axis)n    n    Set nodecls = Nothingn    Erase Pointn    nEnd FunctionnnPublic Function ReturnGamma( _nByRef currentprice() As Double, _nByRef initialprice() As Double, _nByRef nodeprice() As Double, _nByRef px() As Double, _nByRef dx() As Double, _nByRef nmin() As Long, _nByRef nmax() As Long, _nByVal Axis1 As Long, _nByVal Axis2 As Long, _nOptional ByVal NodeStep As Long = 1) As DoublennDim i As LongnDim Point() As DoublenDim nodecls As New NodeControlnn    If Axis1 = Axis2 Thennn        ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Doublen        n        For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)n        n            Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)n        n        Next in    n        ReturnGamma = nodecls.ReturnConvexity(Point(), nodeprice(), px(), dx(), nmin(), nmax(), Axis1, NodeStep) _n        / (initialprice(Axis1) * initialprice(Axis1))n        n    Elsen    n        ReturnGamma = ReturnCrossGamma(currentprice(), initialprice(), nodeprice(), px(), dx(), nmin(), nmax(), Axis1, Axis2)n    n    End Ifn    n    Set nodecls = Nothingn    Erase PointnnEnd FunctionnnPublic Function ReturnCrossGamma( _nByRef currentprice() As Double, _nByRef initialprice() As Double, _nByRef nodeprice() As Double, _nByRef px() As Double, _nByRef dx() As Double, _nByRef nmin() As Long, _nByRef nmax() As Long, _nByVal Axis1 As Long, _nByVal Axis2 As Long) As DoublennDim i As LongnDim Point() As DoublenDim nodecls As New NodeControlnn    ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Doublen    n    For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)n    n        Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)n    n    Next inn    ReturnCrossGamma = nodecls.ReturnMixedDeriv(Point(), nodeprice(), px(), dx(), nmin(), nmax(), Axis1, Axis2) _n    / (initialprice(Axis1) * initialprice(Axis2))n    n    Set nodecls = Nothingn    Erase PointnnEnd FunctionnnPublic Function ReturnTheta( _nByRef currentprice() As Double, _nByRef initialprice() As Double, _nByRef nodeprice() As Double, _nByRef NextTimePrice() As Double, _nByVal timestep As Double, _nByRef px() As Double, _nByRef dx() As Double, _nByRef nmin() As Long, _nByRef nmax() As Long) As DoublennDim i As LongnDim Point() As DoublenDim nodecls As New NodeControlnn    ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Doublen    n    For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)n    n        Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)n    n    Next inn    ReturnTheta = (nodecls.ReturnValue(Point(), NextTimePrice(), px(), dx(), nmin(), nmax()) - _n    nodecls.ReturnValue(Point(), nodeprice(), px(), dx(), nmin(), nmax())) / timestepn        n    Set nodecls = Nothingn    Erase PointnnEnd FunctionnnPublic Function ReturnDdeltaDt( _nByRef currentprice() As Double, _nByRef initialprice() As Double, _nByRef nodeprice() As Double, _nByRef NextTimePrice() As Double, _nByVal timestep As Double, _nByRef px() As Double, _nByRef dx() As Double, _nByRef nmin() As Long, _nByRef nmax() As Long, _nByVal Axis As Long, _nOptional ByVal Direction As Long = 0, _nOptional ByVal NodeStep As Long = 1) As DoublennDim i As LongnDim Point() As DoublenDim nodecls As New NodeControlnn    ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Doublen    n    For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)n    n        Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)n    n    Next inn    ReturnDdeltaDt = (nodecls.ReturnTangent(Point(), NextTimePrice(), px(), dx(), nmin(), nmax(), Axis, _n     Direction, NodeStep) - nodecls.ReturnTangent(Point(), nodeprice(), px(), dx(), nmin(), nmax(), Axis, _n     Direction, NodeStep)) / (initialprice(Axis) * timestep)n    n    Set nodecls = Nothingn    Erase PointnnEnd FunctionnnPublic Function ReturnDgammaDt( _nByRef currentprice() As Double, _nByRef initialprice() As Double, _nByRef nodeprice() As Double, _nByRef NextTimePrice() As Double, _nByVal timestep As Double, _nByRef px() As Double, _nByRef dx() As Double, _nByRef nmin() As Long, _nByRef nmax() As Long, _nByVal Axis As Long, _nOptional ByVal NodeStep As Long = 1) As DoublennDim i As LongnDim Point() As DoublenDim nodecls As New NodeControlnn    ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Doublen    n    For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)n    n        Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)n    n    Next inn    ReturnDgammaDt = (nodecls.ReturnConvexity(Point(), NextTimePrice(), px(), dx(), nmin(), nmax(), Axis, _n    NodeStep) - nodecls.ReturnConvexity(Point(), nodeprice(), px(), dx(), nmin(), nmax(), Axis, _n    NodeStep)) / (initialprice(Axis) * initialprice(Axis) * timestep)n    n    Set nodecls = Nothingn    Erase PointnnEnd FunctionnnPublic Function ReturnDgammaDspot( _nByRef currentprice() As Double, _nByRef initialprice() As Double, _nByRef nodeprice() As Double, _nByRef px() As Double, _nByRef dx() As Double, _nByRef nmin() As Long, _nByRef nmax() As Long, _nByVal Axis As Long) As DoublennDim i As LongnDim Point() As DoublenDim nodecls As New NodeControlnn    ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Doublen    n    For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)n    n        Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)n    n    Next in    n    ReturnDgammaDspot = nodecls.ReturnThirdMoment(Point(), nodeprice(), px(), dx(), nmin(), nmax(), Axis)n    n    Set nodecls = Nothingn    Erase PointnnEnd Function
+Option Explicit
+
+'Each function returns price, delta, gamma, crossgamma, theta, dDeltadt, dGammadt,dgammadspot from node point-ykjeon
+
+Public Function ReturnPrice( _
+ByRef currentprice() As Double, _
+ByRef initialprice() As Double, _
+ByRef nodeprice() As Double, _
+ByRef px() As Double, _
+ByRef dx() As Double, _
+ByRef nmin() As Long, _
+ByRef nmax() As Long) As Double
+
+Dim i As Long
+Dim Point() As Double
+Dim nodecls As New NodeControl
+
+    ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Double
+    
+    For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)
+    
+        Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)
+    
+    Next i
+
+    ReturnPrice = nodecls.ReturnValue(Point(), nodeprice(), px(), dx(), nmin(), nmax())
+    
+    Set nodecls = Nothing
+    Erase Point
+
+End Function
+
+Public Function ReturnDelta( _
+ByRef currentprice() As Double, _
+ByRef initialprice() As Double, _
+ByRef nodeprice() As Double, _
+ByRef px() As Double, _
+ByRef dx() As Double, _
+ByRef nmin() As Long, _
+ByRef nmax() As Long, _
+ByVal Axis As Long, _
+Optional ByVal Direction As Long = 0, _
+Optional ByVal NodeStep As Long = 1) As Double
+
+Dim i As Long
+Dim Point() As Double
+Dim nodecls As New NodeControl
+
+    ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Double
+    
+    For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)
+    
+        Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)
+    
+    Next i
+
+    ReturnDelta = nodecls.ReturnTangent(Point(), nodeprice(), px(), dx(), nmin(), nmax(), Axis, _
+     Direction, NodeStep) / initialprice(Axis)
+    
+    Set nodecls = Nothing
+    Erase Point
+    
+End Function
+
+Public Function ReturnGamma( _
+ByRef currentprice() As Double, _
+ByRef initialprice() As Double, _
+ByRef nodeprice() As Double, _
+ByRef px() As Double, _
+ByRef dx() As Double, _
+ByRef nmin() As Long, _
+ByRef nmax() As Long, _
+ByVal Axis1 As Long, _
+ByVal Axis2 As Long, _
+Optional ByVal NodeStep As Long = 1) As Double
+
+Dim i As Long
+Dim Point() As Double
+Dim nodecls As New NodeControl
+
+    If Axis1 = Axis2 Then
+
+        ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Double
+        
+        For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)
+        
+            Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)
+        
+        Next i
+    
+        ReturnGamma = nodecls.ReturnConvexity(Point(), nodeprice(), px(), dx(), nmin(), nmax(), Axis1, NodeStep) _
+        / (initialprice(Axis1) * initialprice(Axis1))
+        
+    Else
+    
+        ReturnGamma = ReturnCrossGamma(currentprice(), initialprice(), nodeprice(), px(), dx(), nmin(), nmax(), Axis1, Axis2)
+    
+    End If
+    
+    Set nodecls = Nothing
+    Erase Point
+
+End Function
+
+Public Function ReturnCrossGamma( _
+ByRef currentprice() As Double, _
+ByRef initialprice() As Double, _
+ByRef nodeprice() As Double, _
+ByRef px() As Double, _
+ByRef dx() As Double, _
+ByRef nmin() As Long, _
+ByRef nmax() As Long, _
+ByVal Axis1 As Long, _
+ByVal Axis2 As Long) As Double
+
+Dim i As Long
+Dim Point() As Double
+Dim nodecls As New NodeControl
+
+    ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Double
+    
+    For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)
+    
+        Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)
+    
+    Next i
+
+    ReturnCrossGamma = nodecls.ReturnMixedDeriv(Point(), nodeprice(), px(), dx(), nmin(), nmax(), Axis1, Axis2) _
+    / (initialprice(Axis1) * initialprice(Axis2))
+    
+    Set nodecls = Nothing
+    Erase Point
+
+End Function
+
+Public Function ReturnTheta( _
+ByRef currentprice() As Double, _
+ByRef initialprice() As Double, _
+ByRef nodeprice() As Double, _
+ByRef NextTimePrice() As Double, _
+ByVal timestep As Double, _
+ByRef px() As Double, _
+ByRef dx() As Double, _
+ByRef nmin() As Long, _
+ByRef nmax() As Long) As Double
+
+Dim i As Long
+Dim Point() As Double
+Dim nodecls As New NodeControl
+
+    ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Double
+    
+    For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)
+    
+        Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)
+    
+    Next i
+
+    ReturnTheta = (nodecls.ReturnValue(Point(), NextTimePrice(), px(), dx(), nmin(), nmax()) - _
+    nodecls.ReturnValue(Point(), nodeprice(), px(), dx(), nmin(), nmax())) / timestep
+        
+    Set nodecls = Nothing
+    Erase Point
+
+End Function
+
+Public Function ReturnDdeltaDt( _
+ByRef currentprice() As Double, _
+ByRef initialprice() As Double, _
+ByRef nodeprice() As Double, _
+ByRef NextTimePrice() As Double, _
+ByVal timestep As Double, _
+ByRef px() As Double, _
+ByRef dx() As Double, _
+ByRef nmin() As Long, _
+ByRef nmax() As Long, _
+ByVal Axis As Long, _
+Optional ByVal Direction As Long = 0, _
+Optional ByVal NodeStep As Long = 1) As Double
+
+Dim i As Long
+Dim Point() As Double
+Dim nodecls As New NodeControl
+
+    ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Double
+    
+    For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)
+    
+        Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)
+    
+    Next i
+
+    ReturnDdeltaDt = (nodecls.ReturnTangent(Point(), NextTimePrice(), px(), dx(), nmin(), nmax(), Axis, _
+     Direction, NodeStep) - nodecls.ReturnTangent(Point(), nodeprice(), px(), dx(), nmin(), nmax(), Axis, _
+     Direction, NodeStep)) / (initialprice(Axis) * timestep)
+    
+    Set nodecls = Nothing
+    Erase Point
+
+End Function
+
+Public Function ReturnDgammaDt( _
+ByRef currentprice() As Double, _
+ByRef initialprice() As Double, _
+ByRef nodeprice() As Double, _
+ByRef NextTimePrice() As Double, _
+ByVal timestep As Double, _
+ByRef px() As Double, _
+ByRef dx() As Double, _
+ByRef nmin() As Long, _
+ByRef nmax() As Long, _
+ByVal Axis As Long, _
+Optional ByVal NodeStep As Long = 1) As Double
+
+Dim i As Long
+Dim Point() As Double
+Dim nodecls As New NodeControl
+
+    ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Double
+    
+    For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)
+    
+        Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)
+    
+    Next i
+
+    ReturnDgammaDt = (nodecls.ReturnConvexity(Point(), NextTimePrice(), px(), dx(), nmin(), nmax(), Axis, _
+    NodeStep) - nodecls.ReturnConvexity(Point(), nodeprice(), px(), dx(), nmin(), nmax(), Axis, _
+    NodeStep)) / (initialprice(Axis) * initialprice(Axis) * timestep)
+    
+    Set nodecls = Nothing
+    Erase Point
+
+End Function
+
+Public Function ReturnDgammaDspot( _
+ByRef currentprice() As Double, _
+ByRef initialprice() As Double, _
+ByRef nodeprice() As Double, _
+ByRef px() As Double, _
+ByRef dx() As Double, _
+ByRef nmin() As Long, _
+ByRef nmax() As Long, _
+ByVal Axis As Long) As Double
+
+Dim i As Long
+Dim Point() As Double
+Dim nodecls As New NodeControl
+
+    ReDim Point(1 To UBound(currentprice(), 1) - LBound(currentprice(), 1) + 1) As Double
+    
+    For i = LBound(currentprice(), 1) To UBound(currentprice(), 1)
+    
+        Point(i - LBound(currentprice(), 1) + 1) = currentprice(i) / initialprice(i)
+    
+    Next i
+    
+    ReturnDgammaDspot = nodecls.ReturnThirdMoment(Point(), nodeprice(), px(), dx(), nmin(), nmax(), Axis)
+    
+    Set nodecls = Nothing
+    Erase Point
+
+End Function

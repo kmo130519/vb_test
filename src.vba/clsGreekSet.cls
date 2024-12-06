@@ -1,1 +1,30 @@
-Option ExplicitnnPublic no_of_greeks As IntegernnPrivate greeks_() As clsGreeksnnPublic Sub initialize(no_of_greeks_in As Integer)nn    ReDim greeks_(1 To no_of_greeks_in) As clsGreeksn    n    no_of_greeks = no_of_greeks_innnEnd SubnnPublic Sub set_greek(inx As Integer, a_greek As clsGreeks)nn    If inx > no_of_greeks Thenn        raise_err "clsGreekSet.set_greeks", "out of bound"n    End Ifn    n    Set greeks_(inx) = a_greekn    nEnd SubnnnPublic Function greeks(inx As Integer) As clsGreeksn    n    Set greeks = greeks_(inx)n    nEnd Functionnnn
+Option Explicit
+
+Public no_of_greeks As Integer
+
+Private greeks_() As clsGreeks
+
+Public Sub initialize(no_of_greeks_in As Integer)
+
+    ReDim greeks_(1 To no_of_greeks_in) As clsGreeks
+    
+    no_of_greeks = no_of_greeks_in
+
+End Sub
+
+Public Sub set_greek(inx As Integer, a_greek As clsGreeks)
+
+    If inx > no_of_greeks Then
+        raise_err "clsGreekSet.set_greeks", "out of bound"
+    End If
+    
+    Set greeks_(inx) = a_greek
+    
+End Sub
+
+
+Public Function greeks(inx As Integer) As clsGreeks
+    
+    Set greeks = greeks_(inx)
+    
+End Function

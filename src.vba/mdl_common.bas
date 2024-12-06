@@ -1,1 +1,2693 @@
-Option ExplicitnnPublic ErrObject As New clsErrornnPublic business_days_list() As Datennnnn'Private Declare Function GetCurrentProcessId Lib "kernel32" () As LongnnPublic Function get_process_id()n    n    get_process_id = GetCurrentProcessIdnnEnd FunctionnnPublic Function yyyymmdd_to_date(yyyymmdd As String) As Datenn    Dim rtn_date As Daten    nOn Error GoTo ErrorHandlernn    If CDec(yyyymmdd) < 0 Thenn    n        Err.Raise vbObjectError + 1000, , "Invalid date type"n        n    End Ifn    n    If Len(yyyymmdd) <> 8 Thenn    n        Err.Raise vbObjectError + 1000, , "Invalid date type"n        n    End Ifn        n    n    rtn_date = CDate(Left(yyyymmdd, 4) & "/" & Mid(yyyymmdd, 5, 2) & "/" & Right(yyyymmdd, 2))n    n    yyyymmdd_to_date = rtn_daten    n    Exit Functionn    nErrorHandler:nn   raise_err "yyyymmdd_to_date:", Err.descriptionnnEnd FunctionnnPublic Function linear_interpolation_form(x1 As Double, x2 As Double, y1 As Double, y2 As Double, x As Double) As Doublenn    Dim y As Doublen    n    y = ((x1 - x) * y2 + (x - x2) * y1) / (x1 - x2)n    n    linear_interpolation_form = ynnEnd FunctionnnPublic Function tqbilin(x() As Double, y() As Double, z() As Double, p() As Double) As Doublen    n    Dim zp(1) As Doublenn    zp(0) = lin(x(0), z(0), x(2), z(2), p(0))n    zp(1) = lin(x(1), z(1), x(3), z(3), p(0))n    tqbilin = Sqr(lin(y(0), zp(0) ^ 2, y(1), zp(1) ^ 2, p(1)))nnEnd FunctionnnPublic Function bilin(x() As Double, y() As Double, z() As Double, p() As Double) As Doublen    n    Dim zp(1) As Doublenn    zp(0) = lin(x(0), z(0), x(2), z(2), p(0))n    zp(1) = lin(x(1), z(1), x(3), z(3), p(0))n    bilin = lin(y(0), zp(0), y(1), zp(1), p(1))nnEnd FunctionnnPublic Function lin(x1 As Double, y1 As Double, x2 As Double, y2 As Double, x As Double) As Doublenn    lin = (y2 - y1) / (x2 - x1) * (x - x1) + y1nnEnd FunctionnnPublic Function find_location_date(abscissa() As Date, x As Date) As Integernn    Dim inx_up As Integern    Dim inx_low As Integern    Dim inx_mid As Integernn    Dim rtn_inx As IntegernnOn Error GoTo ErrorHandlernn    inx_low = LBound(abscissa) - 1n    inx_up = UBound(abscissa) + 1nn    Do While inx_up - inx_low > 1nn        inx_mid = Int((inx_up + inx_low) / 2)nn        If x >= abscissa(inx_mid) Thennn            inx_low = inx_midnn        Elsenn            inx_up = inx_midnn        End Ifnn    Loopnnn    If x = abscissa(LBound(abscissa)) Thennn        rtn_inx = LBound(abscissa)nn    ElseIf x = abscissa(UBound(abscissa)) Thennn        rtn_inx = UBound(abscissa) - 1nn    Elsenn        rtn_inx = inx_lownn    End Ifnnn    find_location_date = rtn_inxnn    Exit FunctionnnErrorHandler:nn    Err.source = "find_location" & Err.sourcen'    DBDisConnectorn    Err.Raise Err.number, Err.sourcenn End Functionn n nnnPublic Function find_location(abscissa() As Double, x As Double) As Integernn    Dim inx_up As Integern    Dim inx_low As Integern    Dim inx_mid As Integern    n    Dim rtn_inx As Integern    nOn Error GoTo ErrorHandlern    n    inx_low = LBound(abscissa) - 1n    inx_up = UBound(abscissa) + 1n    n    Do While inx_up - inx_low > 1n    n        inx_mid = Int((inx_up + inx_low) / 2)n        n        If x >= abscissa(inx_mid) Thenn        n            inx_low = inx_midn        n        Elsen            n            inx_up = inx_midn            n        End Ifnn    Loopn    n    n    If x = abscissa(LBound(abscissa)) Thenn    n        rtn_inx = LBound(abscissa)n        n    ElseIf x = abscissa(UBound(abscissa)) Thenn        n        rtn_inx = UBound(abscissa) - 1n        n    Elsen    n        rtn_inx = inx_lown    n    End Ifn    n    n    find_location = rtn_inxn    n    Exit Functionn    nErrorHandler:nn    Err.source = "find_location" & Err.sourcen'    DBDisConnectorn    Err.Raise Err.number, Err.sourcen    n End Functionn Public Function find_location_long(abscissa() As Long, x As Long) As Integernn    Dim inx_up As Integern    Dim inx_low As Integern    Dim inx_mid As Integern    n    Dim rtn_inx As Integern    nOn Error GoTo ErrorHandlern    n    inx_low = LBound(abscissa) - 1n    inx_up = UBound(abscissa) + 1n    n    Do While inx_up - inx_low > 1n    n        inx_mid = Int((inx_up + inx_low) / 2)n        n        If x >= abscissa(inx_mid) Thenn        n            inx_low = inx_midn        n        Elsen            n            inx_up = inx_midn            n        End Ifnn    Loopn    n    n    If x = abscissa(LBound(abscissa)) Thenn    n        rtn_inx = LBound(abscissa)n        n    ElseIf x = abscissa(UBound(abscissa)) Thenn        n        rtn_inx = UBound(abscissa) - 1n        n    Elsen    n        rtn_inx = inx_lown    n    End Ifn    n    n    find_location_long = rtn_inxn    n    Exit Functionn    nErrorHandler:nn    Err.source = "find_location" & Err.sourcen'    DBDisConnectorn    Err.Raise Err.number, Err.sourcen    n End FunctionnPublic Function find_location_wksheet(abscissa As Range, x As Double) As Integernn    Dim abscissa_arr() As Doublen    n    abscissa_arr = range_to_array(abscissa, 1)n    n    Dim rtn_inx As Integern    nOn Error GoTo ErrorHandlern    n    rtn_inx = find_location(abscissa_arr, x)n    n    n    find_location_wksheet = rtn_inxn    n    Exit Functionn    nErrorHandler:nn    Err.source = "find_location" & Err.sourcen'    DBDisConnectorn    Err.Raise Err.number, Err.sourcen    n End Functionnn'#####################n' Error Messagen'#####################nnPublic Function raise_err(function_name As String, Optional description As String = "") As ErrObjectnn    If UCase(Left(Err.description, 5)) = "[BIZ]" Thenn    n        MsgBox ErrObject.descriptionn        Resume Nextn    n    End Ifn    n    If ErrObject Is Nothing Thenn        ErrObject = New clsErrorn    End Ifnn   ErrObject.setError ErrObject.number, function_name & Chr(13) & ErrObject.source, description & Chr(13) & ErrObject.descriptionn       Err.Raise ErrObject.numbern    nEnd Functionn'n'Public Sub temp()n'n'    Dim a As Daten'n'    a = 0n'n'n'n'End Subnn    nPublic Function add_month(in_date As Date, Optional months As Integer = 1) As DatennOn Error GoTo ErrorHandlernn    Dim rtn_date As Daten    n    rtn_date = DateAdd("m", months, in_date)n    add_month = rtn_daten    n    Exit Functionn    nErrorHandler:n    n    raise_err "add_month"nnEnd FunctionnnPublic Function check_dynamic_array_double(an_array() As Double) As Booleannn    Dim rtn_value As Booleann    Dim inx As Integern    n    rtn_value = Truen    nOn Error Resume Nextn    n    inx = LBound(an_array)n    n    If Err.number = 9 Thenn    n        rtn_value = Falsen        n    Elsen    n        rtn_value = Truen        n    End Ifn    n    check_dynamic_array_double = rtn_valuennnEnd FunctionnnPublic Function check_dynamic_array_long(an_array() As Long) As Booleannn    Dim rtn_value As Booleann    Dim inx As Integern    n    rtn_value = Truen    nOn Error Resume Nextn    n    inx = LBound(an_array)n    n    If Err.number = 9 Thenn    n        rtn_value = Falsen        n    Elsen    n        rtn_value = Truen        n    End Ifn    n    check_dynamic_array_long = rtn_valuennnEnd FunctionnnPublic Function check_dynamic_array_int(an_array() As Integer) As Booleannn    Dim rtn_value As Booleann    Dim inx As Integern    n    rtn_value = Truen    nOn Error Resume Nextn    n    inx = LBound(an_array)n    n    If Err.number = 9 Thenn    n        rtn_value = Falsen        n    Elsen    n        rtn_value = Truen        n    End Ifn    n    check_dynamic_array_int = rtn_valuennnEnd FunctionnnnPublic Sub show_error()nn    MsgBox ErrObject.description & Chr(13) & Chr(13) & ErrObject.sourcen    ErrObject.clearnnnEnd SubnnPublic Function initialized_dynamic_array(an_array() As Double) As Booleannn    Dim rtn_value As Booleann    Dim temp As Variantn    nOn Error Resume Nextnn    temp = an_array(LBound(an_array))n    n    If Err.number = 9 Thenn    n        rtn_value = Falsen        n    Elsen    n        rtn_value = Truen        n    End Ifn    n    n    initialized_dynamic_array = rtn_valuennEnd FunctionnnnnPublic Sub test___()nnDim l_floor(3) As DoublenDim l_cap(3) As DoublenDim fixing(3) As Doublennl_floor(0) = -0.7nl_floor(1) = -0.7nl_floor(2) = -0.7nnl_cap(0) = 0.2nl_cap(1) = 0.2nl_cap(2) = 0.2nnfixing(0) = 241.5nfixing(1) = 250nfixing(2) = 255.5nn'cliquet_performance l_floor, l_cap, fixingnnnEnd SubnnPublic Function date_to_array_long(in_array() As Date, Optional base_index As Integer = 0) As Long()n    n    Dim rtn_array() As Longn    Dim inx As Longn    n    ReDim rtn_array(base_index To UBound(in_array) + base_index - 1) As Longn       n    For inx = LBound(rtn_array) To UBound(rtn_array)n    n        rtn_array(inx) = CLng(in_array(inx + 1 - base_index))n    n    Next inxn    n    date_to_array_long = rtn_arraynnEnd FunctionnnPublic Function double_to_array(in_array() As Double, Optional base_index As Integer = 0) As Double()n    n    Dim rtn_array() As Doublen    Dim inx As Longn    n    ReDim rtn_array(base_index To UBound(in_array) + base_index - 1) As Doublen       n    For inx = LBound(rtn_array) To UBound(rtn_array)n    n        rtn_array(inx) = in_array(inx + 1 - base_index)n    n    Next inxn    n    double_to_array = rtn_arraynnEnd FunctionnnnPublic Function range_to_array_long(in_range As Range, Optional base_index As Integer = 0) As Long()n    n    Dim Direction As Boolean ' true = row, false= columnn    Dim rtn_array() As Longn    Dim inx As Longn    n    If in_range.Columns.count > in_range.Rows.count Thenn    n        Direction = Falsen        n    Elsen        Direction = Truen        n    End Ifn    n    If Direction Thenn    n        ReDim rtn_array(base_index To in_range.Rows.count + base_index - 1) As Longn        n    Elsen    n        ReDim rtn_array(base_index To in_range.Columns.count + base_index - 1) As Longn        n    End Ifn        n    For inx = LBound(rtn_array) To UBound(rtn_array)n    n        If Direction Thenn         n            rtn_array(inx) = in_range.Cells(inx + 1 - base_index, 1)n            n        Elsen        n            rtn_array(inx) = in_range.Cells(1, inx + 1 - base_index)n            n        End Ifn    n    n    Next inxn    n    range_to_array_long = rtn_arraynnEnd FunctionnnPublic Function range_to_array_date(in_range As Range, Optional base_index As Integer = 0) As Date()n    n    Dim Direction As Boolean ' true = row, false= columnn    Dim rtn_array() As Daten    Dim inx As Longn    n    If in_range.Columns.count > in_range.Rows.count Thenn    n        Direction = Falsen        n    Elsen        Direction = Truen        n    End Ifn    n    If Direction Thenn    n        ReDim rtn_array(base_index To in_range.Rows.count + base_index - 1) As Daten        n    Elsen    n        ReDim rtn_array(base_index To in_range.Columns.count + base_index - 1) As Daten        n    End Ifn        n    For inx = LBound(rtn_array) To UBound(rtn_array)n    n        If Direction Thenn         n            rtn_array(inx) = in_range.Cells(inx + 1 - base_index, 1)n            n        Elsen        n            rtn_array(inx) = in_range.Cells(1, inx + 1 - base_index)n            n        End Ifn    n    n    Next inxn    n    range_to_array_date = rtn_arraynnEnd FunctionnPublic Function range_to_array_2d(in_range As Range, Optional initial_index As Integer = 0, Optional transpose As Boolean = False) As Double()n    nn    Dim rtn_array() As Doublen    Dim inx As Longn    Dim jnx As Integern    n    n    If transpose Thenn    n        ReDim rtn_array(initial_index To in_range.Columns.count + initial_index - 1 _n                      , initial_index To in_range.Rows.count + initial_index - 1) As Doublen        n    Elsen    n        ReDim rtn_array(initial_index To in_range.Rows.count + initial_index - 1 _n                       , initial_index To in_range.Columns.count + initial_index - 1) As Doublen        n    End Ifn        n    For inx = LBound(rtn_array, 1) To UBound(rtn_array, 1)n        For jnx = LBound(rtn_array, 2) To UBound(rtn_array, 2)n    n            If transpose Thenn             n                rtn_array(inx, jnx) = in_range.Cells(jnx + 1 - initial_index, inx + 1 - initial_index)n                n            Elsen            n                rtn_array(inx, jnx) = in_range.Cells(inx + 1 - initial_index, jnx + 1 - initial_index)n                n            End Ifn            n        Next jnxn    n    n    Next inxn    n    range_to_array_2d = rtn_arraynnEnd FunctionnnPublic Function range_to_array(in_range As Range, Optional base_index As Integer = 0) As Double()n    n    Dim Direction As Boolean ' true = row, false= columnn    Dim rtn_array() As Doublen    Dim inx As Longn    n    If in_range.Columns.count > in_range.Rows.count Thenn    n        Direction = Falsen        n    Elsen        Direction = Truen        n    End Ifn    n    If Direction Thenn    n        ReDim rtn_array(base_index To in_range.Rows.count + base_index - 1) As Doublen        n    Elsen    n        ReDim rtn_array(base_index To in_range.Columns.count + base_index - 1) As Doublen        n    End Ifn        n    For inx = LBound(rtn_array) To UBound(rtn_array)n    n        If Direction Thenn         n            rtn_array(inx) = in_range.Cells(inx + 1 - base_index, 1)n            n        Elsen        n            rtn_array(inx) = in_range.Cells(1, inx - base_index + 1)n            n        End Ifn    n    n    Next inxn    n    range_to_array = rtn_arraynnEnd Functionnnnnnnn'###################################################################################n' Author: YK Jeonn'###################################################################################nnPublic Function ToBinary(ByVal n As Double) As Stringnn'This function return the binary expansion of N where N is natural number - ykjeonnnDim temp As StringnnOn Error GoTo ErrorHandlernn    If Int(n) <> n Or n < 0 Thenn        MsgBox "INPUT MUST BE A NONNEGATIVE INTEGER"n        Exit Functionn        n    End Ifn    n    temp = ""n    n    Don    n        temp = CStr(n Mod 2) & tempnn        n = n \ 2nn    Loop While n > 0n    n    ToBinary = tempn    nExit FunctionnnErrorHandler:n    n    MsgBox "FAIL IN BINARY CONVERSION"n    Exit FunctionnnEnd FunctionnnPublic Function DigitConversion( _nByVal n As Double, _nByVal BaseNum As Long) As StringnnDim temp As StringnnOn Error GoTo ErrorHandlernn    If Int(n) <> n Or n < 0 Thenn    n        MsgBox "INPUT MUST BE A NONNEGATIVE INTEGER"n        Exit Functionn        n    Elsen    n        If BaseNum = 1 Thenn        n            DigitConversion = "-1"n            n        Elsen    n            temp = ""n            n            Don            n                temp = CStr(n Mod BaseNum) & tempn        n                n = n \ BaseNumn        n            Loop While n > 0n            n            DigitConversion = tempn        n        End Ifn    n    End Ifn    nExit FunctionnnErrorHandler:n    n    MsgBox "FAIL IN DIGIT CONVERSION"n    Exit FunctionnnEnd FunctionnnPublic Sub ReturnPermutator( _nByVal Dimension As Long, _nByVal BaseNum As Long, _nByRef PermutArray() As Long)nnDim i As LongnDim j As LongnnDim temp As LongnDim Strtemp As Stringnn    temp = BaseNum ^ (Dimension) - 1nn    ReDim PermutArray(0 To temp, 1 To Dimension) As Longn    n    For i = 0 To tempn    n        Strtemp = StrReverse(DigitConversion(i, BaseNum))n        n        For j = 1 To Len(Strtemp)n        n            PermutArray(i, j) = CLng(Mid(Strtemp, j, 1))n        n        Next jn        n        For j = Len(Strtemp) + 1 To Dimensionn        n            PermutArray(i, j) = 0n        n        Next jnn    Next innEnd SubnnnPublic Function Summation(ByRef values() As Double) As DoublennDim IndexMax As LongnDim IndexMin As LongnDim i As IntegernDim temp As Doublen    n    IndexMin = LBound(values)n    IndexMax = UBound(values)n    temp = 0n    n    For i = IndexMin To IndexMaxn    n        temp = temp + values(i)n    n    Next in    n    Summation = tempnnEnd FunctionnnPublic Function max(ByVal x As Double, ByVal y As Double) As Doublenn    max = (x + y + Abs(x - y)) * 0.5nnEnd FunctionnnPublic Function min(ByVal x As Double, ByVal y As Double) As Doublenn    'Min = x + y - Max(x, y)n    min = (x + y - Abs(x - y)) * 0.5nnEnd FunctionnnPublic Function max_date(ByVal x As Date, ByVal y As Date) As Datenn    max_date = (x + y + Abs(x - y)) * 0.5nnEnd FunctionnPublic Function min_date(ByVal x As Date, ByVal y As Date) As Datenn    min_date = (x + y - Abs(x - y)) * 0.5nnEnd FunctionnnPublic Function ReturnMax(ByRef values() As Double) As DoublennDim IndexMax As LongnDim IndexMin As LongnDim i As IntegernDim temp As Doublen    n    IndexMin = LBound(values)n    IndexMax = UBound(values)n    temp = values(IndexMin)n    n    If IndexMax = IndexMin Thenn    n        ReturnMax = values(IndexMin)n        n    Elsen    n        For i = IndexMin + 1 To IndexMaxn        n            temp = max(temp, values(i))n        n        Next in        n        ReturnMax = tempn        n    End IfnnEnd FunctionnnPublic Function ReturnMin(ByRef values() As Double) As DoublennDim IndexMax As LongnDim IndexMin As LongnDim i As IntegernDim temp As Doublen    n    IndexMin = LBound(values)n    IndexMax = UBound(values)n    temp = values(IndexMin)n    n    If IndexMax = IndexMin Thenn    n        ReturnMin = values(IndexMin)n        n    Elsen    n        For i = IndexMin + 1 To IndexMaxn        n            temp = min(temp, values(i))n        n        Next in        n        ReturnMin = tempn        n    End IfnnEnd FunctionnnPublic Function ReturnMinDate(ByRef values() As Date) As DatennDim IndexMax As LongnDim IndexMin As LongnDim i As IntegernDim temp As Daten    n    IndexMin = LBound(values)n    IndexMax = UBound(values)n    temp = values(IndexMin)n    n    If IndexMax = IndexMin Thenn    n        ReturnMinDate = values(IndexMin)n        n    Elsen    n        For i = IndexMin + 1 To IndexMaxn        n            temp = min(temp, values(i))n        n        Next in        n        ReturnMinDate = tempn        n    End IfnnEnd FunctionnnPublic Function lReturnMax(ByRef values() As Long) As LongnnDim IndexMax As LongnDim IndexMin As LongnDim i As IntegernDim temp As Doublen    n    IndexMin = LBound(values)n    IndexMax = UBound(values)n    temp = values(IndexMin)n    n    If IndexMax = IndexMin Thenn    n        lReturnMax = values(IndexMin)n        n    Elsen    n        For i = IndexMin + 1 To IndexMaxn        n            temp = max(temp, values(i))n        n        Next in        n        lReturnMax = tempn        n    End IfnnEnd FunctionnnPublic Function lReturnMin(ByRef values() As Long) As LongnnDim IndexMax As LongnDim IndexMin As LongnDim i As IntegernDim temp As Doublen    n    IndexMin = LBound(values)n    IndexMax = UBound(values)n    temp = values(IndexMin)n    n    If IndexMax = IndexMin Thenn    n        lReturnMin = values(IndexMin)n        n    Elsen    n        For i = IndexMin + 1 To IndexMaxn        n            temp = min(temp, values(i))n        n        Next in        n        lReturnMin = tempn        n    End IfnnEnd FunctionnnPublic Function Combin(ByVal n As Long, ByVal m As Long) As DoublennDim i As LongnDim k As LongnDim temp As Doublen    n    temp = 1nn    If Int(n) <> n Or Int(m) <> m Or n < m Thenn    n        MsgBox "Input Values for Combination function are not valid"n        Exit Functionn        n    Elsen    n        If m = 0 Or m = n Thenn        n            Combin = 1n        n        ElseIf m = 1 Or n - m = 1 Thenn        n            Combin = nn            n        Elsen        n            k = max(n - m, m)n            n            For i = 0 To n - k - 1n                n                temp = temp * (n - i) / (n - k - i)n            n            Next in            n            Combin = tempn                        n        End Ifn        n    End Ifn        nEnd FunctionnnPublic Sub ReturnTangentVector( _nByRef p1() As Double, _nByRef p2() As Double, _nByRef TangentVector() As Double)nnDim i As LongnDim j As LongnDim Dimension As Longnn    Dimension = UBound(p1(), 1) - LBound(p1(), 1) + 1n    n    ReDim TangentVector(1 To Dimension) As Doublen    n    For i = LBound(p1(), 1) To UBound(p1(), 1)n    n        TangentVector(i - LBound(p1(), 1) + 1) = _n        (p2(i) - p1(i))n    n    Next innEnd SubnnPublic Function ReturnVectorNorm( _nByRef p1() As Double, _nByRef p2() As Double, _nOptional ByVal NormIndex As Long = 2) As DoublennDim i As LongnDim v() As DoublennDim temp As DoublennDim Dimension As Longnn    Dimension = UBound(p1(), 1) - LBound(p1(), 1) + 1n    n    ReDim v(1 To Dimension) As Doublen    n    For i = LBound(p1(), 1) To UBound(p1(), 1)n    n        v(i - LBound(p1(), 1) + 1) = Abs(p2(i) - p1(i))n    n    Next inn    If NormIndex = 0 Thenn    n        temp = ReturnMax(v())n        n        ReturnVectorNorm = tempn        n    Elsen    n        For i = 1 To Dimensionn        n            temp = temp + (v(i)) ^ (NormIndex)n        n        Next in        n        ReturnVectorNorm = (temp) ^ (1 / NormIndex)n        n    End IfnnEnd FunctionnnPublic Function Sorting( _nByRef values() As Variant, _nByRef OrderedValues() As Variant, _nOptional ByVal DataOdering As String = "ASC") As DoublennDim i As LongnDim j As LongnnDim IndexMax As LongnDim IndexMin As LongnDim SwapArray() As VariantnDim temp As VariantnnOn Error GoTo ErrorHandlernn    IndexMax = UBound(values)n    IndexMin = LBound(values)n    n    ReDim OrderedValues(IndexMin To IndexMax) As Variantn    ReDim SwapArray(IndexMin To IndexMax) As Variantn    n    For i = IndexMin To IndexMaxn    n        SwapArray(i) = values(i)n    n    Next in    n    For i = IndexMin + 1 To IndexMaxn    n        temp = values(i)n        n        For j = i - 1 To IndexMin Step -1n    n            If SwapArray(j) > values(i) Thenn            n                SwapArray(j + 1) = SwapArray(j)n                SwapArray(j) = tempn                n            End Ifn    n        Next jn        n    Next in    n    If LCase(DataOdering) = LCase("ASC") Thenn        n        For i = IndexMin To IndexMaxn        n            OrderedValues(i) = SwapArray(i)n        n        Next in        n    Elsen    n        For i = IndexMin To IndexMaxn        n            OrderedValues(i) = SwapArray(IndexMax - i + IndexMin)n        n        Next in    n    End Ifn    n    Sorting = 1n    n    Exit Functionn    nErrorHandler:nn    Sorting = -1n    n    Exit FunctionnnEnd FunctionnnPublic Function Moment( _nByRef values() As Double, _nByVal MomentOrder As Long) As DoublennDim IndexMax As LongnDim IndexMin As LongnDim i As LongnDim temp As Doublen    n    temp = 0n    IndexMax = UBound(values)n    IndexMin = LBound(values)n    n    If IndexMax >= IndexMin Thenn    n        For i = IndexMin To IndexMaxn    n            temp = temp + values(i) ^ MomentOrder / (IndexMax - IndexMin + 1)n    n        Next in        n        Moment = tempn    n    Elsen    n        Moment = -999n        n    End IfnnEnd FunctionnnPublic Function CMoment( _nByRef values() As Double, _nByVal MomentOrder As Long) As DoublennDim i As LongnDim IndexMax As LongnDim IndexMin As LongnDim temp As DoublenDim Average As Doublen    n    temp = 0n    IndexMax = UBound(values)n    IndexMin = LBound(values)n    n    Average = Moment(values, 1)n    n    If MomentOrder = 1 Thenn    n        CMoment = Averagen    n    Elsen    n        If IndexMax > IndexMin Thenn    n            For i = IndexMin To IndexMaxn        n                temp = temp + (values(i) - Average) ^ MomentOrder / (IndexMax - IndexMin)n        n            Next in            n            CMoment = tempn            n        ElseIf IndexMax = IndexMin Thenn        n            CMoment = tempn            n        Elsen        n            CMoment = -999n            n        End Ifn        n    End IfnnEnd FunctionnnPublic Function ReturnAVG( _nByRef values() As Double) As Doublen    n    ReturnAVG = Moment(values(), 1)nnEnd FunctionnnPublic Function ReturnSTDEV( _nByRef values() As Double) As DoublennDim temp As Doublenn    temp = Sqr(CMoment(values(), 2))nn    If temp > 0 Thennn        ReturnSTDEV = Sqr(CMoment(values(), 2))n        n    Elsen    n        ReturnSTDEV = -1n        n    End IfnnEnd FunctionnnPublic Function ReturnNCSTDEV( _nByRef values() As Double) As DoublennDim IndexMax As LongnDim IndexMin As LongnDim i As LongnDim temp As Doublenn    temp = 0n    n    IndexMax = UBound(values)n    IndexMin = LBound(values)n    n    If IndexMax - IndexMin >= 0 Thenn        n        For i = IndexMin To IndexMaxn    n            temp = temp + values(i) * values(i) / (IndexMax - IndexMin + 1)n    n        Next in    n        ReturnNCSTDEV = Sqr(temp)nn    Elsen    n        ReturnNCSTDEV = -1n        n    End IfnnEnd FunctionnnPublic Function ReturnABSSTDEV( _nByRef values() As Double) As DoublennDim i As LongnDim IndexMax As LongnDim IndexMin As LongnDim Average As DoublenDim temp As Doublenn    temp = 0n    n    IndexMax = UBound(values)n    IndexMin = LBound(values)nn    If IndexMax > IndexMin Thenn    n        Average = ReturnAVG(values())n    n        For i = IndexMin To IndexMaxn    n            temp = temp + Abs(values(i) - Average) / (IndexMax - IndexMin)n    n        Next in        n        ReturnABSSTDEV = tempn    n    ElseIf IndexMax = IndexMin Thenn    n        ReturnABSSTDEV = 0n        n    Elsen    n        ReturnABSSTDEV = -999n        n    End IfnnEnd FunctionnnFunction LogMoment( _nByRef PriceArray() As Double, _nByVal MomentOrder As Long, _nOptional ByVal DateOrdering As String = "ASC") As DoublennDim i As LongnDim IndexMax As LongnDim IndexMin As LongnDim LogReturn() As Doublenn    IndexMax = UBound(PriceArray)n    IndexMin = LBound(PriceArray)n        n    If IndexMax <= IndexMin + 1 Thenn        n        LogMoment = -999n        n        Exit Functionn        n    Elsen    n        ReDim LogReturn(IndexMin To IndexMax - 1) As Doublen        n        If LCase(DateOrdering) = LCase("ASC") Thenn        n            For i = IndexMin To IndexMax - 1n                n                LogReturn(i) = Log(PriceArray(i + 1) / PriceArray(i))n            n            Next inn        Elsen        n            For i = IndexMin To IndexMax - 1n            n                LogReturn(i) = Log(PriceArray(i) / PriceArray(i + 1))n            n            Next in        n        End Ifn            n        LogMoment = Moment(LogReturn(), MomentOrder)n        n    End IfnnEnd FunctionnnFunction CLogMoment( _nByRef PriceArray() As Double, _nByVal MomentOrder As Long, _nOptional ByVal DateOrdering As String = "ASC") As DoublennDim i As LongnDim IndexMax As LongnDim IndexMin As LongnDim LogReturn() As Doublenn    IndexMax = UBound(PriceArray)n    IndexMin = LBound(PriceArray)n        n    If IndexMax <= IndexMin + 1 Thenn        n        CLogMoment = -999n        n        Exit Functionn        n    Elsen    n        ReDim LogReturn(IndexMin To IndexMax - 1) As Doublen        n        If LCase(DateOrdering) = LCase("ASC") Thenn        n            For i = IndexMin To IndexMax - 1n                n                LogReturn(i) = Log(PriceArray(i + 1) / PriceArray(i))n            n            Next inn        Elsen        n            For i = IndexMin To IndexMax - 1n            n                LogReturn(i) = Log(PriceArray(i) / PriceArray(i + 1))n            n            Next in        n        End Ifn            n        CLogMoment = CMoment(LogReturn(), MomentOrder)n        n    End IfnnEnd FunctionnnFunction GetDrift( _nByRef PriceArray() As Double, _nOptional ByVal AnnualizeFactor As Long = 252, _nOptional ByVal DateOrdering As String = "ASC") As Doublenn    GetDrift = LogMoment(PriceArray(), 1, DateOrdering) * AnnualizeFactornnEnd FunctionnnFunction GetVol( _nByRef PriceArray() As Double, _nOptional ByVal AnnualizeFactor As Long = 252, _nOptional ByVal DateOrdering As String = "ASC") As Doublenn    GetVol = Sqr(LogMoment(PriceArray(), 2, DateOrdering) * AnnualizeFactor)nnEnd FunctionnnFunction GetCVol( _nByRef PriceArray() As Double, _nOptional ByVal AnnualizeFactor As Long = 252, _nOptional ByVal DateOrdering As String = "ASC") As Doublenn    GetCVol = Sqr(CLogMoment(PriceArray(), 2, DateOrdering) * AnnualizeFactor)nnEnd FunctionnnFunction GetSkew( _nByRef PriceArray() As Double, _nOptional ByVal DateOrdering As String = "ASC") As Doublenn    GetSkew = LogMoment(PriceArray(), 3, DateOrdering) / (GetVol(PriceArray(), 1, DateOrdering) ^ 3)nnEnd FunctionnnFunction GetCSkew( _nByRef PriceArray() As Double, _nOptional ByVal DateOrdering As String = "ASC") As Doublenn    GetCSkew = CLogMoment(PriceArray(), 3, DateOrdering) / (GetCVol(PriceArray(), 1, DateOrdering) ^ 3)nnEnd FunctionnnFunction GetKurtosis( _nByRef PriceArray() As Double, _nOptional ByVal DateOrdering As String = "ASC") As Doublenn    GetKurtosis = LogMoment(PriceArray(), 4, DateOrdering) / (GetVol(PriceArray(), 1, DateOrdering) ^ 4)nnEnd FunctionnnFunction GetCKurtosis( _nByRef PriceArray() As Double, _nOptional ByVal DateOrdering As String = "ASC") As Doublenn    GetCKurtosis = CLogMoment(PriceArray(), 4, DateOrdering) / (GetCVol(PriceArray(), 1, DateOrdering) ^ 4)nnEnd FunctionnnFunction GetCCORR( _nByRef PriceArrayX() As Double, _nByRef PriceArrayY() As Double, _nOptional ByVal DateOrdering As String = "ASC" _n) As DoublennDim i As LongnDim temp As DoublenDim IndexMax As LongnDim IndexMin As LongnDim AverageX As DoublenDim AverageY As Doublenn    temp = 0n    IndexMax = UBound(PriceArrayX)n    IndexMin = LBound(PriceArrayX)n    n    If (IndexMax <= IndexMin) Or ((IndexMax - IndexMin) <> (UBound(PriceArrayY(), 1) - LBound(PriceArrayY(), 1))) Thenn    n        GetCCORR = -999n            n        Exit Functionn        n    Elsen            n        AverageX = GetDrift(PriceArrayX(), 1, DateOrdering)n        AverageY = GetDrift(PriceArrayY(), 1, DateOrdering)n        n        If LCase(DateOrdering) = LCase("ASC") Thenn        n            For i = IndexMin To IndexMax - 1n            n                temp = temp + _n                (Log(PriceArrayX(i + 1) / PriceArrayX(i)) - AverageX) * _n                (Log(PriceArrayY(i + 1) / PriceArrayY(i)) - AverageY) _n                / (IndexMax - IndexMin - 1)n            n            Next in        n        Elsen        n            For i = IndexMin To IndexMax - 1n            n                temp = temp + _n                (Log(PriceArrayX(i) / PriceArrayX(i + 1)) - AverageX) * _n                (Log(PriceArrayY(i) / PriceArrayY(i + 1)) - AverageY) _n                / (IndexMax - IndexMin - 1)n            n            Next in        n        End Ifn        n        GetCCORR = temp / (GetCVol(PriceArrayX(), 1, DateOrdering) * GetCVol(PriceArrayY(), 1, DateOrdering))n        n    End IfnnEnd FunctionnnFunction GetCORR( _nByRef PriceArrayX() As Double, _nByRef PriceArrayY() As Double _n) As DoublennDim i As LongnDim temp As DoublenDim IndexMax As LongnDim IndexMin As Longnn    temp = 0n    IndexMax = UBound(PriceArrayX)n    IndexMin = LBound(PriceArrayX)n    n    If (IndexMax <= IndexMin) Or ((IndexMax - IndexMin) <> (UBound(PriceArrayY(), 1) - LBound(PriceArrayY(), 1))) Thenn    n        GetCORR = -999n            n        Exit Functionn        n    Elsen        n        For i = IndexMin To IndexMax - 1n        n            temp = temp + _n            (Log(PriceArrayX(i + 1) / PriceArrayX(i)) * Log(PriceArrayY(i + 1) / PriceArrayY(i))) _n            / (IndexMax - IndexMin)n        n        Next in    n        GetCORR = temp / (GetVol(PriceArrayX(), 1, "ASC") * GetVol(PriceArrayY(), 1, "ASC"))n        n    End IfnnEnd FunctionnnnPublic Function indicator(condition As Boolean) As Doublenn    If condition Thenn    n        indicator = 1n        n    Elsen        n        indicator = 0n        n    End IfnnEnd FunctionnPublic Sub push_back_long(an_array() As Long, an_obj As Long, Optional base As Integer = 1)nnn      Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = basen        initial_ubound = base - 1n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As Longn    n    an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_long", Err.descriptionnnEnd SubnPublic Sub push_back_integer(an_array() As Integer, an_obj As Integer)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As Integern    n    an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    Err.Raise Err.number, "push_back_integer", Err.descriptionnnEnd SubnPublic Sub push_back_string(an_array() As String, an_obj As String)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As Stringn    n    an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_string"nnEnd SubnPublic Sub push_back_boolean(an_array() As Boolean, an_obj As Boolean)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As Booleann    n    an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_boolean"nnEnd SubnnPublic Sub push_back_double(an_array() As Double, an_obj As Double, Optional base As Integer = 1)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = basen        initial_ubound = base - 1n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As Doublen    n    an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_double", Err.descriptionnnEnd SubnnPublic Sub push_back_date(an_array() As Date, an_obj As Date)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As Daten    n    an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_double"nnEnd SubnPublic Function get_array_size_long(an_array() As Long) As Integern    n    Dim rtn_value As Integern    nOn Error Resume Nextn    n    rtn_value = UBound(an_array) - LBound(an_array) + 1n    If Err.number = 9 Or rtn_value < 0 Thenn        rtn_value = 0n    End Ifn    n    n    get_array_size_long = rtn_valuen    nnEnd FunctionnPublic Function get_array_size_integer(an_array() As Integer) As Integern    n    Dim rtn_value As Integern    nOn Error Resume Nextn    n    rtn_value = UBound(an_array) - LBound(an_array) + 1n    If Err.number = 9 Or rtn_value < 0 Thenn        rtn_value = 0n    End Ifn    n    n    get_array_size_integer = rtn_valuen    nnEnd FunctionnnPublic Function get_array_size_date(an_array() As Date) As Integern    n    Dim rtn_value As Integern    nOn Error Resume Nextn    n    rtn_value = UBound(an_array) - LBound(an_array) + 1n    If Err.number = 9 Or rtn_value < 0 Thenn        rtn_value = 0n    End Ifn    n    n    get_array_size_date = rtn_valuen    nnEnd FunctionnnPublic Function get_array_size_double(an_array() As Double) As Integern    n    Dim rtn_value As Integern    nOn Error Resume Nextn    n    rtn_value = UBound(an_array) - LBound(an_array) + 1n    If Err.number = 9 Or rtn_value < 0 Thenn        rtn_value = 0n    End Ifn    n    n    get_array_size_double = rtn_valuen    nnEnd FunctionnnPublic Function get_array_size_string(an_array() As String) As Integern    n    Dim rtn_value As Integern    nOn Error Resume Nextn    n    rtn_value = UBound(an_array) - LBound(an_array) + 1n    If Err.number = 9 Or rtn_value < 0 Thenn        rtn_value = 0n    End Ifn    n    n    get_array_size_string = rtn_valuen    nnEnd Functionnnn'---------------------------------------n' Modified onn' 2013-10-23n'---------------------------------------nnnPublic Function array_base_zero(in_array() As Double) As Double()nn    Dim rtn_array() As Doublen    Dim inx As Integern    n    ReDim rtn_array(0 To get_array_size_double(in_array) - 1) As Doublen    n    For inx = 0 To get_array_size_double(in_array) - 1n        rtn_array(inx) = in_array(inx + LBound(in_array))n    Next inxn    n    array_base_zero = rtn_arraynnEnd Functionnn'------------------------------------n' Subject to improven'------------------------------------nPublic Function get_business_days(from_date As Date, to_date As Date) As Integernn    Dim inx As Integern    n    Dim index_from As Integern    Dim index_to As Integern    n    index_from = find_location_long(holiday_list__, CLng(from_date))n    index_to = find_location_long(holiday_list__, CLng(to_date))n    n    get_business_days = to_date - from_date - (index_to - index_from) ', holidays__) ', date_initialized__)n        nEnd Functionnn'Public Function get_business_days_list(from_date As Date, to_date As Date) As Date()n'n'    Dim inx As Integern'n'    Dim rtn_array() As Daten'n'    Dim index_from As Integern'    Dim index_to As Integern'n'    index_from = find_location_date(holiday_list__, from_date)n'    index_to = find_location_date(holiday_list__, to_date)n'n'    get_business_days = to_date - from_date - (index_to - index_from) ', holidays__) ', date_initialized__)n'n'End Functionnnn' From DBnPublic Function business_days_between(from_date As Date, to_date As Date) As Integernn    Dim rtn_value As Integern    nOn Error GoTo ErrorHandlernn    DBConnectornn    rtn_value = retrieve_business_days_between(from_date, to_date)n    n    DBDisConnectorn    n    business_days_between = rtn_valuenn    Exit Functionn    nErrorHandler:nn    DBDisConnectornnEnd FunctionnnnPublic Function polynomial_value_sht(coeff As Range, x As Double) As Doublen    n    polynomial_value_sht = polynomial_value(range_to_array(coeff, 1), x)n    nnEnd FunctionnnPublic Function polynomial_value(coeff() As Double, x As Double) As Doublenn    Dim inx As Integern    Dim rtn_value As Doublen    n    rtn_value = 0n    n    For inx = 1 To get_array_size_double(coeff)n    n        rtn_value = rtn_value + coeff(inx) * x ^ (inx - 1)n    n    Next inxn    n    polynomial_value = rtn_valuennEnd FunctionnnnPublic Function date_to_long_array(date_array() As Date) As Long()nn    Dim inx As Integern    Dim rtn_array() As Longn    n    n    ReDim rtn_array(LBound(date_array) To UBound(date_array)) As Longn    n    For inx = LBound(date_array) To UBound(date_array)n        n        rtn_array(inx) = CLng(date_array(inx))n    n    Next inxn    n    date_to_long_array = rtn_arrayn    nnEnd FunctionnnnnPublic Sub push_back_clsSABRSurface(an_array() As clsSABRSurface, an_obj As clsSABRSurface)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End Ifn    nnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsSABRSurfacen    n    Set an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_clsSABRSurface"nnEnd SubnnPublic Sub push_back_clsDoubleArray(an_array() As clsDoubleArray, an_obj As clsDoubleArray)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsDoubleArrayn    n    Set an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_clsDblArray"nnEnd SubnPublic Sub push_back_clsPlExplainComponent(an_array() As clsPlExplainComponent, an_obj As clsPlExplainComponent)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsPlExplainComponentn    n    Set an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_clsPlExplainComponent"nnEnd Subnn'=====================================n' Sub: theta_adjustmentn' Desc: Adjust 1 year theta to represent 1 business day thetan'=====================================nPublic Sub theta_adjustment(ByRef greeks As clsGreeks, ByVal from_date As Date, ByVal to_date As Date)n    n    Dim days_between As Integern    nOn Error Resume Nextnn    days_between = get_business_days(from_date, to_date)nn    If Err.number = 0 Thenn    nOn Error GoTo ErrorHandlern    n        greeks.theta = greeks.theta * days_between / 250n    n    Elsen        n        greeks.theta = greeks.theta * (to_date - from_date) / 365n    n    End Ifn    n     'greeks.theta = greeks.theta / 365nn    Exit Subn    nErrorHandler:nn    raise_err "theta_adjustment", Err.descriptionnnnEnd Subnnnn'Public Function cliquet_performance(local_floor() As Double, local_cap() As Double, fixing_value() As Double) As Doublen'Public Function cliquet_performance(local_floor As Variant, local_cap As Variant, fixing_value As Variant) As DoublenPublic Function cliquet_performance(local_floor_in As Range, local_cap_in As Range, fixing_value_in As Range) As Doublen    n    Dim local_floor() As Doublen    Dim local_cap() As Doublen    Dim fixing_value() As Doublenn    Dim rtn_value As Doublen    Dim array_size As Longn    Dim floor_size As Longn    Dim cap_size As Longn    Dim l_floor As Doublen    Dim l_cap As Doublen    Dim inx As Longn    Dim prev_fixing As Doublen    n    nOn Error GoTo ErrorHandlernn    local_floor = range_to_array(local_floor_in)n    local_cap = range_to_array(local_cap_in)n    fixing_value = range_to_array(fixing_value_in)n    n    array_size = UBound(fixing_value) - LBound(fixing_value) + 1n    floor_size = UBound(local_floor) - LBound(local_floor) + 1n    cap_size = UBound(local_cap) - LBound(local_cap) + 1n    n    If array_size <= 2 Or floor_size < 1 Or cap_size < 1 Thenn    n        rtn_value = 0n        n    Elsen    n        prev_fixing = fixing_value(LBound(fixing_value))n        l_floor = local_floor(LBound(local_floor))n        l_cap = local_floor(LBound(local_cap))n    n        For inx = LBound(fixing_value) + 1 To UBound(fixing_value)n        n            If fixing_value(inx) > 0 Thenn            n                If UBound(local_floor) >= inx Thenn                n                    l_floor = local_floor(inx)n                    n                End Ifn                n                If UBound(local_cap) >= inx Thenn                n                    l_cap = local_cap(inx)n                    n                End Ifn                n                rtn_value = rtn_value + max(min(fixing_value(inx) / prev_fixing - 1, l_cap), l_floor)n                prev_fixing = fixing_value(inx)n            n            Elsen            n                Exit Forn                n            End Ifn        n        Next inxn    n    End Ifn    n    cliquet_performance = rtn_valuenn    Exit Functionn    nErrorHandler:nn    raise_err "calculate_previous_performance"nnEnd FunctionnnnPublic Sub push_back_market(an_array() As clsMarket, an_obj As clsMarket)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsMarketn    n    Set an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_market"nnEnd Subnn'Public Sub push_back_rate(an_array() As clsRateCurve, an_obj As clsRateCurve)n'n'n'    Dim initial_lbound As Integern'    Dim initial_ubound As Integern'n'    'Check if the array is initializedn'On Error Resume Nextn'    Dim temp_inx As Integern'    temp_inx = UBound(an_array)n'    If (Err.number = 9) Or temp_inx < 0 Thenn'        initial_lbound = 1n'        initial_ubound = 0n'    Elsen'        initial_lbound = LBound(an_array)n'        initial_ubound = UBound(an_array)n'    End Ifn'n'On Error GoTo ErrorHandlern'n'    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsRateCurven'n'    Set an_array(UBound(an_array)) = an_objn'n'    Exit Subn'n'ErrorHandler:n'n'    raise_err "push_back_rate"n'n'End SubnnPublic Function get_array_size_clsgreeks(an_array() As clsGreeks) As Integern    n    Dim rtn_value As Integern    nOn Error Resume Nextn    n    rtn_value = UBound(an_array) - LBound(an_array) + 1n    If Err.number = 9 Or rtn_value < 0 Thenn        rtn_value = 0n    End Ifn    n    n    get_array_size_clsgreeks = rtn_valuen    nnEnd FunctionnnnPublic Function get_array_size_clsJob(an_array() As clsJob) As Integern    n    Dim rtn_value As Integern    nOn Error Resume Nextn    n    rtn_value = UBound(an_array) - LBound(an_array) + 1n    If Err.number = 9 Or rtn_value < 0 Thenn        rtn_value = 0n    End Ifn    n    n    get_array_size_clsJob = rtn_valuen    nnEnd FunctionnPublic Function get_array_size_clsAcDealTicket(an_array() As clsACDealTicket) As Integern    n    Dim rtn_value As Integern    nOn Error Resume Nextn    n    rtn_value = UBound(an_array) - LBound(an_array) + 1n    If Err.number = 9 Or rtn_value < 0 Thenn        rtn_value = 0n    End Ifn    n    n    get_array_size_clsAcDealTicket = rtn_valuen    nnEnd FunctionnnPublic Function get_array_size_clsCliquetDealTicket(an_array() As clsCliquetDealTicket) As Longn    n    Dim rtn_value As Longn    nOn Error Resume Nextn    n    rtn_value = UBound(an_array) - LBound(an_array) + 1n    If Err.number = 9 Or rtn_value < 0 Thenn        rtn_value = 0n    End Ifn    n    n    get_array_size_clsCliquetDealTicket = rtn_valuen    nnEnd FunctionnnPublic Function get_array_size_clsVanillaOption(an_array() As clsVanillaOption) As Longn    n    Dim rtn_value As Longn    nOn Error Resume Nextn    n    rtn_value = UBound(an_array) - LBound(an_array) + 1n    If Err.number = 9 Or rtn_value < 0 Thenn        rtn_value = 0n    End Ifn    n    n    get_array_size_clsVanillaOption = rtn_valuen    nnEnd FunctionnnPublic Function get_array_size_clsQuote(the_array() As clsQuote) As Integern    n    Dim rtn_value As Integern    nOn Error Resume Nextnn    rtn_value = UBound(the_array)n    n    If Err.number = 9 Thenn        rtn_value = 0n    End Ifn    n    n     get_array_size_clsQuote = rtn_valuennEnd Functionnn'--------------------------n' mdl_common_ext_2n'--------------------------nPublic Sub push_back_clsSabrParameter(an_array() As clsSabrParameter, an_obj As clsSabrParameter)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsSabrParametern    n    Set an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_clsSabrParameter"nnEnd SubnPublic Sub push_back_clsAutocallSchedule(an_array() As clsAutocallSchedule, an_obj As clsAutocallSchedule)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsAutocallSchedulen    n    Set an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_clsAutocallSchedule"nnEnd SubnnPublic Sub push_back_clsjob(an_array() As clsJob, an_obj As clsJob)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsJobn    n    Set an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_clsjob"nnEnd SubnPublic Sub push_back_clsquote(an_array() As clsQuote, an_obj As clsQuote)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsQuoten    n    Set an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_clsquote"nnEnd SubnPublic Sub push_back_greek(an_array() As clsGreeks, an_obj As clsGreeks)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = UBound(an_array)n    If (Err.number = 9) Or temp_inx < 0 Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsGreeksn    n    Set an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_greek"nnEnd SubnnPublic Sub push_back_vanilla(an_array() As clsVanillaOption, an_obj As clsVanillaOption)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = LBound(an_array)n    If (Err.number = 9) Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsVanillaOptionn    n    Set an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back"nnEnd SubnnnnPublic Sub push_back_clsSwapSchedule(an_array() As clsSwapSchedule, an_obj As clsSwapSchedule)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = LBound(an_array)n    If (Err.number = 9) Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsSwapSchedulen    n    Set an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_clsSwapSchedule"nnEnd SubnPublic Sub push_back_clsAcDealTicket(an_array() As clsACDealTicket, an_obj As clsACDealTicket)nnn    Dim initial_lbound As Integern    Dim initial_ubound As Integern    n    'Check if the array is initializednOn Error Resume Nextn    Dim temp_inx As Integern    temp_inx = LBound(an_array)n    If (Err.number = 9) Thenn        initial_lbound = 1n        initial_ubound = 0n    Elsen        initial_lbound = LBound(an_array)n        initial_ubound = UBound(an_array)n    End IfnnOn Error GoTo ErrorHandlernn    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsACDealTicketn    n    Set an_array(UBound(an_array)) = an_objn    n    Exit Subn    nErrorHandler:nn    raise_err "push_back_clsAcDealTicket"nnEnd SubnnPublic Function find_com_addIn() As Objectnn    Dim cai As COMAddInn    Dim obj As Objectn    n    For Each cai In Application.COMAddInsn        n        If InStr(cai.description, "SP Legacy System (COM Add-in Helper)") Thenn            Set obj = cai.Objectn            Exit Fornn        End Ifn    Nextn    n    Set find_com_addIn = objnnEnd FunctionnnPublic Sub com_test()n    n    Dim com_obj As Objectn    Dim rtn_value As Booleann    n    Dim the_value As Doublen    Dim asset_code As Stringn    Dim c_price(2) As Doublen    Dim i_price(2) As Doublen    Dim yyyymmdd As Stringn    n    Set com_obj = find_com_addInn    n    asset_code = "IO122713438D"n    yyyymmdd = "20130903"n    c_price(0) = 100n    c_price(1) = 100n    i_price(0) = 100n    i_price(1) = 100n    n    n    rtn_value = com_obj.getValue(the_value, asset_code, c_price, i_price, yyyymmdd)nnEnd SubnSub TestDnaComAddIn()n    Dim cai As COMAddInn    Dim obj As Objectn    For Each cai In Application.COMAddInsn        ' Could check cai.Connect to see if it is loaded.n        Debug.Print cai.description, cai.GUIDn        If InStr(cai.description, "MyTitle (COM Add-in Helper)") Thenn            Set obj = cai.Objectn            If obj Is Nothing Thenn              Debug.Print "ObjNothing"n            Elsen              Debug.Print obj.SayHello(), obj.ActiveCell3n            End Ifn        End Ifn    NextnEnd Subn
+Option Explicit
+
+Public ErrObject As New clsError
+
+Public business_days_list() As Date
+
+
+
+
+'Private Declare Function GetCurrentProcessId Lib "kernel32" () As Long
+
+Public Function get_process_id()
+    
+    get_process_id = GetCurrentProcessId
+
+End Function
+
+Public Function yyyymmdd_to_date(yyyymmdd As String) As Date
+
+    Dim rtn_date As Date
+    
+On Error GoTo ErrorHandler
+
+    If CDec(yyyymmdd) < 0 Then
+    
+        Err.Raise vbObjectError + 1000, , "Invalid date type"
+        
+    End If
+    
+    If Len(yyyymmdd) <> 8 Then
+    
+        Err.Raise vbObjectError + 1000, , "Invalid date type"
+        
+    End If
+        
+    
+    rtn_date = CDate(Left(yyyymmdd, 4) & "/" & Mid(yyyymmdd, 5, 2) & "/" & Right(yyyymmdd, 2))
+    
+    yyyymmdd_to_date = rtn_date
+    
+    Exit Function
+    
+ErrorHandler:
+
+   raise_err "yyyymmdd_to_date:", Err.description
+
+End Function
+
+Public Function linear_interpolation_form(x1 As Double, x2 As Double, y1 As Double, y2 As Double, x As Double) As Double
+
+    Dim y As Double
+    
+    y = ((x1 - x) * y2 + (x - x2) * y1) / (x1 - x2)
+    
+    linear_interpolation_form = y
+
+End Function
+
+Public Function tqbilin(x() As Double, y() As Double, z() As Double, p() As Double) As Double
+    
+    Dim zp(1) As Double
+
+    zp(0) = lin(x(0), z(0), x(2), z(2), p(0))
+    zp(1) = lin(x(1), z(1), x(3), z(3), p(0))
+    tqbilin = Sqr(lin(y(0), zp(0) ^ 2, y(1), zp(1) ^ 2, p(1)))
+
+End Function
+
+Public Function bilin(x() As Double, y() As Double, z() As Double, p() As Double) As Double
+    
+    Dim zp(1) As Double
+
+    zp(0) = lin(x(0), z(0), x(2), z(2), p(0))
+    zp(1) = lin(x(1), z(1), x(3), z(3), p(0))
+    bilin = lin(y(0), zp(0), y(1), zp(1), p(1))
+
+End Function
+
+Public Function lin(x1 As Double, y1 As Double, x2 As Double, y2 As Double, x As Double) As Double
+
+    lin = (y2 - y1) / (x2 - x1) * (x - x1) + y1
+
+End Function
+
+Public Function find_location_date(abscissa() As Date, x As Date) As Integer
+
+    Dim inx_up As Integer
+    Dim inx_low As Integer
+    Dim inx_mid As Integer
+
+    Dim rtn_inx As Integer
+
+On Error GoTo ErrorHandler
+
+    inx_low = LBound(abscissa) - 1
+    inx_up = UBound(abscissa) + 1
+
+    Do While inx_up - inx_low > 1
+
+        inx_mid = Int((inx_up + inx_low) / 2)
+
+        If x >= abscissa(inx_mid) Then
+
+            inx_low = inx_mid
+
+        Else
+
+            inx_up = inx_mid
+
+        End If
+
+    Loop
+
+
+    If x = abscissa(LBound(abscissa)) Then
+
+        rtn_inx = LBound(abscissa)
+
+    ElseIf x = abscissa(UBound(abscissa)) Then
+
+        rtn_inx = UBound(abscissa) - 1
+
+    Else
+
+        rtn_inx = inx_low
+
+    End If
+
+
+    find_location_date = rtn_inx
+
+    Exit Function
+
+ErrorHandler:
+
+    Err.source = "find_location" & Err.source
+'    DBDisConnector
+    Err.Raise Err.number, Err.source
+
+ End Function
+ 
+ 
+
+
+Public Function find_location(abscissa() As Double, x As Double) As Integer
+
+    Dim inx_up As Integer
+    Dim inx_low As Integer
+    Dim inx_mid As Integer
+    
+    Dim rtn_inx As Integer
+    
+On Error GoTo ErrorHandler
+    
+    inx_low = LBound(abscissa) - 1
+    inx_up = UBound(abscissa) + 1
+    
+    Do While inx_up - inx_low > 1
+    
+        inx_mid = Int((inx_up + inx_low) / 2)
+        
+        If x >= abscissa(inx_mid) Then
+        
+            inx_low = inx_mid
+        
+        Else
+            
+            inx_up = inx_mid
+            
+        End If
+
+    Loop
+    
+    
+    If x = abscissa(LBound(abscissa)) Then
+    
+        rtn_inx = LBound(abscissa)
+        
+    ElseIf x = abscissa(UBound(abscissa)) Then
+        
+        rtn_inx = UBound(abscissa) - 1
+        
+    Else
+    
+        rtn_inx = inx_low
+    
+    End If
+    
+    
+    find_location = rtn_inx
+    
+    Exit Function
+    
+ErrorHandler:
+
+    Err.source = "find_location" & Err.source
+'    DBDisConnector
+    Err.Raise Err.number, Err.source
+    
+ End Function
+ Public Function find_location_long(abscissa() As Long, x As Long) As Integer
+
+    Dim inx_up As Integer
+    Dim inx_low As Integer
+    Dim inx_mid As Integer
+    
+    Dim rtn_inx As Integer
+    
+On Error GoTo ErrorHandler
+    
+    inx_low = LBound(abscissa) - 1
+    inx_up = UBound(abscissa) + 1
+    
+    Do While inx_up - inx_low > 1
+    
+        inx_mid = Int((inx_up + inx_low) / 2)
+        
+        If x >= abscissa(inx_mid) Then
+        
+            inx_low = inx_mid
+        
+        Else
+            
+            inx_up = inx_mid
+            
+        End If
+
+    Loop
+    
+    
+    If x = abscissa(LBound(abscissa)) Then
+    
+        rtn_inx = LBound(abscissa)
+        
+    ElseIf x = abscissa(UBound(abscissa)) Then
+        
+        rtn_inx = UBound(abscissa) - 1
+        
+    Else
+    
+        rtn_inx = inx_low
+    
+    End If
+    
+    
+    find_location_long = rtn_inx
+    
+    Exit Function
+    
+ErrorHandler:
+
+    Err.source = "find_location" & Err.source
+'    DBDisConnector
+    Err.Raise Err.number, Err.source
+    
+ End Function
+Public Function find_location_wksheet(abscissa As Range, x As Double) As Integer
+
+    Dim abscissa_arr() As Double
+    
+    abscissa_arr = range_to_array(abscissa, 1)
+    
+    Dim rtn_inx As Integer
+    
+On Error GoTo ErrorHandler
+    
+    rtn_inx = find_location(abscissa_arr, x)
+    
+    
+    find_location_wksheet = rtn_inx
+    
+    Exit Function
+    
+ErrorHandler:
+
+    Err.source = "find_location" & Err.source
+'    DBDisConnector
+    Err.Raise Err.number, Err.source
+    
+ End Function
+
+'#####################
+' Error Message
+'#####################
+
+Public Function raise_err(function_name As String, Optional description As String = "") As ErrObject
+
+    If UCase(Left(Err.description, 5)) = "[BIZ]" Then
+    
+        MsgBox ErrObject.description
+        Resume Next
+    
+    End If
+    
+    If ErrObject Is Nothing Then
+        ErrObject = New clsError
+    End If
+
+   ErrObject.setError ErrObject.number, function_name & Chr(13) & ErrObject.source, description & Chr(13) & ErrObject.description
+       Err.Raise ErrObject.number
+    
+End Function
+'
+'Public Sub temp()
+'
+'    Dim a As Date
+'
+'    a = 0
+'
+'
+'
+'End Sub
+
+    
+Public Function add_month(in_date As Date, Optional months As Integer = 1) As Date
+
+On Error GoTo ErrorHandler
+
+    Dim rtn_date As Date
+    
+    rtn_date = DateAdd("m", months, in_date)
+    add_month = rtn_date
+    
+    Exit Function
+    
+ErrorHandler:
+    
+    raise_err "add_month"
+
+End Function
+
+Public Function check_dynamic_array_double(an_array() As Double) As Boolean
+
+    Dim rtn_value As Boolean
+    Dim inx As Integer
+    
+    rtn_value = True
+    
+On Error Resume Next
+    
+    inx = LBound(an_array)
+    
+    If Err.number = 9 Then
+    
+        rtn_value = False
+        
+    Else
+    
+        rtn_value = True
+        
+    End If
+    
+    check_dynamic_array_double = rtn_value
+
+
+End Function
+
+Public Function check_dynamic_array_long(an_array() As Long) As Boolean
+
+    Dim rtn_value As Boolean
+    Dim inx As Integer
+    
+    rtn_value = True
+    
+On Error Resume Next
+    
+    inx = LBound(an_array)
+    
+    If Err.number = 9 Then
+    
+        rtn_value = False
+        
+    Else
+    
+        rtn_value = True
+        
+    End If
+    
+    check_dynamic_array_long = rtn_value
+
+
+End Function
+
+Public Function check_dynamic_array_int(an_array() As Integer) As Boolean
+
+    Dim rtn_value As Boolean
+    Dim inx As Integer
+    
+    rtn_value = True
+    
+On Error Resume Next
+    
+    inx = LBound(an_array)
+    
+    If Err.number = 9 Then
+    
+        rtn_value = False
+        
+    Else
+    
+        rtn_value = True
+        
+    End If
+    
+    check_dynamic_array_int = rtn_value
+
+
+End Function
+
+
+Public Sub show_error()
+
+    MsgBox ErrObject.description & Chr(13) & Chr(13) & ErrObject.source
+    ErrObject.clear
+
+
+End Sub
+
+Public Function initialized_dynamic_array(an_array() As Double) As Boolean
+
+    Dim rtn_value As Boolean
+    Dim temp As Variant
+    
+On Error Resume Next
+
+    temp = an_array(LBound(an_array))
+    
+    If Err.number = 9 Then
+    
+        rtn_value = False
+        
+    Else
+    
+        rtn_value = True
+        
+    End If
+    
+    
+    initialized_dynamic_array = rtn_value
+
+End Function
+
+
+
+Public Sub test___()
+
+Dim l_floor(3) As Double
+Dim l_cap(3) As Double
+Dim fixing(3) As Double
+
+l_floor(0) = -0.7
+l_floor(1) = -0.7
+l_floor(2) = -0.7
+
+l_cap(0) = 0.2
+l_cap(1) = 0.2
+l_cap(2) = 0.2
+
+fixing(0) = 241.5
+fixing(1) = 250
+fixing(2) = 255.5
+
+'cliquet_performance l_floor, l_cap, fixing
+
+
+End Sub
+
+Public Function date_to_array_long(in_array() As Date, Optional base_index As Integer = 0) As Long()
+    
+    Dim rtn_array() As Long
+    Dim inx As Long
+    
+    ReDim rtn_array(base_index To UBound(in_array) + base_index - 1) As Long
+       
+    For inx = LBound(rtn_array) To UBound(rtn_array)
+    
+        rtn_array(inx) = CLng(in_array(inx + 1 - base_index))
+    
+    Next inx
+    
+    date_to_array_long = rtn_array
+
+End Function
+
+Public Function double_to_array(in_array() As Double, Optional base_index As Integer = 0) As Double()
+    
+    Dim rtn_array() As Double
+    Dim inx As Long
+    
+    ReDim rtn_array(base_index To UBound(in_array) + base_index - 1) As Double
+       
+    For inx = LBound(rtn_array) To UBound(rtn_array)
+    
+        rtn_array(inx) = in_array(inx + 1 - base_index)
+    
+    Next inx
+    
+    double_to_array = rtn_array
+
+End Function
+
+
+Public Function range_to_array_long(in_range As Range, Optional base_index As Integer = 0) As Long()
+    
+    Dim Direction As Boolean ' true = row, false= column
+    Dim rtn_array() As Long
+    Dim inx As Long
+    
+    If in_range.Columns.count > in_range.Rows.count Then
+    
+        Direction = False
+        
+    Else
+        Direction = True
+        
+    End If
+    
+    If Direction Then
+    
+        ReDim rtn_array(base_index To in_range.Rows.count + base_index - 1) As Long
+        
+    Else
+    
+        ReDim rtn_array(base_index To in_range.Columns.count + base_index - 1) As Long
+        
+    End If
+        
+    For inx = LBound(rtn_array) To UBound(rtn_array)
+    
+        If Direction Then
+         
+            rtn_array(inx) = in_range.Cells(inx + 1 - base_index, 1)
+            
+        Else
+        
+            rtn_array(inx) = in_range.Cells(1, inx + 1 - base_index)
+            
+        End If
+    
+    
+    Next inx
+    
+    range_to_array_long = rtn_array
+
+End Function
+
+Public Function range_to_array_date(in_range As Range, Optional base_index As Integer = 0) As Date()
+    
+    Dim Direction As Boolean ' true = row, false= column
+    Dim rtn_array() As Date
+    Dim inx As Long
+    
+    If in_range.Columns.count > in_range.Rows.count Then
+    
+        Direction = False
+        
+    Else
+        Direction = True
+        
+    End If
+    
+    If Direction Then
+    
+        ReDim rtn_array(base_index To in_range.Rows.count + base_index - 1) As Date
+        
+    Else
+    
+        ReDim rtn_array(base_index To in_range.Columns.count + base_index - 1) As Date
+        
+    End If
+        
+    For inx = LBound(rtn_array) To UBound(rtn_array)
+    
+        If Direction Then
+         
+            rtn_array(inx) = in_range.Cells(inx + 1 - base_index, 1)
+            
+        Else
+        
+            rtn_array(inx) = in_range.Cells(1, inx + 1 - base_index)
+            
+        End If
+    
+    
+    Next inx
+    
+    range_to_array_date = rtn_array
+
+End Function
+Public Function range_to_array_2d(in_range As Range, Optional initial_index As Integer = 0, Optional transpose As Boolean = False) As Double()
+    
+
+    Dim rtn_array() As Double
+    Dim inx As Long
+    Dim jnx As Integer
+    
+    
+    If transpose Then
+    
+        ReDim rtn_array(initial_index To in_range.Columns.count + initial_index - 1 _
+                      , initial_index To in_range.Rows.count + initial_index - 1) As Double
+        
+    Else
+    
+        ReDim rtn_array(initial_index To in_range.Rows.count + initial_index - 1 _
+                       , initial_index To in_range.Columns.count + initial_index - 1) As Double
+        
+    End If
+        
+    For inx = LBound(rtn_array, 1) To UBound(rtn_array, 1)
+        For jnx = LBound(rtn_array, 2) To UBound(rtn_array, 2)
+    
+            If transpose Then
+             
+                rtn_array(inx, jnx) = in_range.Cells(jnx + 1 - initial_index, inx + 1 - initial_index)
+                
+            Else
+            
+                rtn_array(inx, jnx) = in_range.Cells(inx + 1 - initial_index, jnx + 1 - initial_index)
+                
+            End If
+            
+        Next jnx
+    
+    
+    Next inx
+    
+    range_to_array_2d = rtn_array
+
+End Function
+
+Public Function range_to_array(in_range As Range, Optional base_index As Integer = 0) As Double()
+    
+    Dim Direction As Boolean ' true = row, false= column
+    Dim rtn_array() As Double
+    Dim inx As Long
+    
+    If in_range.Columns.count > in_range.Rows.count Then
+    
+        Direction = False
+        
+    Else
+        Direction = True
+        
+    End If
+    
+    If Direction Then
+    
+        ReDim rtn_array(base_index To in_range.Rows.count + base_index - 1) As Double
+        
+    Else
+    
+        ReDim rtn_array(base_index To in_range.Columns.count + base_index - 1) As Double
+        
+    End If
+        
+    For inx = LBound(rtn_array) To UBound(rtn_array)
+    
+        If Direction Then
+         
+            rtn_array(inx) = in_range.Cells(inx + 1 - base_index, 1)
+            
+        Else
+        
+            rtn_array(inx) = in_range.Cells(1, inx - base_index + 1)
+            
+        End If
+    
+    
+    Next inx
+    
+    range_to_array = rtn_array
+
+End Function
+
+
+
+
+
+
+'###################################################################################
+' Author: YK Jeon
+'###################################################################################
+
+Public Function ToBinary(ByVal n As Double) As String
+
+'This function return the binary expansion of N where N is natural number - ykjeon
+
+Dim temp As String
+
+On Error GoTo ErrorHandler
+
+    If Int(n) <> n Or n < 0 Then
+        MsgBox "INPUT MUST BE A NONNEGATIVE INTEGER"
+        Exit Function
+        
+    End If
+    
+    temp = ""
+    
+    Do
+    
+        temp = CStr(n Mod 2) & temp
+
+        n = n \ 2
+
+    Loop While n > 0
+    
+    ToBinary = temp
+    
+Exit Function
+
+ErrorHandler:
+    
+    MsgBox "FAIL IN BINARY CONVERSION"
+    Exit Function
+
+End Function
+
+Public Function DigitConversion( _
+ByVal n As Double, _
+ByVal BaseNum As Long) As String
+
+Dim temp As String
+
+On Error GoTo ErrorHandler
+
+    If Int(n) <> n Or n < 0 Then
+    
+        MsgBox "INPUT MUST BE A NONNEGATIVE INTEGER"
+        Exit Function
+        
+    Else
+    
+        If BaseNum = 1 Then
+        
+            DigitConversion = "-1"
+            
+        Else
+    
+            temp = ""
+            
+            Do
+            
+                temp = CStr(n Mod BaseNum) & temp
+        
+                n = n \ BaseNum
+        
+            Loop While n > 0
+            
+            DigitConversion = temp
+        
+        End If
+    
+    End If
+    
+Exit Function
+
+ErrorHandler:
+    
+    MsgBox "FAIL IN DIGIT CONVERSION"
+    Exit Function
+
+End Function
+
+Public Sub ReturnPermutator( _
+ByVal Dimension As Long, _
+ByVal BaseNum As Long, _
+ByRef PermutArray() As Long)
+
+Dim i As Long
+Dim j As Long
+
+Dim temp As Long
+Dim Strtemp As String
+
+    temp = BaseNum ^ (Dimension) - 1
+
+    ReDim PermutArray(0 To temp, 1 To Dimension) As Long
+    
+    For i = 0 To temp
+    
+        Strtemp = StrReverse(DigitConversion(i, BaseNum))
+        
+        For j = 1 To Len(Strtemp)
+        
+            PermutArray(i, j) = CLng(Mid(Strtemp, j, 1))
+        
+        Next j
+        
+        For j = Len(Strtemp) + 1 To Dimension
+        
+            PermutArray(i, j) = 0
+        
+        Next j
+
+    Next i
+
+End Sub
+
+
+Public Function Summation(ByRef values() As Double) As Double
+
+Dim IndexMax As Long
+Dim IndexMin As Long
+Dim i As Integer
+Dim temp As Double
+    
+    IndexMin = LBound(values)
+    IndexMax = UBound(values)
+    temp = 0
+    
+    For i = IndexMin To IndexMax
+    
+        temp = temp + values(i)
+    
+    Next i
+    
+    Summation = temp
+
+End Function
+
+Public Function max(ByVal x As Double, ByVal y As Double) As Double
+
+    max = (x + y + Abs(x - y)) * 0.5
+
+End Function
+
+Public Function min(ByVal x As Double, ByVal y As Double) As Double
+
+    'Min = x + y - Max(x, y)
+    min = (x + y - Abs(x - y)) * 0.5
+
+End Function
+
+Public Function max_date(ByVal x As Date, ByVal y As Date) As Date
+
+    max_date = (x + y + Abs(x - y)) * 0.5
+
+End Function
+Public Function min_date(ByVal x As Date, ByVal y As Date) As Date
+
+    min_date = (x + y - Abs(x - y)) * 0.5
+
+End Function
+
+Public Function ReturnMax(ByRef values() As Double) As Double
+
+Dim IndexMax As Long
+Dim IndexMin As Long
+Dim i As Integer
+Dim temp As Double
+    
+    IndexMin = LBound(values)
+    IndexMax = UBound(values)
+    temp = values(IndexMin)
+    
+    If IndexMax = IndexMin Then
+    
+        ReturnMax = values(IndexMin)
+        
+    Else
+    
+        For i = IndexMin + 1 To IndexMax
+        
+            temp = max(temp, values(i))
+        
+        Next i
+        
+        ReturnMax = temp
+        
+    End If
+
+End Function
+
+Public Function ReturnMin(ByRef values() As Double) As Double
+
+Dim IndexMax As Long
+Dim IndexMin As Long
+Dim i As Integer
+Dim temp As Double
+    
+    IndexMin = LBound(values)
+    IndexMax = UBound(values)
+    temp = values(IndexMin)
+    
+    If IndexMax = IndexMin Then
+    
+        ReturnMin = values(IndexMin)
+        
+    Else
+    
+        For i = IndexMin + 1 To IndexMax
+        
+            temp = min(temp, values(i))
+        
+        Next i
+        
+        ReturnMin = temp
+        
+    End If
+
+End Function
+
+Public Function ReturnMinDate(ByRef values() As Date) As Date
+
+Dim IndexMax As Long
+Dim IndexMin As Long
+Dim i As Integer
+Dim temp As Date
+    
+    IndexMin = LBound(values)
+    IndexMax = UBound(values)
+    temp = values(IndexMin)
+    
+    If IndexMax = IndexMin Then
+    
+        ReturnMinDate = values(IndexMin)
+        
+    Else
+    
+        For i = IndexMin + 1 To IndexMax
+        
+            temp = min(temp, values(i))
+        
+        Next i
+        
+        ReturnMinDate = temp
+        
+    End If
+
+End Function
+
+Public Function lReturnMax(ByRef values() As Long) As Long
+
+Dim IndexMax As Long
+Dim IndexMin As Long
+Dim i As Integer
+Dim temp As Double
+    
+    IndexMin = LBound(values)
+    IndexMax = UBound(values)
+    temp = values(IndexMin)
+    
+    If IndexMax = IndexMin Then
+    
+        lReturnMax = values(IndexMin)
+        
+    Else
+    
+        For i = IndexMin + 1 To IndexMax
+        
+            temp = max(temp, values(i))
+        
+        Next i
+        
+        lReturnMax = temp
+        
+    End If
+
+End Function
+
+Public Function lReturnMin(ByRef values() As Long) As Long
+
+Dim IndexMax As Long
+Dim IndexMin As Long
+Dim i As Integer
+Dim temp As Double
+    
+    IndexMin = LBound(values)
+    IndexMax = UBound(values)
+    temp = values(IndexMin)
+    
+    If IndexMax = IndexMin Then
+    
+        lReturnMin = values(IndexMin)
+        
+    Else
+    
+        For i = IndexMin + 1 To IndexMax
+        
+            temp = min(temp, values(i))
+        
+        Next i
+        
+        lReturnMin = temp
+        
+    End If
+
+End Function
+
+Public Function Combin(ByVal n As Long, ByVal m As Long) As Double
+
+Dim i As Long
+Dim k As Long
+Dim temp As Double
+    
+    temp = 1
+
+    If Int(n) <> n Or Int(m) <> m Or n < m Then
+    
+        MsgBox "Input Values for Combination function are not valid"
+        Exit Function
+        
+    Else
+    
+        If m = 0 Or m = n Then
+        
+            Combin = 1
+        
+        ElseIf m = 1 Or n - m = 1 Then
+        
+            Combin = n
+            
+        Else
+        
+            k = max(n - m, m)
+            
+            For i = 0 To n - k - 1
+                
+                temp = temp * (n - i) / (n - k - i)
+            
+            Next i
+            
+            Combin = temp
+                        
+        End If
+        
+    End If
+        
+End Function
+
+Public Sub ReturnTangentVector( _
+ByRef p1() As Double, _
+ByRef p2() As Double, _
+ByRef TangentVector() As Double)
+
+Dim i As Long
+Dim j As Long
+Dim Dimension As Long
+
+    Dimension = UBound(p1(), 1) - LBound(p1(), 1) + 1
+    
+    ReDim TangentVector(1 To Dimension) As Double
+    
+    For i = LBound(p1(), 1) To UBound(p1(), 1)
+    
+        TangentVector(i - LBound(p1(), 1) + 1) = _
+        (p2(i) - p1(i))
+    
+    Next i
+
+End Sub
+
+Public Function ReturnVectorNorm( _
+ByRef p1() As Double, _
+ByRef p2() As Double, _
+Optional ByVal NormIndex As Long = 2) As Double
+
+Dim i As Long
+Dim v() As Double
+
+Dim temp As Double
+
+Dim Dimension As Long
+
+    Dimension = UBound(p1(), 1) - LBound(p1(), 1) + 1
+    
+    ReDim v(1 To Dimension) As Double
+    
+    For i = LBound(p1(), 1) To UBound(p1(), 1)
+    
+        v(i - LBound(p1(), 1) + 1) = Abs(p2(i) - p1(i))
+    
+    Next i
+
+    If NormIndex = 0 Then
+    
+        temp = ReturnMax(v())
+        
+        ReturnVectorNorm = temp
+        
+    Else
+    
+        For i = 1 To Dimension
+        
+            temp = temp + (v(i)) ^ (NormIndex)
+        
+        Next i
+        
+        ReturnVectorNorm = (temp) ^ (1 / NormIndex)
+        
+    End If
+
+End Function
+
+Public Function Sorting( _
+ByRef values() As Variant, _
+ByRef OrderedValues() As Variant, _
+Optional ByVal DataOdering As String = "ASC") As Double
+
+Dim i As Long
+Dim j As Long
+
+Dim IndexMax As Long
+Dim IndexMin As Long
+Dim SwapArray() As Variant
+Dim temp As Variant
+
+On Error GoTo ErrorHandler
+
+    IndexMax = UBound(values)
+    IndexMin = LBound(values)
+    
+    ReDim OrderedValues(IndexMin To IndexMax) As Variant
+    ReDim SwapArray(IndexMin To IndexMax) As Variant
+    
+    For i = IndexMin To IndexMax
+    
+        SwapArray(i) = values(i)
+    
+    Next i
+    
+    For i = IndexMin + 1 To IndexMax
+    
+        temp = values(i)
+        
+        For j = i - 1 To IndexMin Step -1
+    
+            If SwapArray(j) > values(i) Then
+            
+                SwapArray(j + 1) = SwapArray(j)
+                SwapArray(j) = temp
+                
+            End If
+    
+        Next j
+        
+    Next i
+    
+    If LCase(DataOdering) = LCase("ASC") Then
+        
+        For i = IndexMin To IndexMax
+        
+            OrderedValues(i) = SwapArray(i)
+        
+        Next i
+        
+    Else
+    
+        For i = IndexMin To IndexMax
+        
+            OrderedValues(i) = SwapArray(IndexMax - i + IndexMin)
+        
+        Next i
+    
+    End If
+    
+    Sorting = 1
+    
+    Exit Function
+    
+ErrorHandler:
+
+    Sorting = -1
+    
+    Exit Function
+
+End Function
+
+Public Function Moment( _
+ByRef values() As Double, _
+ByVal MomentOrder As Long) As Double
+
+Dim IndexMax As Long
+Dim IndexMin As Long
+Dim i As Long
+Dim temp As Double
+    
+    temp = 0
+    IndexMax = UBound(values)
+    IndexMin = LBound(values)
+    
+    If IndexMax >= IndexMin Then
+    
+        For i = IndexMin To IndexMax
+    
+            temp = temp + values(i) ^ MomentOrder / (IndexMax - IndexMin + 1)
+    
+        Next i
+        
+        Moment = temp
+    
+    Else
+    
+        Moment = -999
+        
+    End If
+
+End Function
+
+Public Function CMoment( _
+ByRef values() As Double, _
+ByVal MomentOrder As Long) As Double
+
+Dim i As Long
+Dim IndexMax As Long
+Dim IndexMin As Long
+Dim temp As Double
+Dim Average As Double
+    
+    temp = 0
+    IndexMax = UBound(values)
+    IndexMin = LBound(values)
+    
+    Average = Moment(values, 1)
+    
+    If MomentOrder = 1 Then
+    
+        CMoment = Average
+    
+    Else
+    
+        If IndexMax > IndexMin Then
+    
+            For i = IndexMin To IndexMax
+        
+                temp = temp + (values(i) - Average) ^ MomentOrder / (IndexMax - IndexMin)
+        
+            Next i
+            
+            CMoment = temp
+            
+        ElseIf IndexMax = IndexMin Then
+        
+            CMoment = temp
+            
+        Else
+        
+            CMoment = -999
+            
+        End If
+        
+    End If
+
+End Function
+
+Public Function ReturnAVG( _
+ByRef values() As Double) As Double
+    
+    ReturnAVG = Moment(values(), 1)
+
+End Function
+
+Public Function ReturnSTDEV( _
+ByRef values() As Double) As Double
+
+Dim temp As Double
+
+    temp = Sqr(CMoment(values(), 2))
+
+    If temp > 0 Then
+
+        ReturnSTDEV = Sqr(CMoment(values(), 2))
+        
+    Else
+    
+        ReturnSTDEV = -1
+        
+    End If
+
+End Function
+
+Public Function ReturnNCSTDEV( _
+ByRef values() As Double) As Double
+
+Dim IndexMax As Long
+Dim IndexMin As Long
+Dim i As Long
+Dim temp As Double
+
+    temp = 0
+    
+    IndexMax = UBound(values)
+    IndexMin = LBound(values)
+    
+    If IndexMax - IndexMin >= 0 Then
+        
+        For i = IndexMin To IndexMax
+    
+            temp = temp + values(i) * values(i) / (IndexMax - IndexMin + 1)
+    
+        Next i
+    
+        ReturnNCSTDEV = Sqr(temp)
+
+    Else
+    
+        ReturnNCSTDEV = -1
+        
+    End If
+
+End Function
+
+Public Function ReturnABSSTDEV( _
+ByRef values() As Double) As Double
+
+Dim i As Long
+Dim IndexMax As Long
+Dim IndexMin As Long
+Dim Average As Double
+Dim temp As Double
+
+    temp = 0
+    
+    IndexMax = UBound(values)
+    IndexMin = LBound(values)
+
+    If IndexMax > IndexMin Then
+    
+        Average = ReturnAVG(values())
+    
+        For i = IndexMin To IndexMax
+    
+            temp = temp + Abs(values(i) - Average) / (IndexMax - IndexMin)
+    
+        Next i
+        
+        ReturnABSSTDEV = temp
+    
+    ElseIf IndexMax = IndexMin Then
+    
+        ReturnABSSTDEV = 0
+        
+    Else
+    
+        ReturnABSSTDEV = -999
+        
+    End If
+
+End Function
+
+Function LogMoment( _
+ByRef PriceArray() As Double, _
+ByVal MomentOrder As Long, _
+Optional ByVal DateOrdering As String = "ASC") As Double
+
+Dim i As Long
+Dim IndexMax As Long
+Dim IndexMin As Long
+Dim LogReturn() As Double
+
+    IndexMax = UBound(PriceArray)
+    IndexMin = LBound(PriceArray)
+        
+    If IndexMax <= IndexMin + 1 Then
+        
+        LogMoment = -999
+        
+        Exit Function
+        
+    Else
+    
+        ReDim LogReturn(IndexMin To IndexMax - 1) As Double
+        
+        If LCase(DateOrdering) = LCase("ASC") Then
+        
+            For i = IndexMin To IndexMax - 1
+                
+                LogReturn(i) = Log(PriceArray(i + 1) / PriceArray(i))
+            
+            Next i
+
+        Else
+        
+            For i = IndexMin To IndexMax - 1
+            
+                LogReturn(i) = Log(PriceArray(i) / PriceArray(i + 1))
+            
+            Next i
+        
+        End If
+            
+        LogMoment = Moment(LogReturn(), MomentOrder)
+        
+    End If
+
+End Function
+
+Function CLogMoment( _
+ByRef PriceArray() As Double, _
+ByVal MomentOrder As Long, _
+Optional ByVal DateOrdering As String = "ASC") As Double
+
+Dim i As Long
+Dim IndexMax As Long
+Dim IndexMin As Long
+Dim LogReturn() As Double
+
+    IndexMax = UBound(PriceArray)
+    IndexMin = LBound(PriceArray)
+        
+    If IndexMax <= IndexMin + 1 Then
+        
+        CLogMoment = -999
+        
+        Exit Function
+        
+    Else
+    
+        ReDim LogReturn(IndexMin To IndexMax - 1) As Double
+        
+        If LCase(DateOrdering) = LCase("ASC") Then
+        
+            For i = IndexMin To IndexMax - 1
+                
+                LogReturn(i) = Log(PriceArray(i + 1) / PriceArray(i))
+            
+            Next i
+
+        Else
+        
+            For i = IndexMin To IndexMax - 1
+            
+                LogReturn(i) = Log(PriceArray(i) / PriceArray(i + 1))
+            
+            Next i
+        
+        End If
+            
+        CLogMoment = CMoment(LogReturn(), MomentOrder)
+        
+    End If
+
+End Function
+
+Function GetDrift( _
+ByRef PriceArray() As Double, _
+Optional ByVal AnnualizeFactor As Long = 252, _
+Optional ByVal DateOrdering As String = "ASC") As Double
+
+    GetDrift = LogMoment(PriceArray(), 1, DateOrdering) * AnnualizeFactor
+
+End Function
+
+Function GetVol( _
+ByRef PriceArray() As Double, _
+Optional ByVal AnnualizeFactor As Long = 252, _
+Optional ByVal DateOrdering As String = "ASC") As Double
+
+    GetVol = Sqr(LogMoment(PriceArray(), 2, DateOrdering) * AnnualizeFactor)
+
+End Function
+
+Function GetCVol( _
+ByRef PriceArray() As Double, _
+Optional ByVal AnnualizeFactor As Long = 252, _
+Optional ByVal DateOrdering As String = "ASC") As Double
+
+    GetCVol = Sqr(CLogMoment(PriceArray(), 2, DateOrdering) * AnnualizeFactor)
+
+End Function
+
+Function GetSkew( _
+ByRef PriceArray() As Double, _
+Optional ByVal DateOrdering As String = "ASC") As Double
+
+    GetSkew = LogMoment(PriceArray(), 3, DateOrdering) / (GetVol(PriceArray(), 1, DateOrdering) ^ 3)
+
+End Function
+
+Function GetCSkew( _
+ByRef PriceArray() As Double, _
+Optional ByVal DateOrdering As String = "ASC") As Double
+
+    GetCSkew = CLogMoment(PriceArray(), 3, DateOrdering) / (GetCVol(PriceArray(), 1, DateOrdering) ^ 3)
+
+End Function
+
+Function GetKurtosis( _
+ByRef PriceArray() As Double, _
+Optional ByVal DateOrdering As String = "ASC") As Double
+
+    GetKurtosis = LogMoment(PriceArray(), 4, DateOrdering) / (GetVol(PriceArray(), 1, DateOrdering) ^ 4)
+
+End Function
+
+Function GetCKurtosis( _
+ByRef PriceArray() As Double, _
+Optional ByVal DateOrdering As String = "ASC") As Double
+
+    GetCKurtosis = CLogMoment(PriceArray(), 4, DateOrdering) / (GetCVol(PriceArray(), 1, DateOrdering) ^ 4)
+
+End Function
+
+Function GetCCORR( _
+ByRef PriceArrayX() As Double, _
+ByRef PriceArrayY() As Double, _
+Optional ByVal DateOrdering As String = "ASC" _
+) As Double
+
+Dim i As Long
+Dim temp As Double
+Dim IndexMax As Long
+Dim IndexMin As Long
+Dim AverageX As Double
+Dim AverageY As Double
+
+    temp = 0
+    IndexMax = UBound(PriceArrayX)
+    IndexMin = LBound(PriceArrayX)
+    
+    If (IndexMax <= IndexMin) Or ((IndexMax - IndexMin) <> (UBound(PriceArrayY(), 1) - LBound(PriceArrayY(), 1))) Then
+    
+        GetCCORR = -999
+            
+        Exit Function
+        
+    Else
+            
+        AverageX = GetDrift(PriceArrayX(), 1, DateOrdering)
+        AverageY = GetDrift(PriceArrayY(), 1, DateOrdering)
+        
+        If LCase(DateOrdering) = LCase("ASC") Then
+        
+            For i = IndexMin To IndexMax - 1
+            
+                temp = temp + _
+                (Log(PriceArrayX(i + 1) / PriceArrayX(i)) - AverageX) * _
+                (Log(PriceArrayY(i + 1) / PriceArrayY(i)) - AverageY) _
+                / (IndexMax - IndexMin - 1)
+            
+            Next i
+        
+        Else
+        
+            For i = IndexMin To IndexMax - 1
+            
+                temp = temp + _
+                (Log(PriceArrayX(i) / PriceArrayX(i + 1)) - AverageX) * _
+                (Log(PriceArrayY(i) / PriceArrayY(i + 1)) - AverageY) _
+                / (IndexMax - IndexMin - 1)
+            
+            Next i
+        
+        End If
+        
+        GetCCORR = temp / (GetCVol(PriceArrayX(), 1, DateOrdering) * GetCVol(PriceArrayY(), 1, DateOrdering))
+        
+    End If
+
+End Function
+
+Function GetCORR( _
+ByRef PriceArrayX() As Double, _
+ByRef PriceArrayY() As Double _
+) As Double
+
+Dim i As Long
+Dim temp As Double
+Dim IndexMax As Long
+Dim IndexMin As Long
+
+    temp = 0
+    IndexMax = UBound(PriceArrayX)
+    IndexMin = LBound(PriceArrayX)
+    
+    If (IndexMax <= IndexMin) Or ((IndexMax - IndexMin) <> (UBound(PriceArrayY(), 1) - LBound(PriceArrayY(), 1))) Then
+    
+        GetCORR = -999
+            
+        Exit Function
+        
+    Else
+        
+        For i = IndexMin To IndexMax - 1
+        
+            temp = temp + _
+            (Log(PriceArrayX(i + 1) / PriceArrayX(i)) * Log(PriceArrayY(i + 1) / PriceArrayY(i))) _
+            / (IndexMax - IndexMin)
+        
+        Next i
+    
+        GetCORR = temp / (GetVol(PriceArrayX(), 1, "ASC") * GetVol(PriceArrayY(), 1, "ASC"))
+        
+    End If
+
+End Function
+
+
+Public Function indicator(condition As Boolean) As Double
+
+    If condition Then
+    
+        indicator = 1
+        
+    Else
+        
+        indicator = 0
+        
+    End If
+
+End Function
+Public Sub push_back_long(an_array() As Long, an_obj As Long, Optional base As Integer = 1)
+
+
+      Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = base
+        initial_ubound = base - 1
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As Long
+    
+    an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_long", Err.description
+
+End Sub
+Public Sub push_back_integer(an_array() As Integer, an_obj As Integer)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As Integer
+    
+    an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    Err.Raise Err.number, "push_back_integer", Err.description
+
+End Sub
+Public Sub push_back_string(an_array() As String, an_obj As String)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As String
+    
+    an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_string"
+
+End Sub
+Public Sub push_back_boolean(an_array() As Boolean, an_obj As Boolean)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As Boolean
+    
+    an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_boolean"
+
+End Sub
+
+Public Sub push_back_double(an_array() As Double, an_obj As Double, Optional base As Integer = 1)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = base
+        initial_ubound = base - 1
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As Double
+    
+    an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_double", Err.description
+
+End Sub
+
+Public Sub push_back_date(an_array() As Date, an_obj As Date)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As Date
+    
+    an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_double"
+
+End Sub
+Public Function get_array_size_long(an_array() As Long) As Integer
+    
+    Dim rtn_value As Integer
+    
+On Error Resume Next
+    
+    rtn_value = UBound(an_array) - LBound(an_array) + 1
+    If Err.number = 9 Or rtn_value < 0 Then
+        rtn_value = 0
+    End If
+    
+    
+    get_array_size_long = rtn_value
+    
+
+End Function
+Public Function get_array_size_integer(an_array() As Integer) As Integer
+    
+    Dim rtn_value As Integer
+    
+On Error Resume Next
+    
+    rtn_value = UBound(an_array) - LBound(an_array) + 1
+    If Err.number = 9 Or rtn_value < 0 Then
+        rtn_value = 0
+    End If
+    
+    
+    get_array_size_integer = rtn_value
+    
+
+End Function
+
+Public Function get_array_size_date(an_array() As Date) As Integer
+    
+    Dim rtn_value As Integer
+    
+On Error Resume Next
+    
+    rtn_value = UBound(an_array) - LBound(an_array) + 1
+    If Err.number = 9 Or rtn_value < 0 Then
+        rtn_value = 0
+    End If
+    
+    
+    get_array_size_date = rtn_value
+    
+
+End Function
+
+Public Function get_array_size_double(an_array() As Double) As Integer
+    
+    Dim rtn_value As Integer
+    
+On Error Resume Next
+    
+    rtn_value = UBound(an_array) - LBound(an_array) + 1
+    If Err.number = 9 Or rtn_value < 0 Then
+        rtn_value = 0
+    End If
+    
+    
+    get_array_size_double = rtn_value
+    
+
+End Function
+
+Public Function get_array_size_string(an_array() As String) As Integer
+    
+    Dim rtn_value As Integer
+    
+On Error Resume Next
+    
+    rtn_value = UBound(an_array) - LBound(an_array) + 1
+    If Err.number = 9 Or rtn_value < 0 Then
+        rtn_value = 0
+    End If
+    
+    
+    get_array_size_string = rtn_value
+    
+
+End Function
+
+
+'---------------------------------------
+' Modified on
+' 2013-10-23
+'---------------------------------------
+
+
+Public Function array_base_zero(in_array() As Double) As Double()
+
+    Dim rtn_array() As Double
+    Dim inx As Integer
+    
+    ReDim rtn_array(0 To get_array_size_double(in_array) - 1) As Double
+    
+    For inx = 0 To get_array_size_double(in_array) - 1
+        rtn_array(inx) = in_array(inx + LBound(in_array))
+    Next inx
+    
+    array_base_zero = rtn_array
+
+End Function
+
+'------------------------------------
+' Subject to improve
+'------------------------------------
+Public Function get_business_days(from_date As Date, to_date As Date) As Integer
+
+    Dim inx As Integer
+    
+    Dim index_from As Integer
+    Dim index_to As Integer
+    
+    index_from = find_location_long(holiday_list__, CLng(from_date))
+    index_to = find_location_long(holiday_list__, CLng(to_date))
+    
+    get_business_days = to_date - from_date - (index_to - index_from) ', holidays__) ', date_initialized__)
+        
+End Function
+
+'Public Function get_business_days_list(from_date As Date, to_date As Date) As Date()
+'
+'    Dim inx As Integer
+'
+'    Dim rtn_array() As Date
+'
+'    Dim index_from As Integer
+'    Dim index_to As Integer
+'
+'    index_from = find_location_date(holiday_list__, from_date)
+'    index_to = find_location_date(holiday_list__, to_date)
+'
+'    get_business_days = to_date - from_date - (index_to - index_from) ', holidays__) ', date_initialized__)
+'
+'End Function
+
+
+' From DB
+Public Function business_days_between(from_date As Date, to_date As Date) As Integer
+
+    Dim rtn_value As Integer
+    
+On Error GoTo ErrorHandler
+
+    DBConnector
+
+    rtn_value = retrieve_business_days_between(from_date, to_date)
+    
+    DBDisConnector
+    
+    business_days_between = rtn_value
+
+    Exit Function
+    
+ErrorHandler:
+
+    DBDisConnector
+
+End Function
+
+
+Public Function polynomial_value_sht(coeff As Range, x As Double) As Double
+    
+    polynomial_value_sht = polynomial_value(range_to_array(coeff, 1), x)
+    
+
+End Function
+
+Public Function polynomial_value(coeff() As Double, x As Double) As Double
+
+    Dim inx As Integer
+    Dim rtn_value As Double
+    
+    rtn_value = 0
+    
+    For inx = 1 To get_array_size_double(coeff)
+    
+        rtn_value = rtn_value + coeff(inx) * x ^ (inx - 1)
+    
+    Next inx
+    
+    polynomial_value = rtn_value
+
+End Function
+
+
+Public Function date_to_long_array(date_array() As Date) As Long()
+
+    Dim inx As Integer
+    Dim rtn_array() As Long
+    
+    
+    ReDim rtn_array(LBound(date_array) To UBound(date_array)) As Long
+    
+    For inx = LBound(date_array) To UBound(date_array)
+        
+        rtn_array(inx) = CLng(date_array(inx))
+    
+    Next inx
+    
+    date_to_long_array = rtn_array
+    
+
+End Function
+
+
+
+Public Sub push_back_clsSABRSurface(an_array() As clsSABRSurface, an_obj As clsSABRSurface)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+    
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsSABRSurface
+    
+    Set an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_clsSABRSurface"
+
+End Sub
+
+Public Sub push_back_clsDoubleArray(an_array() As clsDoubleArray, an_obj As clsDoubleArray)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsDoubleArray
+    
+    Set an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_clsDblArray"
+
+End Sub
+Public Sub push_back_clsPlExplainComponent(an_array() As clsPlExplainComponent, an_obj As clsPlExplainComponent)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsPlExplainComponent
+    
+    Set an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_clsPlExplainComponent"
+
+End Sub
+
+'=====================================
+' Sub: theta_adjustment
+' Desc: Adjust 1 year theta to represent 1 business day theta
+'=====================================
+Public Sub theta_adjustment(ByRef greeks As clsGreeks, ByVal from_date As Date, ByVal to_date As Date)
+    
+    Dim days_between As Integer
+    
+On Error Resume Next
+
+    days_between = get_business_days(from_date, to_date)
+
+    If Err.number = 0 Then
+    
+On Error GoTo ErrorHandler
+    
+        greeks.theta = greeks.theta * days_between / 250
+    
+    Else
+        
+        greeks.theta = greeks.theta * (to_date - from_date) / 365
+    
+    End If
+    
+     'greeks.theta = greeks.theta / 365
+
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "theta_adjustment", Err.description
+
+
+End Sub
+
+
+
+'Public Function cliquet_performance(local_floor() As Double, local_cap() As Double, fixing_value() As Double) As Double
+'Public Function cliquet_performance(local_floor As Variant, local_cap As Variant, fixing_value As Variant) As Double
+Public Function cliquet_performance(local_floor_in As Range, local_cap_in As Range, fixing_value_in As Range) As Double
+    
+    Dim local_floor() As Double
+    Dim local_cap() As Double
+    Dim fixing_value() As Double
+
+    Dim rtn_value As Double
+    Dim array_size As Long
+    Dim floor_size As Long
+    Dim cap_size As Long
+    Dim l_floor As Double
+    Dim l_cap As Double
+    Dim inx As Long
+    Dim prev_fixing As Double
+    
+    
+On Error GoTo ErrorHandler
+
+    local_floor = range_to_array(local_floor_in)
+    local_cap = range_to_array(local_cap_in)
+    fixing_value = range_to_array(fixing_value_in)
+    
+    array_size = UBound(fixing_value) - LBound(fixing_value) + 1
+    floor_size = UBound(local_floor) - LBound(local_floor) + 1
+    cap_size = UBound(local_cap) - LBound(local_cap) + 1
+    
+    If array_size <= 2 Or floor_size < 1 Or cap_size < 1 Then
+    
+        rtn_value = 0
+        
+    Else
+    
+        prev_fixing = fixing_value(LBound(fixing_value))
+        l_floor = local_floor(LBound(local_floor))
+        l_cap = local_floor(LBound(local_cap))
+    
+        For inx = LBound(fixing_value) + 1 To UBound(fixing_value)
+        
+            If fixing_value(inx) > 0 Then
+            
+                If UBound(local_floor) >= inx Then
+                
+                    l_floor = local_floor(inx)
+                    
+                End If
+                
+                If UBound(local_cap) >= inx Then
+                
+                    l_cap = local_cap(inx)
+                    
+                End If
+                
+                rtn_value = rtn_value + max(min(fixing_value(inx) / prev_fixing - 1, l_cap), l_floor)
+                prev_fixing = fixing_value(inx)
+            
+            Else
+            
+                Exit For
+                
+            End If
+        
+        Next inx
+    
+    End If
+    
+    cliquet_performance = rtn_value
+
+    Exit Function
+    
+ErrorHandler:
+
+    raise_err "calculate_previous_performance"
+
+End Function
+
+
+Public Sub push_back_market(an_array() As clsMarket, an_obj As clsMarket)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsMarket
+    
+    Set an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_market"
+
+End Sub
+
+'Public Sub push_back_rate(an_array() As clsRateCurve, an_obj As clsRateCurve)
+'
+'
+'    Dim initial_lbound As Integer
+'    Dim initial_ubound As Integer
+'
+'    'Check if the array is initialized
+'On Error Resume Next
+'    Dim temp_inx As Integer
+'    temp_inx = UBound(an_array)
+'    If (Err.number = 9) Or temp_inx < 0 Then
+'        initial_lbound = 1
+'        initial_ubound = 0
+'    Else
+'        initial_lbound = LBound(an_array)
+'        initial_ubound = UBound(an_array)
+'    End If
+'
+'On Error GoTo ErrorHandler
+'
+'    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsRateCurve
+'
+'    Set an_array(UBound(an_array)) = an_obj
+'
+'    Exit Sub
+'
+'ErrorHandler:
+'
+'    raise_err "push_back_rate"
+'
+'End Sub
+
+Public Function get_array_size_clsgreeks(an_array() As clsGreeks) As Integer
+    
+    Dim rtn_value As Integer
+    
+On Error Resume Next
+    
+    rtn_value = UBound(an_array) - LBound(an_array) + 1
+    If Err.number = 9 Or rtn_value < 0 Then
+        rtn_value = 0
+    End If
+    
+    
+    get_array_size_clsgreeks = rtn_value
+    
+
+End Function
+
+
+Public Function get_array_size_clsJob(an_array() As clsJob) As Integer
+    
+    Dim rtn_value As Integer
+    
+On Error Resume Next
+    
+    rtn_value = UBound(an_array) - LBound(an_array) + 1
+    If Err.number = 9 Or rtn_value < 0 Then
+        rtn_value = 0
+    End If
+    
+    
+    get_array_size_clsJob = rtn_value
+    
+
+End Function
+Public Function get_array_size_clsAcDealTicket(an_array() As clsACDealTicket) As Integer
+    
+    Dim rtn_value As Integer
+    
+On Error Resume Next
+    
+    rtn_value = UBound(an_array) - LBound(an_array) + 1
+    If Err.number = 9 Or rtn_value < 0 Then
+        rtn_value = 0
+    End If
+    
+    
+    get_array_size_clsAcDealTicket = rtn_value
+    
+
+End Function
+
+Public Function get_array_size_clsCliquetDealTicket(an_array() As clsCliquetDealTicket) As Long
+    
+    Dim rtn_value As Long
+    
+On Error Resume Next
+    
+    rtn_value = UBound(an_array) - LBound(an_array) + 1
+    If Err.number = 9 Or rtn_value < 0 Then
+        rtn_value = 0
+    End If
+    
+    
+    get_array_size_clsCliquetDealTicket = rtn_value
+    
+
+End Function
+
+Public Function get_array_size_clsVanillaOption(an_array() As clsVanillaOption) As Long
+    
+    Dim rtn_value As Long
+    
+On Error Resume Next
+    
+    rtn_value = UBound(an_array) - LBound(an_array) + 1
+    If Err.number = 9 Or rtn_value < 0 Then
+        rtn_value = 0
+    End If
+    
+    
+    get_array_size_clsVanillaOption = rtn_value
+    
+
+End Function
+
+Public Function get_array_size_clsQuote(the_array() As clsQuote) As Integer
+    
+    Dim rtn_value As Integer
+    
+On Error Resume Next
+
+    rtn_value = UBound(the_array)
+    
+    If Err.number = 9 Then
+        rtn_value = 0
+    End If
+    
+    
+     get_array_size_clsQuote = rtn_value
+
+End Function
+
+'--------------------------
+' mdl_common_ext_2
+'--------------------------
+Public Sub push_back_clsSabrParameter(an_array() As clsSabrParameter, an_obj As clsSabrParameter)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsSabrParameter
+    
+    Set an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_clsSabrParameter"
+
+End Sub
+Public Sub push_back_clsAutocallSchedule(an_array() As clsAutocallSchedule, an_obj As clsAutocallSchedule)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsAutocallSchedule
+    
+    Set an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_clsAutocallSchedule"
+
+End Sub
+
+Public Sub push_back_clsjob(an_array() As clsJob, an_obj As clsJob)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsJob
+    
+    Set an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_clsjob"
+
+End Sub
+Public Sub push_back_clsquote(an_array() As clsQuote, an_obj As clsQuote)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsQuote
+    
+    Set an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_clsquote"
+
+End Sub
+Public Sub push_back_greek(an_array() As clsGreeks, an_obj As clsGreeks)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = UBound(an_array)
+    If (Err.number = 9) Or temp_inx < 0 Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsGreeks
+    
+    Set an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_greek"
+
+End Sub
+
+Public Sub push_back_vanilla(an_array() As clsVanillaOption, an_obj As clsVanillaOption)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = LBound(an_array)
+    If (Err.number = 9) Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsVanillaOption
+    
+    Set an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back"
+
+End Sub
+
+
+
+Public Sub push_back_clsSwapSchedule(an_array() As clsSwapSchedule, an_obj As clsSwapSchedule)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = LBound(an_array)
+    If (Err.number = 9) Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsSwapSchedule
+    
+    Set an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_clsSwapSchedule"
+
+End Sub
+Public Sub push_back_clsAcDealTicket(an_array() As clsACDealTicket, an_obj As clsACDealTicket)
+
+
+    Dim initial_lbound As Integer
+    Dim initial_ubound As Integer
+    
+    'Check if the array is initialized
+On Error Resume Next
+    Dim temp_inx As Integer
+    temp_inx = LBound(an_array)
+    If (Err.number = 9) Then
+        initial_lbound = 1
+        initial_ubound = 0
+    Else
+        initial_lbound = LBound(an_array)
+        initial_ubound = UBound(an_array)
+    End If
+
+On Error GoTo ErrorHandler
+
+    ReDim Preserve an_array(initial_lbound To initial_ubound + 1) As clsACDealTicket
+    
+    Set an_array(UBound(an_array)) = an_obj
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "push_back_clsAcDealTicket"
+
+End Sub
+
+Public Function find_com_addIn() As Object
+
+    Dim cai As COMAddIn
+    Dim obj As Object
+    
+    For Each cai In Application.COMAddIns
+        
+        If InStr(cai.description, "SP Legacy System (COM Add-in Helper)") Then
+            Set obj = cai.Object
+            Exit For
+
+        End If
+    Next
+    
+    Set find_com_addIn = obj
+
+End Function
+
+Public Sub com_test()
+    
+    Dim com_obj As Object
+    Dim rtn_value As Boolean
+    
+    Dim the_value As Double
+    Dim asset_code As String
+    Dim c_price(2) As Double
+    Dim i_price(2) As Double
+    Dim yyyymmdd As String
+    
+    Set com_obj = find_com_addIn
+    
+    asset_code = "IO122713438D"
+    yyyymmdd = "20130903"
+    c_price(0) = 100
+    c_price(1) = 100
+    i_price(0) = 100
+    i_price(1) = 100
+    
+    
+    rtn_value = com_obj.getValue(the_value, asset_code, c_price, i_price, yyyymmdd)
+
+End Sub
+Sub TestDnaComAddIn()
+    Dim cai As COMAddIn
+    Dim obj As Object
+    For Each cai In Application.COMAddIns
+        ' Could check cai.Connect to see if it is loaded.
+        Debug.Print cai.description, cai.GUID
+        If InStr(cai.description, "MyTitle (COM Add-in Helper)") Then
+            Set obj = cai.Object
+            If obj Is Nothing Then
+              Debug.Print "ObjNothing"
+            Else
+              Debug.Print obj.SayHello(), obj.ActiveCell3
+            End If
+        End If
+    Next
+End Sub

@@ -1,1 +1,197 @@
-Option ExplicitnnPublic no_of_dates As IntegernnPublic eval_date_ As DatennPrivate sabr_param_() As clsSabrParameternnPublic Function bump_fwd(ByVal bump_size As Double) As Double()n    n    Dim inx As Integern    Dim rtn_array() As Doublen    nOn Error GoTo ErrorHandlernn    For inx = 1 To no_of_datesn    n        sabr_param_(inx).forward = sabr_param_(inx).forward + bump_sizen        push_back_double rtn_array, sabr_param_(inx).forwardn    n    Next inxn    n    nnn    bump_fwd = rtn_arrayn    n    Exit Functionn    nErrorHandler:nn    raise_err "clsSABRParamArray.bump_fwd", Err.descriptionn        nnnEnd FunctionnnnPublic Sub set_sabr_param(no_of_array As Integer, sabr_param() As clsSabrParameter)nn    Dim inx As Integern    n    ReDim sabr_param_(1 To no_of_array)n    n    For inx = 1 To no_of_arrayn    n        Set sabr_param_(inx) = sabr_param(inx).copy_objn    n    Next inxn    nnnEnd SubnnPublic Function copy_obj(Optional min_date As Date = 0) As clsSABRParamArraynn    Dim rtn_obj As clsSABRParamArrayn    Dim inx As Integern    Dim tmp_sabr_parameter() As clsSabrParametern    Dim dummy_obj As clsSabrParametern    n    Set rtn_obj = New clsSABRParamArrayn    n    rtn_obj.no_of_dates = 0 'no_of_datesn    rtn_obj.eval_date_ = eval_date_n    n    For inx = 1 To no_of_datesn        n        If sabr_param_(inx).Maturity > min_date Thenn            Set dummy_obj = sabr_param_(inx).copy_obj()n            push_back_clsSabrParameter tmp_sabr_parameter, dummy_objn            rtn_obj.no_of_dates = rtn_obj.no_of_dates + 1n        End Ifn    n    Next inxn    nn    rtn_obj.set_sabr_param rtn_obj.no_of_dates, tmp_sabr_parameternn    Set copy_obj = rtn_objnnEnd FunctionnnPublic Sub initialize(no_of_dates_in As Integer _n                    , Maturity() As Date _n                    , fwd() As Double _n                    , alpha() As Double _n                    , beta As Double _n                    , nu() As Double _n                    , rho() As Double _n                    , atm() As Double _n                    , eval_date As Date _n                    )nn    Dim inx As Integern    nOn Error GoTo ErrorHandlern    eval_date_ = eval_datenn    no_of_dates = no_of_dates_inn    n    If no_of_dates_in > 0 Thenn        ReDim sabr_param_(1 To no_of_dates) As clsSabrParametern        n        For inx = 1 To no_of_datesn        n            Set sabr_param_(inx) = New clsSabrParametern            sabr_param_(inx).initialize fwd(inx), alpha(inx), beta, nu(inx), rho(inx), (Maturity(inx) - eval_date_) / 365, atm(inx), Maturity(inx)n        n        Next inxn    End Ifn    n    Exit Subn    nErrorHandler:nn    raise_err "clsSABRParamArray.initialize", Err.descriptionnnEnd SubnnPublic Function sabr_param(inx As Integer) As clsSabrParameternn          n    Set sabr_param = sabr_param_(inx)nnEnd FunctionnnnnPublic Function maturity_dates_array() As Date()n    n    Dim rtn_array() As Daten    Dim inx As Integern    n    n    For inx = 1 To no_of_datesn        n        push_back_date rtn_array, sabr_param_(inx).Maturityn    n    Next inxn    n    maturity_dates_array = rtn_arrayn    nnEnd FunctionnPublic Function atm_vol_array() As Double()n    n    Dim rtn_array() As Doublen    Dim inx As Integern    n    n    For inx = 1 To no_of_datesn        n        push_back_double rtn_array, sabr_param_(inx).vol_atmn    n    Next inxn    n    atm_vol_array = rtn_arrayn    nnEnd FunctionnnnnPublic Function nu_array() As Double()n    n    Dim rtn_array() As Doublen    Dim inx As Integern    n    n    For inx = 1 To no_of_datesn        n        push_back_double rtn_array, sabr_param_(inx).nun    n    Next inxn    n    nu_array = rtn_arrayn    nnEnd FunctionnnPublic Function rho_array() As Double()n    n    Dim rtn_array() As Doublen    Dim inx As Integern    n    n    For inx = 1 To no_of_datesn        n        push_back_double rtn_array, sabr_param_(inx).rhon    n    Next inxn    n    rho_array = rtn_arrayn    nnEnd Functionn
+Option Explicit
+
+Public no_of_dates As Integer
+
+Public eval_date_ As Date
+
+Private sabr_param_() As clsSabrParameter
+
+Public Function bump_fwd(ByVal bump_size As Double) As Double()
+    
+    Dim inx As Integer
+    Dim rtn_array() As Double
+    
+On Error GoTo ErrorHandler
+
+    For inx = 1 To no_of_dates
+    
+        sabr_param_(inx).forward = sabr_param_(inx).forward + bump_size
+        push_back_double rtn_array, sabr_param_(inx).forward
+    
+    Next inx
+    
+    
+
+
+    bump_fwd = rtn_array
+    
+    Exit Function
+    
+ErrorHandler:
+
+    raise_err "clsSABRParamArray.bump_fwd", Err.description
+        
+
+
+End Function
+
+
+Public Sub set_sabr_param(no_of_array As Integer, sabr_param() As clsSabrParameter)
+
+    Dim inx As Integer
+    
+    ReDim sabr_param_(1 To no_of_array)
+    
+    For inx = 1 To no_of_array
+    
+        Set sabr_param_(inx) = sabr_param(inx).copy_obj
+    
+    Next inx
+    
+
+
+End Sub
+
+Public Function copy_obj(Optional min_date As Date = 0) As clsSABRParamArray
+
+    Dim rtn_obj As clsSABRParamArray
+    Dim inx As Integer
+    Dim tmp_sabr_parameter() As clsSabrParameter
+    Dim dummy_obj As clsSabrParameter
+    
+    Set rtn_obj = New clsSABRParamArray
+    
+    rtn_obj.no_of_dates = 0 'no_of_dates
+    rtn_obj.eval_date_ = eval_date_
+    
+    For inx = 1 To no_of_dates
+        
+        If sabr_param_(inx).Maturity > min_date Then
+            Set dummy_obj = sabr_param_(inx).copy_obj()
+            push_back_clsSabrParameter tmp_sabr_parameter, dummy_obj
+            rtn_obj.no_of_dates = rtn_obj.no_of_dates + 1
+        End If
+    
+    Next inx
+    
+
+    rtn_obj.set_sabr_param rtn_obj.no_of_dates, tmp_sabr_parameter
+
+    Set copy_obj = rtn_obj
+
+End Function
+
+Public Sub initialize(no_of_dates_in As Integer _
+                    , Maturity() As Date _
+                    , fwd() As Double _
+                    , alpha() As Double _
+                    , beta As Double _
+                    , nu() As Double _
+                    , rho() As Double _
+                    , atm() As Double _
+                    , eval_date As Date _
+                    )
+
+    Dim inx As Integer
+    
+On Error GoTo ErrorHandler
+    eval_date_ = eval_date
+
+    no_of_dates = no_of_dates_in
+    
+    If no_of_dates_in > 0 Then
+        ReDim sabr_param_(1 To no_of_dates) As clsSabrParameter
+        
+        For inx = 1 To no_of_dates
+        
+            Set sabr_param_(inx) = New clsSabrParameter
+            sabr_param_(inx).initialize fwd(inx), alpha(inx), beta, nu(inx), rho(inx), (Maturity(inx) - eval_date_) / 365, atm(inx), Maturity(inx)
+        
+        Next inx
+    End If
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    raise_err "clsSABRParamArray.initialize", Err.description
+
+End Sub
+
+Public Function sabr_param(inx As Integer) As clsSabrParameter
+
+          
+    Set sabr_param = sabr_param_(inx)
+
+End Function
+
+
+
+Public Function maturity_dates_array() As Date()
+    
+    Dim rtn_array() As Date
+    Dim inx As Integer
+    
+    
+    For inx = 1 To no_of_dates
+        
+        push_back_date rtn_array, sabr_param_(inx).Maturity
+    
+    Next inx
+    
+    maturity_dates_array = rtn_array
+    
+
+End Function
+Public Function atm_vol_array() As Double()
+    
+    Dim rtn_array() As Double
+    Dim inx As Integer
+    
+    
+    For inx = 1 To no_of_dates
+        
+        push_back_double rtn_array, sabr_param_(inx).vol_atm
+    
+    Next inx
+    
+    atm_vol_array = rtn_array
+    
+
+End Function
+
+
+
+Public Function nu_array() As Double()
+    
+    Dim rtn_array() As Double
+    Dim inx As Integer
+    
+    
+    For inx = 1 To no_of_dates
+        
+        push_back_double rtn_array, sabr_param_(inx).nu
+    
+    Next inx
+    
+    nu_array = rtn_array
+    
+
+End Function
+
+Public Function rho_array() As Double()
+    
+    Dim rtn_array() As Double
+    Dim inx As Integer
+    
+    
+    For inx = 1 To no_of_dates
+        
+        push_back_double rtn_array, sabr_param_(inx).rho
+    
+    Next inx
+    
+    rho_array = rtn_array
+    
+
+End Function

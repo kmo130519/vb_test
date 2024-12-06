@@ -1,1 +1,2012 @@
-Option Explicitnn'Private Declare Function GetTickCount Lib "kernel32.dll" () As LongnnPublic Sub checkboxQuote_Click()nn    If shtACPricer.Range("isQuote") = True Thenn        shtACPricer.Range("asset_code").Cells(1, 2).ClearContentsn        shtACPricer.Range("asset_code").ClearContentsn    Elsen        shtACPricer.Range("asset_code").Cells(1, 2).Formula = "=ELS!B6"n        shtACPricer.Range("asset_code").Formula = "=VLOOKUP(ELS!B6,ELS!A10:AL1000,38,FALSE)"n    End Ifn    nEnd SubnnnPublic Sub checkboxOpenGreeks_Click()n    n    If shtACPricer.Range("chkOpenGreeks") = True Thenn        shtACPricer.Range("chkVega") = Truen        shtACPricer.Range("chkSkew") = Falsen        shtACPricer.Range("chkConv") = Falsen        shtACPricer.Range("chkCorr") = Falsen        shtACPricer.Range("chkRho") = Falsen        shtACPricer.Range("chkStickyStrikeDelta") = Falsen        shtACPricer.Range("chkTermVega") = Falsen        shtACPricer.Range("chkTermSkew") = Falsen        shtACPricer.Range("chkTermConv") = Falsen        shtACPricer.Range("chkDeltaGamma") = Truen        shtACPricer.Range("chkSnapshot") = Falsen        shtACPricer.Range("chkDuration") = Falsen        shtACPricer.Range("chkTheta") = Falsen        shtACPricer.Range("chkVegaPL") = Falsen    Elsen        shtACPricer.Range("chkVega") = Falsen        shtACPricer.Range("chkSkew") = Falsen        shtACPricer.Range("chkConv") = Falsen        shtACPricer.Range("chkCorr") = Falsen        shtACPricer.Range("chkRho") = Falsen        shtACPricer.Range("chkStickyStrikeDelta") = Falsen        shtACPricer.Range("chkTermVega") = Falsen        shtACPricer.Range("chkTermSkew") = Falsen        shtACPricer.Range("chkTermConv") = Falsen        shtACPricer.Range("chkDeltaGamma") = Falsen        shtACPricer.Range("chkSnapshot") = Falsen        shtACPricer.Range("chkDuration") = Falsen        shtACPricer.Range("chkTheta") = Falsen        shtACPricer.Range("chkVegaPL") = Falsen    End Ifn    nEnd Subnnn'----------------------------------------------n' Sub: runn' Called by Usern' Calculate price and greeks for the deal loaded on the screen.n'-----------------------------------------------nPublic Sub cmdCalcPrice_Click()n n'Dim ticknnOn Error GoTo ErrorHandlernCall SET_GLOBALn    'Application.Calculation = xlCalculationManualn    n    'tick = GetTickCountn    n    Dim deal_ticket As clsACDealTicketn    Set deal_ticket = read_ac_deal_ticket()nn    Dim market_set As clsMarketSetn    Set market_set = read_market_setn'    Select Case deal_ticket.CCYn'    Case "KRW": Set market_set = read_market_set("KRW")n'    Case "USD": Set market_set = read_market_set("USD")n'    End Selectn    n    'modify deal_ticket for leverage indices : 2018.7.9n    'modify deal_ticket for the ejectable structure : 2021.11.12n    Set deal_ticket = modify_ac_deal_ticket(deal_ticket, market_set)n                       n    'Call cmd_calc_ac_price(deal_ticket, market_set)n    n    Dim greeks As New clsGreeksn        n    run_ac_pricing_mc greeks, deal_ticket, market_set _n                    , shtACPricer.Range("chkDeltaGamma").value _n                    , shtACPricer.Range("chkStickyMoneynessDeltaGamma").value _n                    , shtACPricer.Range("chkStickyStrikeDelta").value _n                    , shtACPricer.Range("chkCrossGamma").value _n                    , shtACPricer.Range("chkVega").value _n                    , shtACPricer.Range("chkTermVega").value _n                    , shtACPricer.Range("chkSkew").value _n                    , shtACPricer.Range("chkCorr").value _n                    , shtACPricer.Range("chkRho").value _n                    , shtACPricer.Range("chkTheta").value _n                    , shtACPricer.Range("chkLocalCorrelation").valuen                                n    clear_ac_greeksn        n    display_greeks_nd greeks, deal_ticket.no_of_uln        n    Set greeks = Nothingn    n    'tick = GetTickCount - tickn    'Application.Range("A1").value = tickn    n    'Application.Calculation = xlCalculationAutomaticn    n    Exit Subn    nErrorHandler:n    show_errorn    Application.Calculation = xlCalculationAutomaticnnEnd SubnnPrivate Function find_ua(ary_ua() As String, str_ua As String) As Booleann    n    Dim i As Integern    n    For i = 1 To UBound(ary_ua)n    n        If ary_ua(i) = str_ua Thenn            find_ua = Truen            Exit Forn        End Ifn        n    Next in    n    nEnd Functionnn'----------------------------------------------n' Sub: runn' Called by Usern' Calculate price and greeks for the deal loaded on the screen.n'-----------------------------------------------n'분산처리nSub cmdCalcPriceDist_Click()n nDim ticknnOn Error GoTo 0 'On Error GoTo ErrorHandlernn    Application.Calculation = xlCalculationManualn    n    Application.Range("A1").value = GetTickCountn    n    cmd_calc_ac_price_distributedn    n'    If Me.Range("chkDuration").value Thenn'        cmd_durationn'    End Ifn    nn    Application.Calculation = xlCalculationAutomaticn    n    Exit Subn    nErrorHandler:n    show_errorn    Application.Calculation = xlCalculationAutomaticnnEnd SubnnPublic Sub cmdCallProbability_Click()nnOn Error GoTo ErrorHandlernn    Application.Calculation = xlCalculationManualn      n    cmd_call_probabilityn    n    Application.Calculation = xlCalculationAutomaticn    Exit Subn    nErrorHandler:n    show_errorn    Application.Calculation = xlCalculationAutomaticnnnnEnd SubnnPublic Sub cmdDuration_Click()nnnOn Error GoTo ErrorHandlernn    Application.Calculation = xlCalculationManualnn    cmd_durationn    n    Application.Calculation = xlCalculationAutomaticn    n    Exit Subn    nErrorHandler:n    show_errorn    Application.Calculation = xlCalculationAutomaticnnEnd SubnnPublic Sub cmdExpiry_Click()nOn Error GoTo ErrorHandlernn    Application.Calculation = xlCalculationManualnn    cmd_expiry_acn    n    Application.Calculation = xlCalculationAutomaticn    Exit Subn    nErrorHandler:n    show_errorn    Application.Calculation = xlCalculationAutomaticnEnd SubnPublic Sub cmdChangeReference_Click()nn    Dim inx As Integern    Dim jnx As Integern    Dim Maturity As Doublen    Dim frequency As Integern    Dim coupon_pa As Doublen    Dim cpn_frequency As Integern    Dim no_of_ul As Integern    n    Dim date_shift As Integern        nOn Error GoTo ErrorHandlernn    Application.Calculation = xlCalculationManualn    n'=====================================n' Clear Schedulen'=====================================n'    If Me.Range("no_of_schedules").value > 0 Thenn'        Me.Range("schedule_start").Range("A1:F" & Me.Range("no_of_schedules").value).ClearContentsn'    End Ifn'n'    If Me.Range("cpn_schedule_start").value > 0 Thenn'        Me.Range("cpn_schedule_start").Range("A1:F" & Me.Range("no_of_coupon_schedule").value).ClearContentsn'    End Ifn    n    no_of_ul = Me.Range("No_of_Underlying").valuenn''======================================n'' KI Barriern''======================================n'    Me.Range("ki_barrier").Cells(1, 2).value = "=" & Me.Range("ki_barrier").Cells(1, 1).Addressn'    Me.Range("ki_barrier").Cells(1, 3).value = "=" & Me.Range("ki_barrier").Cells(1, 1).Addressn    nn'======================================n' Daten'======================================nn'    date_shift = shtMarket.Range("market_date").value - Me.Range("value_date").valuen'    Me.Range("current_date").value = "=market_date"n'    Me.Range("value_date").value = "=market_date"n    n    Me.Range("dummy").value = "=max(" & Me.Range("schedule_start").Cells(1, 2).Address & ":" & Me.Range("schedule_start").Cells(20, 2).Address & ")"n    n'======================================n' Referencen'======================================n    For inx = 1 To no_of_uln        If Left(Me.Range("ul_code").Cells(1, inx), 6) = "KOSPI2" Thenn            Me.Range("reference").Cells(1, inx) = "=S"n        Elsen            Me.Range("reference").Cells(1, inx) = "=S_" & Me.Range("ul_code").Cells(1, inx)n        End Ifn    Next inxn    n'======================================n' Fill Schedulen'======================================nn'n'    For inx = 1 To Me.Range("no_of_schedules").valuen'n'        Me.Range("schedule_start").Cells(inx, 0).value = inxn'        Me.Range("schedule_start").Cells(inx, 1).value = Me.Range("schedule_start").Cells(inx, 1).value + date_shiftn'n'        If Me.Range("Monthly_Coupon_Flag").Cells(1, 2) = 0 And Me.Range("Range_Accrual_Flag").Cells(1, 2) = 0 Thenn'n'                Me.Range("schedule_start").Cells(inx, 2).value = "=Coupon_P.A./12*Frequency_M*" & Me.Range("schedule_start").Cells(inx, 0).Addressn'n'        Elsen'n'            Me.Range("schedule_start").Cells(inx, 2).value = 0n'n'        End Ifn'n'    Next inxn'nn'======================================n' Fill Coupon Schedulen'======================================n'    cpn_frequency = Me.Range("cpn_frequency").valuen'n'    If Me.Range("Monthly_Coupon_Flag").Cells(1, 2) = 1 Thenn'n'        For inx = 1 To Me.Range("no_of_coupon_schedule").valuen'n'            Me.Range("cpn_schedule_start").Cells(inx, 1).value = Me.Range("cpn_schedule_start").Cells(inx, 1).value + date_shiftn'            Me.Range("cpn_schedule_start").Cells(inx, 3).value = "=Coupon_P.A./12*cpn_frequency"n'n'        Next inxn'n'    End Ifn'n'    Me.Range("mid_day_greek").value = "N"n    n    Application.Calculation = xlCalculationAutomaticn    n    Exit Subn    nErrorHandler:nn    show_errorn    Application.Calculation = xlCalculationAutomaticn    nnEnd SubnPublic Sub cmdFillFormula_Click()nn    Dim inx As Integern    Dim jnx As Integern    Dim Maturity As Doublen    Dim frequency As Integern    Dim coupon_pa As Doublen    Dim cpn_frequency As Integern    Dim no_of_ul As Integern        nOn Error GoTo ErrorHandlernn    Application.Calculation = xlCalculationManualn    n'=====================================n' Clear Schedulen'=====================================n    If Me.Range("no_of_schedules").value > 0 Thenn        Me.Range("schedule_start").Range("A1:F" & Me.Range("no_of_schedules").value).ClearContentsn    End Ifn    n    If Me.Range("cpn_schedule_start").value > 0 Thenn        Me.Range("cpn_schedule_start").Range("A1:F" & Me.Range("no_of_coupon_schedule").value).ClearContentsn    End Ifn    n    no_of_ul = Me.Range("No_of_Underlying").valuenn'======================================n' KI Barriern'======================================n    Me.Range("ki_barrier").Cells(1, 2).value = "=" & Me.Range("ki_barrier").Cells(1, 1).Addressn    Me.Range("ki_barrier").Cells(1, 3).value = "=" & Me.Range("ki_barrier").Cells(1, 1).Addressn    n    Me.Range("put_strike").value = 1n    Me.Range("put_participation").value = 1n    Me.Range("Put_Add_CPN").value = 0n    Me.Range("ki_adj_pct").value = 1n    Me.Range("Call_Strike").value = 1n    Me.Range("Call_PR").value = 0n    Me.Range("floor_value").value = 0n    nn'======================================n' Daten'======================================n    Me.Range("current_date").value = "=market_date"n    Me.Range("value_date").value = "=market_date"n    Me.Range("dummy").value = "=max(" & Me.Range("schedule_start").Cells(1, 2).Address & ":" & Me.Range("schedule_start").Cells(20, 2).Address & ")"n    n'======================================n' Referencen'======================================n    For inx = 1 To no_of_uln        If Left(Me.Range("ul_code").Cells(1, inx), 6) = "KOSPI2" Thenn            Me.Range("reference").Cells(1, inx) = "=S"n        Elsen            Me.Range("reference").Cells(1, inx) = "=S_" & Me.Range("ul_code").Cells(1, inx)n        End Ifn    Next inxn    n'======================================n' Fill Schedulen'======================================n    Maturity = Me.Range("Maturity_y").valuen    frequency = Me.Range("Frequency_M").valuen    coupon_pa = Me.Range("Coupon_P.A.").valuen    n    For inx = 1 To Int(Maturity * 12# / frequency)n    n        Me.Range("schedule_start").Cells(inx, 0).value = inxn        Me.Range("schedule_start").Cells(inx, 1).value = "=add_month(value_date," & Me.Range("schedule_start").Cells(inx, 0).Address & "*Frequency_M)-3"n        n        If Me.Range("Monthly_Coupon_Flag").Cells(1, 2) = 0 And Me.Range("Range_Accrual_Flag").Cells(1, 2) = 0 Thenn            Me.Range("schedule_start").Cells(inx, 2).value = "=Coupon_P.A./12*Frequency_M*" & Me.Range("schedule_start").Cells(inx, 0).Addressn            Me.Range("schedule_start").Cells(inx, 3).value = "=Coupon_P.A./12*Frequency_M*" & Me.Range("schedule_start").Cells(inx, 0).Addressn            Me.Range("schedule_start").Cells(inx, 4).value = "=Coupon_P.A./12*Frequency_M*" & Me.Range("schedule_start").Cells(inx, 0).Addressn        Elsen            Me.Range("schedule_start").Cells(inx, 2).value = 0n            Me.Range("schedule_start").Cells(inx, 3).value = 0n            Me.Range("schedule_start").Cells(inx, 4).value = 0n        End Ifn    n    Next inxn    nn'======================================n' Fill Coupon Schedulen'======================================n    cpn_frequency = Me.Range("cpn_frequency").valuen    n    If Me.Range("Monthly_Coupon_Flag").Cells(1, 2) = 1 Thenn    n        For inx = 1 To Int(Maturity * 12 / cpn_frequency)n        n            Me.Range("cpn_schedule_start").Cells(inx, 0).value = inxn            Me.Range("cpn_schedule_start").Cells(inx, 1).value = "=add_month(value_date," & Me.Range("cpn_schedule_start").Cells(inx, 0).Address & "*cpn_frequency) - 3"n            n            Me.Range("cpn_schedule_start").Cells(inx, 2).value = "=Monthly_Cpn"n            n            Me.Range("cpn_schedule_start").Cells(inx, 3).value = "=Coupon_P.A./12*cpn_frequency"n          n            For jnx = 1 To no_of_uln            n                Me.Range("cpn_schedule_start").Cells(inx, 3 + jnx).value = "=" & Me.Range("reference").Cells(1, jnx).Address & " * " & Me.Range("cpn_schedule_start").Cells(inx, 2).Addressn                n            Next jnxn        n        Next inxn        n    End Ifn    n    n    If Me.Range("Range_Accrual_Flag").Cells(1, 2) = 1 Thenn    n        Me.Range("ra_cpn") = "=Coupon_P.A. / 12 * Frequency_M"n    n    End Ifn    n    Me.Range("mid_day_greek").value = "N"n    n    Application.Calculation = xlCalculationAutomaticn    n    Exit Subn    nErrorHandler:nn    show_errorn    Application.Calculation = xlCalculationAutomaticn    nnEnd SubnnPublic Sub cmdLoadDeal_Click()nnnOn Error GoTo ErrorHandlernn    Application.Calculation = xlCalculationManualn    n    clear_ac_dealn    n    cmd_load_ac_dealn    n    Application.Calculation = xlCalculationAutomaticn    n    Exit Subn    nErrorHandler:n    show_errorn    Application.Calculation = xlCalculationAutomaticnnnEnd Subnn'n'Private Sub cmdExpiry_Click()n'n'On Error GoTo ErrorHandlern'n'    Application.Calculation = xlCalculationManualn'n'    cmd_expiryn'n'    Application.Calculation = xlCalculationAutomaticn'n'    Exit Subn'n'ErrorHandler:n'n'    show_errorn'    Application.Calculation = xlCalculationAutomaticn'n'End Subn'n'Private Sub cmdLoadDeal_Click()n'n'On Error GoTo ErrorHandlern'n'    Application.Calculation = xlCalculationManualn'n'    cmd_load_dealn'n'    Application.Calculation = xlCalculationAutomaticn'n'    Exit Subn'n'ErrorHandler:n'n'    show_errorn'    Application.Calculation = xlCalculationAutomaticn'n'End Subn'n'n'n'Private Sub cmdNewDeal_Click()n'n'On Error GoTo ErrorHandlern'n'    Application.Calculation = xlCalculationManualn'n'    cmd_new_dealn'n'    Application.Calculation = xlCalculationAutomaticn'n'    Exit Subn'n'ErrorHandler:n'n'    show_errorn'    Application.Calculation = xlCalculationAutomaticn'n'End Subn'n'n'Private Sub cmdRunMultiDeal_Click()n'n'n'On Error GoTo ErrorHandlern'n'    cmd_cal_price_multi_dealsn'n'    Exit Subn'n'ErrorHandler:n'n'    show_errorn'n'End Subn'n'Private Sub CommandButton1_Click()n'n'End Subn'n'Private Sub cmdUnconfirm_Click()n'n'On Error GoTo ErrorHandlern'n'    cmd_unconfirmn'n'    Exit Subn'n'ErrorHandler:n'n'    show_errorn'n'n'End Subn'n'Private Sub cmdUpdateDeal_Click()n'n'On Error GoTo ErrorHandlern'n'    cmd_update_dealn'n'    Exit Subn'n'ErrorHandler:n'n'    show_errorn'n'n'End Subn'n'Private Sub Label1_Click()n'n'End SubnPublic Sub cmdNewDeal_Click()nnnOn Error GoTo ErrorHandlernn    Application.Calculation = xlCalculationManualn      n    cmd_new_ac_dealn    n    Application.Calculation = xlCalculationAutomaticn    n    Exit Subn    nErrorHandler:n    show_errorn    Application.Calculation = xlCalculationAutomaticnnEnd SubnnPrivate Sub cmdShowFlushNode_Click()nnOn Error GoTo ErrorHandlernn    Application.Calculation = xlCalculationManualnn   ' cmd_show_flush_nodenn     Application.Calculation = xlCalculationAutomaticnn    Exit Subn    nErrorHandler:n    show_errorn    Application.Calculation = xlCalculationAutomaticnnEnd Subnn'Private Sub cmdSpotVol_Click()n'n'On Error GoTo ErrorHandlern'n'    Application.Calculation = xlCalculationManualn'n'    cmd_spot_vol_acn'n'    Application.Calculation = xlCalculationAutomaticn'    Exit Subn'n'ErrorHandler:n'    show_errorn'    Application.Calculation = xlCalculationAutomaticn'n'n'End SubnnPublic Sub cmdUnconfirm_Click()nnOn Error GoTo ErrorHandlernn    Application.Calculation = xlCalculationManualnn    cmd_unconfirm_acn    n    Application.Calculation = xlCalculationAutomaticn    Exit Subn    nErrorHandler:n    show_errorn    Application.Calculation = xlCalculationAutomaticnnEnd SubnnPublic Sub cmdUpdateDeal_Click()nnOn Error GoTo ErrorHandlernn    Application.Calculation = xlCalculationManualn      n    cmd_update_ac_dealn    n    Application.Calculation = xlCalculationAutomaticn    n    Exit Subn    nErrorHandler:n    show_errorn    Application.Calculation = xlCalculationAutomaticnnEnd Subn'n'Private Sub cmdLocalVega_Click()n'n'On Error GoTo ErrorHandlern'n'    Application.Calculation = xlCalculationManualn'n'    cmd_local_vegan'n'    Application.Calculation = xlCalculationAutomaticn'n'    Exit Subn'n'ErrorHandler:n'    show_errorn'    Application.Calculation = xlCalculationAutomaticn'n'End SubnnPrivate Sub CommandButton1_Click()nncmd_3d_closing_testnnEnd SubnnPublic Sub btnLoadDeal_Click()n    n    'Clear ranges : deal ticketn    shtACPricer.Range("fund_code_m").ClearContentsn    shtACPricer.Range("fund_code_c").ClearContentsn    shtACPricer.Range("No_of_Underlying").ClearContentsn    shtACPricer.Range("ul_code").ClearContentsn    shtACPricer.Range("ejected_ul_flag").ClearContentsn    shtACPricer.Range("ejectable_flag").ClearContentsn    n    shtACPricer.Range("value_date").ClearContentsn    shtACPricer.Range("maturity_date").ClearContentsn    shtACPricer.Range("settlement_date").ClearContentsnn    shtACPricer.Range("dummy").ClearContentsn    n    shtACPricer.Range("ki_flag").ClearContentsn    shtACPricer.Range("ki_touch_flag").ClearContentsn    shtACPricer.Range("ki_barrier").ClearContentsn    n    shtACPricer.Range("KI_Monitoring_Freq").ClearContentsn    n    shtACPricer.Range("monthly_coupon_flag").ClearContentsn    shtACPricer.Range("Early_Exit_Flag").ClearContentsn    'shtACPricer.Range("Early_Exit_Touched").ClearContentsn    n    shtACPricer.Range("notional").ClearContentsn    shtACPricer.Range("CCY").ClearContentsn    shtACPricer.Range("reference").ClearContentsn    n    shtACPricer.Range("issue_cost").ClearContentsn    shtACPricer.Range("strike_shift").ClearContentsn    shtACPricer.Range("KI_Barrier_Shift").ClearContentsn    n    shtACPricer.Range("performance_type").ClearContentsn    shtACPricer.Range("ki_performance_type").ClearContentsn    n    'Clear ranges: call schedulen    shtACPricer.Range("schedule_start").Range(Cells(1, 1), Cells(36, 1)).ClearContentsn    shtACPricer.Range("cpn_on_call").Range(Cells(1, 1), Cells(36, 1)).ClearContentsn    shtACPricer.Range("strike_rate").Range(Cells(1, 1), Cells(36, 1)).ClearContentsn    shtACPricer.Range("performance_type_on_call").Range(Cells(1, 1), Cells(36, 1)).ClearContentsn    shtACPricer.Range("strike_smoothing_width").Range(Cells(1, 1), Cells(36, 1)).ClearContentsn    shtACPricer.Range("ejectable_order_on_call").Range(Cells(1, 1), Cells(36, 1)).ClearContentsn    n    'Clear ranges: monthly coupon schedulen    shtACPricer.Range("cpn_schedule_start").Range(Cells(1, 1), Cells(100, 3)).ClearContentsn    n    'Clear ranges: early exit schedulen    shtACPricer.Range("early_exit_schedule_start").Range(Cells(1, 1), Cells(22, 8)).ClearContentsn    n    'Reset Autocall YNn    shtACPricer.Range("Autocall_YN").ClearContentsn    With shtACPricer.Range("Autocall_YN").Interiorn        .Pattern = xlNonen        .TintAndShade = 0n        .PatternTintAndShade = 0n    End Withn    n    Dim bScreenUpdating As Booleann    Dim btatusBar As Booleann    Dim bDisplayStatusBar As Booleann    Dim vCalculation As Variantn    Dim bEnableEvents As Booleann    n    bScreenUpdating = Application.ScreenUpdatingn    btatusBar = Application.StatusBarn    bDisplayStatusBar = Application.DisplayStatusBarn    vCalculation = Application.Calculationn    bEnableEvents = Application.EnableEventsn    n    With Applicationn        .ScreenUpdating = Falsen        .StatusBar = Falsen        .DisplayStatusBar = Falsen        .Calculation = xlCalculationManualn        .EnableEvents = Falsen    End Withn    n    'Set defulat valuesn    shtACPricer.Range("call_put") = "CALL"n    shtACPricer.Range("put_strike") = 1n    shtACPricer.Range("Put_Add_CPN") = 0n    shtACPricer.Range("ki_adj_pct") = 1n    shtACPricer.Range("Call_Strike") = 1n    shtACPricer.Range("put_participation") = 1n    'floor: 원금보장율n    If shtACPricer.Range("asset_code").value = "IO322714A77T" Thenn        shtACPricer.Range("floor_value") = 1 'ELBn    Elsen        shtACPricer.Range("floor_value") = 0n    End Ifn    shtACPricer.Range("Call_PR") = 0n    shtACPricer.Range("Range_Accrual_Flag") = Falsen    shtACPricer.Range("alive_yn") = "Y"n    shtACPricer.Range("confirmed_yn") = "Y"n    shtACPricer.Range("buy_sell") = "SELL"n    '발행사 신용스프레드n    shtACPricer.Range("Rate_Spread") = 0n    shtACPricer.Range("Hedge_Cost") = 0n    shtACPricer.Range("instrument_type") = "Note"n    shtACPricer.Range("performance_type") = "Worst"n    shtACPricer.Range("ki_performance_type") = "Worst"n    n    Dim scenario_test As Booleann    scenario_test = shtMarket.Range("SCENARIO_ENABLE")n    n    Dim isQuote As Booleann    isQuote = shtACPricer.Range("isQuote").valuen    n    Dim i, j As Integern    n    Dim sql As Stringn    n    Dim oCmd As New adoDB.Commandn    Dim oRS As New adoDB.Recordsetn    n    Dim today As Daten    today = shtACPricer.Range("current_date").valuen    n    Dim tDayStr As Stringn    tDayStr = date2str(today)nn    Dim adoCon As New adoDB.Connectionn    Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)n    n    Dim productCode As Stringn    productCode = shtACPricer.Range("asset_code").valuen    n    If productCode = "IO322720A08T" Thenn        productCode = "IO322720508T"n    End Ifn    Dim seq As Integern    seq = shtACPricer.Range("D4")n        n    '---------- From Front DBn    sql = " select ASSET_CODE, ORIGIN_ASSET_CODE, FUND_CODE_M, FUND_CODE_C, NOTIONAL, CURRENT_NOTIONAL, VALUE_DATE, EXPIRY_DATE, SETTLEMENT_DATE, OPTION_TYPE, DUMMY_COUPON, KI_BARRIER_YN, KI_TOUCHED_YN, KI_BARRIER, KO_BARRIER_YN, KO_TOUCHED_YN, KO_BARRIER, PUT_STRIKE, PUT_PARTICIPATION, ISSUE_PRICE, RATE_SPREAD, STRIKE_SMOOTHING, KI_MONITORING_FREQ, ISSUE_COST, NOTE, LIVE_YN, CONFIRM_YN, UPDATE_DT, COST, KIBARRIER_SHIFT_SIZE, INSTRUMENT_TYPE, PERFORMANCE_TYPE, RA_YN, RA_CPN_PER_PERIOD, RA_TENOR, RA_MIN_PCT, RA_MAX_PCT, DEAD_DATE, ORIGIN_NOTIONAL, MINIMUM_PAYOFF, KI_PERFORMANCE_TYPE, NOTE_CURRENCY, COND_FEE, NOTE_CURVE, MAX_NOTIONAL from sps.ac_deal where asset_code = '" + productCode + "' "n    n    With oCmdn        .ActiveConnection = adoConn        .CommandType = adCmdTextn        .CommandText = sqln        n        oRS.Open .Executen    End Withn        n    i = 1n    Dim value_date As Daten    Dim maturity_date As Daten    Dim settlement_date As Daten    Dim dummy_coupon As Doublen    Dim ki_flag As Booleann    Dim ki_touch_flag As Booleann    Dim ki_monitoring_freq As Integern    Dim notional As Doublen    Dim issue_cost As Doublen    Dim strike_smoothing As Doublen    Dim ki_barrier_shift As Doublen    n    Do Until oRS.EOFn    n        If isQuote = True Thenn            shtACPricer.Range("fund_code_m") = oRS("FUND_CODE_M")n            shtACPricer.Range("fund_code_c") = oRS("FUND_CODE_C")n            shtACPricer.Range("CCY") = oRS("NOTE_CURRENCY")n        End Ifn    n        'value daten        value_date = str2date(oRS("VALUE_DATE"))n        shtACPricer.Range("value_date").Cells(1, i) = value_daten        'maturity daten        maturity_date = str2date(oRS("EXPIRY_DATE"))n        shtACPricer.Range("maturity_date").Cells(1, i) = maturity_daten        'issue daten        settlement_date = str2date(oRS("SETTLEMENT_DATE"))n        shtACPricer.Range("settlement_date").Cells(1, i) = settlement_daten        n        'dummy couponn        dummy_coupon = oRS("DUMMY_COUPON")n        shtACPricer.Range("dummy").Cells(1, i) = dummy_couponn        n        'KI barrier flagn        If (oRS("KI_BARRIER_YN") = "Y") Thenn            ki_flag = Truen        Elsen            ki_flag = Falsen        End Ifn        shtACPricer.Range("ki_flag").Cells(1, i) = ki_flagn            n        'KI touched flagn        If (oRS("KI_TOUCHED_YN") = "Y") Thenn            ki_touch_flag = Truen        Elsen            ki_touch_flag = Falsen        End Ifn        shtACPricer.Range("ki_touch_flag").Cells(1, i) = ki_touch_flagn        n        'KI monitoring freq.n        ki_monitoring_freq = oRS("KI_MONITORING_FREQ")n        shtACPricer.Range("KI_Monitoring_Freq").Cells(1, i) = ki_monitoring_freqn        n        'notionaln        If oRS("NOTIONAL") = 0 Thenn            notional = 1n        Elsen            notional = Abs(oRS("NOTIONAL"))n        End Ifn        n'        If productCode = "IO322720A08T" Or productCode = "IO322720508T" Thenn'            notional = -1 * shtELS.Range("eswap_qty_col").Cells(seq + 9, 1) * shtELS.Range("els_facevalue_col").Cells(seq + 9, 1)n'        End Ifn        n        shtACPricer.Range("notional").Cells(1, i) = notionaln        n        'issue costn        issue_cost = oRS("ISSUE_COST")n        shtACPricer.Range("issue_cost").Cells(1, i) = issue_costn        n        'strike smoothingn        If shtACPricer.Range("chkStrikeSmoothing") = True Thenn            If IsNull(oRS("STRIKE_SMOOTHING")) Thenn                strike_smoothing = 0.02n            Elsen                strike_smoothing = oRS("STRIKE_SMOOTHING")n            End Ifn            shtACPricer.Range("strike_shift").Cells(1, i) = strike_smoothingn        Elsen            shtACPricer.Range("strike_shift").Cells(1, i) = 0n        End Ifn        n        'KI barrier shiftn        ki_barrier_shift = oRS("KIBARRIER_SHIFT_SIZE")n        shtACPricer.Range("KI_Barrier_Shift").Cells(1, i) = ki_barrier_shiftn        n        i = i + 1n        oRS.MoveNextn    Loopn    n    oRS.Closen    n    '---------- From BizOnen    '기초자산 코드, 최초기준가, KI수준n    If isQuote = True Thenn        sql = " SELECT ASSET_CODE, UL_CODE, REFERENCE_PRICE, UPDATE_DT, KI_BARRIER, SORT_SEQ, UL_COST_YIELD from sps.ac_underlying where asset_code = '" + productCode + "' order by 6"n    Elsen        sql = " SELECT indv_iscd, decode(unas_iscd,'NIKKEI225','NKY',unas_iscd), unas_intl_prc, clrd_sdrt/100, barr_val/100 from BSYS.TBSIMO202D00@GDW where indv_iscd = '" + productCode + "' order by 2"n    End Ifn        n    With oCmdn        .ActiveConnection = adoConn        .CommandType = adCmdTextn        .CommandText = sqln       n        oRS.Open .Executen    End Withn        n    i = 1n    Dim redeem_shift As Booleann    redeem_shift = Falsen    n    Dim ua_code As Stringn    Dim ua_ref_spot() As Doublen    Dim ua_ki_barr() As Doublen    Dim ua_close_spot() As Doublen    ReDim ua_ref_spot(0) As Doublen    ReDim ua_ki_barr(0) As Doublen    ReDim ua_close_spot(0) As Doublen    n    Do Until oRS.EOFn    n        '단축코드 -> KR코드 변환 2019.3.5n        If isQuote = True Thenn            Select Case oRS(1)n            Case "005380": ua_code = "KR7005380001" '현대차n            Case "005930": ua_code = "KR7005930003" '삼성전자n            Case "000030": ua_code = "KR7000030007" '우리은행n            Case "028260": ua_code = "KR7028260008" '삼성물산n            Case "105560": ua_code = "KR7105560007" 'KB금융n            Case "035420": ua_code = "KR7035420009" 'NAVERn            Case "018260": ua_code = "KR7018260000" '삼성SDSn            Case "005490": ua_code = "KR7005490008" 'POSCOn            Case "034220": ua_code = "KR7034220004" 'LG디스플레이n            Case "D02002": ua_code = "KRD020021147" 'KOSPI200 레버리지n            Case Else: ua_code = oRS(1)n            End Selectn        Elsen            ua_code = oRS(1)n        End Ifn        n        'underlying coden        shtACPricer.Range("ul_code").Cells(1, i) = ua_coden        'ejectablen        shtACPricer.Range("ejected_ul_flag").Cells(1, i) = False '기본값. 실제 상품 발행시 수정 필요.n        n        ReDim Preserve ua_ref_spot(UBound(ua_ref_spot) + 1) As Doublen        ReDim Preserve ua_ki_barr(UBound(ua_ki_barr) + 1) As Doublen        ReDim Preserve ua_close_spot(UBound(ua_close_spot) + 1) As Doublen        n        ua_close_spot(i) = WorksheetFunction.VLookup(ua_code, Range("ua_close_spot"), 2, False)n        n        'ref. spot: 신규발행종목 최초기준가 100으로 설정n        '스트레스테스트 일 경우는 제외 2018.12.20n        'If (scenario_test = False) And (today = value_date Or isQuote = True) Then '평가일이 초초기준가설정일일 때n        If (scenario_test = False) And (today <= value_date Or isQuote = True) Then '평가일이 최초기준가설정일 이전일 때 포함(예. 발행풀가 기간을 피하기 위해 발행일 < 최초기준가평가일 인 경우)n            ua_ref_spot(i) = ua_close_spot(i)n        Elsen            ua_ref_spot(i) = oRS(2)n            '최초기준가 검증(발행일에만)n            If today = settlement_date And check_spot(oRS(1), date2str(value_date), oRS(2), adoCon) = False Thenn                MsgBox productCode & ": " & oRS(1) & " 기초자산최초기준가 오류"n            End Ifn        End Ifn        shtACPricer.Range("reference").Cells(1, i) = ua_ref_spot(i)n        n        'KI barriern        ua_ki_barr(i) = oRS(4)n        shtACPricer.Range("KI_barrier").Cells(1, i) = ua_ki_barr(i)n        n        If oRS(1) = "SX5E" Then redeem_shift = Truen        If oRS(1) = "SPX" Then redeem_shift = Truen        n        i = i + 1n        oRS.MoveNextn    Loopn    n    'no of underlyingn    Dim no_of_underlying As Integern    no_of_underlying = i - 1n    shtACPricer.Range("no_of_underlying") = no_of_underlyingn    n    If redeem_shift Thenn        maturity_date = maturity_date + 1n        shtACPricer.Range("maturity_date") = maturity_daten    End Ifn    n    oRS.Closen    n    '----------------------------------------n    'performance type, fund_code, ccyn    n    Dim early_exit_flag As Booleann    Dim isFiveWins As Booleann    Dim ejectable_flag As Booleann        n    If isQuote = True Thenn    nn    Elsen        sql = " SELECT UNAS_CHOC_MTHD_CODE, CLRD_TYPE_CODE, substr(PROD_FNCD,1,2), PROD_FNCD, STLM_CRCD, DEAL_CLS_CODE " _n            & " FROM    bsys.TBSIMO201M00@gdw " _n            & " WHERE   INDV_ISCD = '" + productCode + "' "n        n        With oCmdn            .ActiveConnection = adoConn            .CommandType = adCmdTextn            .CommandText = sqln            n            oRS.Open .Executen        End Withnn        isFiveWins = Falsen        n        Do Until oRS.EOFn            n            Select Case oRS(0)n            Case "1"n                shtACPricer.Range("performance_type") = "Worst"n                shtACPricer.Range("ki_performance_type") = "Worst"n            Case "2"n                shtACPricer.Range("performance_type") = "Best"n                shtACPricer.Range("ki_performance_type") = "Best"n            Case "4"n                shtACPricer.Range("performance_type") = "Average"n                shtACPricer.Range("ki_performance_type") = "Average"n            Case "5"n                shtACPricer.Range("performance_type") = "Average"n                shtACPricer.Range("ki_performance_type") = "Worst"n            End Selectn            n            If oRS(1) = "29" Thenn                early_exit_flag = Truen                shtACPricer.Range("early_exit_flag") = Truen            Elsen                early_exit_flag = Falsen                shtACPricer.Range("early_exit_flag") = Falsen            End Ifn            n            If oRS(1) = "38" Thenn                isFiveWins = Truen            Elsen                isFiveWins = Falsen            End Ifn            n            If False Then '기본값. 실제 상품 발생시 수정 필요.n                ejectable_flag = Truen                shtACPricer.Range("ejectable_flag") = Truen            Elsen                ejectable_flag = Falsen                shtACPricer.Range("ejectable_flag") = Falsen            End Ifn            n            shtACPricer.Range("fund_code_m") = oRS(2)n            shtACPricer.Range("fund_code_c") = oRS(3)n            shtACPricer.Range("CCY") = oRS(4)n            If oRS(5) = "2" Thenn                shtACPricer.Range("buy_sell") = "BUY"n            Elsen                shtACPricer.Range("buy_sell") = "SELL"n            End Ifn            n            oRS.MoveNextn        Loopn        n        oRS.Closen    End Ifn        n    '----------------------------------------n    'Call schedulen    Dim no_of_ac_schedule As Integern    Dim call_date() As Daten    Dim coupon_on_call() As Doublen    Dim barr_strike() As Doublen    Dim barr_perform_type() As Integern    ReDim call_date(0) As Daten    ReDim coupon_on_call(0) As Doublen    ReDim barr_strike(0) As Doublen    ReDim barr_perform_type(0) As Integern        n    If isQuote = True Thenn        sql = " SELECT  CALL_DATE   " _n            & "        ,null        " _n            & "    ,NVL(coupon_on_call,0)  " _n            & "    ,NVL(strike,0)      " _n            & "    ,NVL(performance_type,-1)      " _n            & "    ,NVL(strike_smoothing_width,0) " _n            & "FROM    sps.ac_schedule " _n            & "WHERE   asset_code = '" + productCode + "'" _n            & "ORDER BY 2 "n            n        With oCmdn            .ActiveConnection = adoConn            .CommandType = adCmdTextn            .CommandText = sqln            n            oRS.Open .Executen        End Withn        n        i = 1n        Do Until oRS.EOFn            n            ReDim Preserve call_date(UBound(call_date) + 1) As Daten            ReDim Preserve coupon_on_call(UBound(coupon_on_call) + 1) As Doublen            ReDim Preserve barr_strike(UBound(barr_strike) + 1) As Doublen            ReDim Preserve barr_perform_type(UBound(barr_perform_type) + 1) As Integern            n            If redeem_shift Thenn                '기초자산 지역에 따라 상환스케줄 1차 조정: 실제 평가일 + 1달력일n                call_date(i) = str2date(oRS(0)) + 1n            Elsen                call_date(i) = str2date(oRS(0))n            End Ifn            shtACPricer.Range("schedule_start").Cells(i, 1) = call_date(i)n            n            coupon_on_call(i) = oRS(2)n            barr_strike(i) = oRS(3)n            n            shtACPricer.Range("cpn_on_call").Cells(i, 1) = coupon_on_call(i)n            shtACPricer.Range("strike_rate").Cells(i, 1) = barr_strike(i)n            n            'performance_type_on_calln            barr_perform_type(i) = oRS(4)n            shtACPricer.Range("performance_type_on_call").Cells(i, 1) = barr_perform_type(i)n            n            'strike smoothingn            If shtACPricer.Range("chkStrikeSmoothing") = True Thenn                shtACPricer.Range("strike_smoothing_width").Cells(i, 1) = oRS(5)n            Elsen                shtACPricer.Range("strike_smoothing_width").Cells(i, 1) = 0n            End Ifn            n            'ejectablen            If shtACPricer.Range("ejectable_flag") = True Thenn                shtACPricer.Range("ejectable_order_on_call").Cells(i, 1) = 0 '기본값. 실제 상품 발행시 수정 필요.n            Elsen                shtACPricer.Range("ejectable_order_on_call").Cells(i, 1) = 0n            End Ifn            n            i = i + 1n            oRS.MoveNextn        Loopn        n        oRS.Closen            n    Elsen    n        If isFiveWins Thenn            sql = " SELECT CLRD_DTRM_DATE, null, "n            sql = sql & "                 NVL(CLRD_INRT,0)/100 CLRD_ERT,"n            sql = sql & "                 NVL(CLRD_BARR_VAL,0)/100 UNAS_SDRT,"n            sql = sql & "                'N' AVRG_APLY_YN"n            sql = sql & "         FROM   BSYS.TBSIMO227L00@GDW"n            sql = sql & "         WHERE  INDV_ISCD = '" + productCode + "'"n            sql = sql & " ORDER BY CLRD_DTRM_DATE"n    '        SQL = " SELECT CLRD_DTRM_DATE, null, "n    '        SQL = SQL & "                NVL(CLRD_INRT,0)/100 CLRD_ERT, "n    '        SQL = SQL & "                NVL(CLRD_BARR_VAL,0)/100 UNAS_SDRT, "n    '        SQL = SQL & "                'N' AVRG_APLY_YN, "n    '        SQL = SQL & "                NVL(b.strike_smoothing_width,0) "n    '        SQL = SQL & "         FROM   BSYS.TBSIMO227L00@GDW a, sps.ac_schedule b "n    '        SQL = SQL & "         WHERE  a.INDV_ISCD = '" + productCode + "' and a.INDV_ISCD = b.ASSET_CODE(+) "n    '        SQL = SQL & " and a.CLRD_DTRM_DATE = b.call_date(+) "n    '        SQL = SQL & " ORDER BY 1 "n        Elsen            sql = " SELECT  TRTH_CLRD_DTRM_DATE   DT  " _n                & "        ,RMS.GET_WORKDATE(TRTH_CLRD_DTRM_DATE,1)   BFRPY_BASE_DT " _n                & "    ,NVL(CLRD_ERT,0) / 100       BFRPY_BASE_RT " _n                & "    ,NVL(UNAS_SDRT1,0)/100     BASERT1 " _n                & "    ,NVL(AVRG_APLY_YN,'N')     AVRG_APLY_YN " _n                & "FROM    BSYS.TBSIMO203D00@gdw " _n                & "WHERE   INDV_ISCD = '" + productCode + "' " _n                & "ORDER BY CLRD_DTRM_DATE "n    '        SQL = " SELECT  TRTH_CLRD_DTRM_DATE   DT  " _n    '            & "        ,RMS.GET_WORKDATE(TRTH_CLRD_DTRM_DATE,1)   BFRPY_BASE_DT " _n    '            & "    ,NVL(CLRD_ERT,0) / 100       BFRPY_BASE_RT " _n    '            & "    ,NVL(UNAS_SDRT1,0)/100     BASERT1 " _n    '            & "    ,NVL(AVRG_APLY_YN,'N')     AVRG_APLY_YN " _n    '            & "    ,NVL(b.strike_smoothing_width,0) " _n    '            & "FROM    bsys.TBSIMO203d00@gdw a, sps.ac_schedule b " _n    '            & "WHERE   a.INDV_ISCD = '" + productCode + "' and a.INDV_ISCD = b.ASSET_CODE(+) " _n    '            & "and TRTH_CLRD_DTRM_DATE = b.call_date(+) " _n    '            & "ORDER BY 1 "n        End Ifn    n        With oCmdn            .ActiveConnection = adoConn            .CommandType = adCmdTextn            .CommandText = sqln            n            oRS.Open .Executen        End Withn        n        i = 1n        Do Until oRS.EOFn            n            ReDim Preserve call_date(UBound(call_date) + 1) As Daten            ReDim Preserve coupon_on_call(UBound(coupon_on_call) + 1) As Doublen            ReDim Preserve barr_strike(UBound(barr_strike) + 1) As Doublen            ReDim Preserve barr_perform_type(UBound(barr_perform_type) + 1) As Integern            n            If redeem_shift Thenn                '2019.4.18n                '오늘이 실제 조기상환평가일 후 첫 영업일이면 call date를 오늘로 설정: 상환여부 판단 때문n                If today = WorksheetFunction.WorkDay(str2date(oRS(0)), 1, shtHolidays.Range("Holidays")) Thenn                    call_date(i) = todayn                Elsen                    '기초자산 지역에 따라 상환스케줄 1차 조정: 실제 평가일 + 1달력일n                    call_date(i) = str2date(oRS(0)) + 1n                End Ifn            Elsen                call_date(i) = str2date(oRS(0))n            End Ifn            shtACPricer.Range("schedule_start").Cells(i, 1) = call_date(i)n            coupon_on_call(i) = oRS(2)n            barr_strike(i) = oRS(3)n            shtACPricer.Range("cpn_on_call").Cells(i, 1) = coupon_on_call(i)n            shtACPricer.Range("strike_rate").Cells(i, 1) = barr_strike(i)n            n            'performance_type_on_calln            If oRS(4) = "Y" Thenn                barr_perform_type(i) = 0n            Elsen                barr_perform_type(i) = -1n            End Ifn            shtACPricer.Range("performance_type_on_call").Cells(i, 1) = barr_perform_type(i)n            n            ''strike smoothingn            'shtACPricer.Range("strike_smoothing_width").Cells(i, 1) = oRS(5)n                        n            'ejectablen            If shtACPricer.Range("ejectable_flag") = True Thenn                shtACPricer.Range("ejectable_order_on_call").Cells(i, 1) = 0 '기본값. 실제 상품 발행시 수정 필요.n            Elsen                shtACPricer.Range("ejectable_order_on_call").Cells(i, 1) = 0n            End Ifn            n            i = i + 1n            oRS.MoveNextn        Loopn        n        oRS.Closen    n        '----------------------------------------n        'Strike smoothing factor: sps DB의 call date를 shift할 경우 비즈원 call date와 join되지 않는 문제가 있어 부득이 독립적으로 입수함n        sql = "SELECT call_date, strike_smoothing_width from sps.ac_schedule where ASSET_CODE = '" + productCode + "' and call_date >='" + date2str(call_date(1) - 1) + "' ORDER BY 1 "n            n        With oCmdn            .ActiveConnection = adoConn            .CommandType = adCmdTextn            .CommandText = sqln            n            oRS.Open .Executen        End Withn        n        i = 1n        Do Until oRS.EOFn            n            'strike smoothingn            If shtACPricer.Range("chkStrikeSmoothing") = True Thenn                shtACPricer.Range("strike_smoothing_width").Cells(i, 1) = oRS(1)n            Elsen                shtACPricer.Range("strike_smoothing_width").Cells(i, 1) = 0n            End Ifn            n            i = i + 1n            oRS.MoveNextn        Loopn        n        oRS.Closen    n    End Ifn    no_of_ac_schedule = i - 1n    n    '----------------------------------------n    'Monthly coupon schedulen    Dim monthly_coupon_flag As Booleann    monthly_coupon_flag = Falsen    n    Dim coupon_date() As Daten    Dim montly_coupon() As Doublen    Dim coupon_barr() As Doublen    ReDim coupon_date(0) As Daten    ReDim montly_coupon(0) As Doublen    ReDim coupon_barr(0) As Doublen    n    Dim no_of_monthly_coupon_schedule As Integern    n    If isQuote = True Thenn    n    Elsen        n        '쿠폰구간관리n        sql = " SELECT NVL(BONS_CUPN_STA_SDRT/100, 0) CouponBarrier, " _n            & "         NVL(BONS_CUPN_FIN_SDRT/100, 100) CouponUpperBarrier, " _n            & "         NVL(BONS_CUPN_INRT/100, 0) CouponRate, SCTN_STA_CTNU, SCTN_FIN_CTNU " _n            & " FROM    bsys.TBSIMO210L00@gdw " _n            & " WHERE   INDV_ISCD = '" + productCode + "' ORDER BY SCTN_STA_CTNU ASC"n        n        With oCmdn            .ActiveConnection = adoConn            .CommandType = adCmdTextn            .CommandText = sqln            n            oRS.Open .Executen        End Withn            n        i = 1n        Do Until oRS.EOFnn'            ReDim Preserve coupon_barr(UBound(coupon_barr) + 1) As Doublen'            ReDim Preserve montly_coupon(UBound(montly_coupon) + 1) As Doublen            n            For i = oRS(3) To oRS(4)n                        ReDim Preserve coupon_barr(UBound(coupon_barr) + 1) As Doublen            ReDim Preserve montly_coupon(UBound(montly_coupon) + 1) As Doublen                'coupon barriern                coupon_barr(i) = oRS(0)n                shtACPricer.Range("cpn_schedule_start").Cells(i, 2) = coupon_barr(i)n                'coupon on calln                montly_coupon(i) = oRS(2)n                shtACPricer.Range("cpn_schedule_start").Cells(i, 3) = montly_coupon(i)n            Next in            n            oRS.MoveNextn        n        Loopn        n        oRS.Closen        n        '쿠폰지급일관리n        sql = " SELECT TRTH_CUPN_VLTN_DATE COUPON_DATE " _n            & " FROM    BSYS.TBSIMO213L00@GDW   " _n            & " WHERE   INDV_ISCD = '" + productCode + "' ORDER BY 1 ASC"n            n        With oCmdn            .ActiveConnection = adoConn            .CommandType = adCmdTextn            .CommandText = sqln            n            oRS.Open .Executen        End Withn            n        i = 1n        'coupon daten        Do Until oRS.EOFn            monthly_coupon_flag = Truen            ReDim coupon_date(UBound(coupon_date) + 1) As Daten            n            If redeem_shift Thenn                '2019.4.18n                '오늘이 실제 조기상환평가일 후 첫 영업일이면 call date를 오늘로 설정: 상환여부 판단 때문n                If today = WorksheetFunction.WorkDay(str2date(oRS(0)), 1, shtHolidays.Range("Holidays")) Thenn                    coupon_date(i) = todayn                Elsen                    '기초자산 지역에 따라 상환스케줄 1차 조정: 실제 평가일 + 1달력일n                    coupon_date(i) = str2date(oRS(0)) + 1n                End Ifn            Elsen                coupon_date(i) = str2date(oRS(0))n            End Ifn            shtACPricer.Range("cpn_schedule_start").Cells(i, 1) = coupon_date(i)n            n            i = i + 1n            oRS.MoveNextn        n        Loopn        n        oRS.Closen    n    End Ifn    n    'Monthly coupon flagn    shtACPricer.Range("monthly_coupon_flag") = monthly_coupon_flagn    no_of_monthly_coupon_schedule = i - 1nn    '----------------------------------------n    'Early Exit(Lizard)n'    Dim isEEchecked As Booleann'    isEEchecked = Falsenn    Dim no_of_ee_schedule As Integern    n    Dim ee_call_date() As Daten    Dim ee_coupon_on_call() As Doublen    Dim ee_barr_strike() As Doublen    Dim ee_barr_perform_type() As Integern    Dim ee_barr_type() As Integern    Dim ee_barr_touched() As Booleann    ReDim ee_call_date(0) As Daten    ReDim ee_coupon_on_call(0) As Doublen    ReDim ee_barr_strike(0) As Doublen    ReDim ee_barr_perform_type(0) As Integern    ReDim ee_barr_type(0) As Integern    ReDim ee_barr_touched(0) As Booleann    n    If isQuote = True Thenn    n        early_exit_flag = Falsen    n        sql = " SELECT * FROM ("n        sql = sql & " SELECT CALL_DATE,"n        sql = sql & "        COUPON_ON_CALL,"n        sql = sql & "        STRIKE,"n        sql = sql & "        STRIKE_SMOOTHING_WIDTH,"n        sql = sql & "        EE_TOUCHED_YN,"n        sql = sql & "        PERFORMANCE_TYPE,"n        sql = sql & "        BARRIER_TYPE,"n        sql = sql & "        ROW_NUMBER() OVER(PARTITION BY CALL_DATE ORDER BY UL_CODE) RNUM"n        sql = sql & " FROM SPS.AC_EE_SCHEDULE"n        sql = sql & " WHERE  ASSET_CODE='" + productCode + "')"n        sql = sql & " WHERE RNUM=1 "n        n        With oCmdn            .ActiveConnection = adoConn            .CommandType = adCmdTextn            .CommandText = sqln            n            oRS.Open .Executen        End Withn        n        i = 1n        Do Until oRS.EOFn        n            early_exit_flag = Truen            ReDim Preserve ee_call_date(UBound(ee_call_date) + 1) As Daten            ReDim Preserve ee_coupon_on_call(UBound(ee_coupon_on_call) + 1) As Doublen            ReDim Preserve ee_barr_strike(UBound(ee_barr_strike) + 1) As Doublen            ReDim Preserve ee_barr_perform_type(UBound(ee_barr_perform_type) + 1) As Integern            ReDim Preserve ee_barr_type(UBound(ee_barr_type) + 1) As Integern            ReDim Preserve ee_barr_touched(UBound(ee_barr_touched) + 1) As Booleann            n            'early exit schedule: call date, end daten            If redeem_shift Thenn               '2019.4.18n                '오늘이 실제 조기상환평가일 후 첫 영업일이면 call date를 오늘로 설정: 상환여부 판단 때문n                If today = WorksheetFunction.WorkDay(str2date(oRS(0)), 1, shtHolidays.Range("Holidays")) Thenn                    ee_call_date(i) = todayn                Elsen                    '기초자산 지역에 따라 상환스케줄 1차 조정: 실제 평가일 + 1달력일n                    ee_call_date(i) = str2date(oRS(0)) + 1n                End Ifn            Elsen                ee_call_date(i) = str2date(oRS(0))n            End Ifn            shtACPricer.Range("early_exit_schedule_start").Cells(i, 1) = ee_call_date(i)n            shtACPricer.Range("early_exit_schedule_start").Cells(i, 4) = ee_call_date(i)n                n            'early exit schedule: coupon on calln            ee_coupon_on_call(i) = oRS(1)n            shtACPricer.Range("early_exit_schedule_start").Cells(i, 2) = ee_coupon_on_call(i)n            'early exit schedule: early exit barriern            ee_barr_strike(i) = oRS(2)n            shtACPricer.Range("early_exit_schedule_start").Cells(i, 5) = ee_barr_strike(i)n            'early exit schedule: start daten            shtACPricer.Range("early_exit_schedule_start").Cells(i, 3) = settlement_daten            n            'early exit schedule: early exit touchedn            If oRS(4) = 0 Thenn                ee_barr_touched(i) = Falsen                shtACPricer.Range("early_exit_schedule_start").Cells(i, 6) = "N"n            Elsen                ee_barr_touched(i) = Truen                shtACPricer.Range("early_exit_schedule_start").Cells(i, 6) = "Y"n            End Ifn            ee_barr_perform_type(i) = oRS(5)n            ee_barr_type(i) = oRS(6)n            shtACPricer.Range("early_exit_schedule_start").Cells(i, 7) = ee_barr_perform_type(i)n            shtACPricer.Range("early_exit_schedule_start").Cells(i, 8) = ee_barr_type(i)nn            '다음 early exit barrier touch 여부: BizOne 입력값 기준n'            If isEEchecked = False And today <= shtACPricer.Range("early_exit_schedule_start").Cells(i, 1) Thenn'n'                For j = 1 To shtACPricer.Range("no_of_underlying")n'                    shtACPricer.Range("EE_Barrier").Cells(1, j) = oRS(2)n'                Next jn'n'                If oRS(4) = 0 Thenn'                    shtACPricer.Range("Early_Exit_Touched") = Falsen'                Elsen'                    shtACPricer.Range("Early_Exit_Touched") = Truen'                End Ifn'n'                isEEchecked = Truen'            End Ifn            n            i = i + 1n            oRS.MoveNextn        Loopn        n        oRS.Closen        n        shtACPricer.Range("early_exit_flag") = early_exit_flagn        n    Elsen        n        'Early Exit Touchedn        If early_exit_flag = True Thenn            sql = " SELECT CALC_FIN_DATE EarlyExitDate, " _n                & "         CLRD_INRT/100 EarlyExitCouponRate, " _n                & "         CLRD_BARR_VAL/100 EarlyExitBarrier, " _n                & "         CALC_STA_DATE, " _n                & "         CALC_FIN_DATE, " _n                & "         CLRD_BARR_HIT_YN " _n                & " FROM    bsys.TBSIMO227L00@gdw " _n                & " WHERE   INDV_ISCD = '" + productCode + "' "n            n            With oCmdn                .ActiveConnection = adoConn                .CommandType = adCmdTextn                .CommandText = sqln                n                oRS.Open .Executen            End Withn            n            i = 1n            Do Until oRS.EOFn                n                ReDim Preserve ee_call_date(UBound(ee_call_date) + 1) As Daten                ReDim Preserve ee_coupon_on_call(UBound(ee_coupon_on_call) + 1) As Doublen                ReDim Preserve ee_barr_strike(UBound(ee_barr_strike) + 1) As Doublen                ReDim Preserve ee_barr_perform_type(UBound(ee_barr_perform_type) + 1) As Integern                ReDim Preserve ee_barr_type(UBound(ee_barr_type) + 1) As Integern                ReDim Preserve ee_barr_touched(UBound(ee_barr_touched) + 1) As Booleann                'early exit schedule: call date, end daten                If redeem_shift Thenn                    '2019.4.18n                    '오늘이 실제 조기상환평가일 후 첫 영업일이면 call date를 오늘로 설정: 상환여부 판단 때문n                    If today = WorksheetFunction.WorkDay(str2date(oRS(0)), 1, shtHolidays.Range("Holidays")) Thenn                        ee_call_date(i) = todayn                    Elsen                        '기초자산 지역에 따라 상환스케줄 1차 조정: 실제 평가일 + 1달력일n                        ee_call_date(i) = str2date(oRS(0)) + 1n                    End Ifn                Elsen                    ee_call_date(i) = str2date(oRS(0))n                End Ifn                shtACPricer.Range("early_exit_schedule_start").Cells(i, 1) = ee_call_date(i)n                shtACPricer.Range("early_exit_schedule_start").Cells(i, 4) = ee_call_date(i)n            n                'early exit schedule: coupon on calln                ee_coupon_on_call(i) = oRS(1)n                shtACPricer.Range("early_exit_schedule_start").Cells(i, 2) = ee_coupon_on_call(i)n                'early exit schedule: early exit barriern                ee_barr_strike(i) = oRS(2)n                shtACPricer.Range("early_exit_schedule_start").Cells(i, 5) = ee_barr_strike(i)n                'early exit schedule: start daten                shtACPricer.Range("early_exit_schedule_start").Cells(i, 3) = str2date(oRS(3))n                'early exit schedule: early exit touchedn                If oRS(5) = "N" Thenn                    ee_barr_touched(i) = Falsen                Elsen                    ee_barr_touched(i) = Truen                End Ifn                shtACPricer.Range("early_exit_schedule_start").Cells(i, 6) = oRS(5)n                n                'Hero 구조 원장 완성 전까지 기존 Early-exit구조 처리를 위한 임시 하드 코딩: dll(2018.8.8)n                ee_barr_perform_type(i) = -1n                ee_barr_type(i) = -1n                shtACPricer.Range("early_exit_schedule_start").Cells(i, 7) = ee_barr_perform_type(i)n                shtACPricer.Range("early_exit_schedule_start").Cells(i, 8) = ee_barr_type(i)n    n                '다음 early exit barrier touch 여부: BizOne 입력값 기준n'                If isEEchecked = False And today <= shtACPricer.Range("early_exit_schedule_start").Cells(i, 1) Thenn'n'                    For j = 1 To shtACPricer.Range("no_of_underlying")n'                        shtACPricer.Range("EE_Barrier").Cells(1, j) = oRS(2)n'                    Next jn'n'                    If oRS(5) = "N" Thenn'                        shtACPricer.Range("Early_Exit_Touched") = Falsen'                    Elsen'                        shtACPricer.Range("Early_Exit_Touched") = Truen'                    End Ifn'n'                    isEEchecked = Truen'                End Ifn                n                i = i + 1n                oRS.MoveNextn            Loopn            n            oRS.Closen            n        End Ifn    n    End Ifnn    no_of_ee_schedule = i - 1n            n    Call disconnectDB(adoCon)n    n    'Clear resultsn    clear_ac_greeksn    shtACPricer.Range("price").Cells(2, 1) = 0n    n    '----------------------------------------n    'Check KI for todayn    If ki_flag = True Thenn        For j = 1 To no_of_underlyingn            If ua_close_spot(j) / ua_ref_spot(j) < ua_ki_barr(j) Thenn            n                If ki_touch_flag = False Thenn                    If scenario_test = False Thenn                        MsgBox productCode & ": " & "당일 KI 터지했으나 원장에 반영 안됨"n                    Elsen                        ki_touch_flag = Truen                        shtACPricer.Range("ki_touch_flag") = Truen                    End Ifn                End Ifn        n                Exit Forn            End Ifn        Next jn    End Ifn    n    'Check EE KI for todayn    If early_exit_flag = True Thenn        For i = 1 To no_of_ee_schedulen            If today <= ee_call_date(i) Thenn                For j = 1 To no_of_underlyingn                    n                    If ua_close_spot(j) / ua_ref_spot(j) < ee_barr_strike(i) Thenn                    n                        If ee_barr_touched(i) = False Thenn                            If scenario_test = False Thenn                                MsgBox productCode & ": " & "당일 early exit barrer 터지했으나 원장에 반영 안됨"n                            Elsen                                ee_barr_touched(i) = Truen                                shtACPricer.Range("early_exit_schedule_start").Cells(i, 6) = "Y"n                            End Ifn                        End Ifn    n                        Exit Forn                    End Ifn                Next jn            End Ifn        Next in    End Ifn    n    Dim redeem_rate As Doublen    redeem_rate = 0n    n    'Check monthly couponn    Dim monthly_cpn As Doublen    monthly_cpn = 0n    If monthly_coupon_flag = True Thenn        For i = 1 To no_of_monthly_coupon_schedulen            If today = coupon_date(i) Thenn            n                If check_monthly_cpn(coupon_barr(i)) = True Thenn                    monthly_cpn = montly_coupon(i)n                End Ifn                n            End Ifn        Next in    End Ifn      n    'Check early-exit couponn    Dim ee_success As Booleann    ee_success = Falsen    Dim ee_cpn As Doublen    ee_cpn = 0n    If early_exit_flag = True Thenn        For i = 1 To no_of_ee_schedulen            If today = ee_call_date(i) And ee_barr_touched(i) = False Thenn                ee_success = Truen                ee_cpn = ee_coupon_on_call(i)n                Exit Forn            End Ifn        Next in    End Ifnn    'Check autocall dates for todayn    Dim ac_success As Booleann    ac_success = Falsen    For i = 1 To no_of_ac_schedulen            n        If today = call_date(i) Thenn            n            ac_success = check_autocall(barr_strike(i), barr_perform_type(i))n            n            If ac_success = True Thenn                'autocall conditionn                redeem_rate = monthly_cpn + coupon_on_call(i)n                Exit Forn            Elsen                'early-exit conditionn                If ee_success = True Thenn                    ac_success = Truen                    redeem_rate = monthly_cpn + ee_cpnn                    Exit Forn                End Ifn            n                'dummy coupon conditionn                If ki_touch_flag = False And today = maturity_date Thenn                    ac_success = Truen                    redeem_rate = dummy_couponn                    Exit Forn                End Ifn            End Ifnn        End Ifnn    Next in           n    If redeem_shift Thenn    n        Dim ac_fail_confirm As Booleann        ac_fail_confirm = Falsen        Dim ee_fail_confirm As Booleann        ee_fail_confirm = Falsen        n        'call schedulen        For i = 1 To no_of_ac_schedulen            If today = call_date(i) - 1 Thenn            n                ac_fail_confirm = check_autocall_fail(barr_strike(i), barr_perform_type(i))nn                Exit Forn            End Ifn        Next in        n        'early-exit schedulen        If early_exit_flag = True Thenn            Dim isEEdate As Booleann            isEEdate = Falsen        n            For i = 1 To no_of_ee_schedulen                If today = ee_call_date(i) - 1 Thenn                n                    isEEdate = Truen                    ee_fail_confirm = ee_barr_touched(i) = True Or _n                                      check_autocall_fail(ee_barr_strike(i), ee_barr_perform_type(i))n                    Exit Forn                End Ifn            Next in            If isEEdate = False Thenn                ee_fail_confirm = Truen            End Ifn        Elsen            ee_fail_confirm = Truen        End Ifn        n       n        '당일 redeem_shift 취소n        If ac_fail_confirm = True And ee_fail_confirm = True Thenn            'call schedulen            For i = 1 To no_of_ac_schedulen                If today = call_date(i) - 1 Thenn                    call_date(i) = todayn                    shtACPricer.Range("schedule_start").Cells(i, 1) = todayn                    Exit Forn                End Ifn            Next in        n            'early-exit schedulen            For i = 1 To no_of_ee_schedulen                If today = ee_call_date(i) - 1 Thenn                    ee_call_date(i) = todayn                    shtACPricer.Range("early_exit_schedule_start").Cells(i, 1) = todayn                    shtACPricer.Range("early_exit_schedule_start").Cells(i, 4) = todayn                    Exit Forn                End Ifn            Next in            'monthly coupon schedulen            For i = 1 To no_of_monthly_coupon_schedulen                If today = coupon_date(i) - 1 Thenn                    coupon_date(i) = todayn                    shtACPricer.Range("cpn_schedule_start").Cells(i, 1) = todayn                    Exit Forn                End Ifn            Next in            'maturity daten            If today = maturity_date - 1 Thenn                maturity_date = todayn                shtACPricer.Range("maturity_date") = todayn            End Ifn        End Ifn    End Ifn    n    shtACPricer.Range("Autocall_YN") = ac_successn    If ac_success = True Thenn        shtACPricer.Range("price").Cells(2, 1) = (1 + redeem_rate) * notionaln    End Ifnn    If ac_success = True Thenn        With shtACPricer.Range("Autocall_YN").Interiorn            .Pattern = xlSolidn            .PatternColorIndex = xlAutomaticn            .Color = 255n            .TintAndShade = 0n            .PatternTintAndShade = 0n        End Withn    Elsen        With shtACPricer.Range("Autocall_YN").Interiorn            .Pattern = xlNonen            .TintAndShade = 0n            .PatternTintAndShade = 0n        End Withn    End Ifn    n    With Applicationn        .ScreenUpdating = bScreenUpdatingn        .StatusBar = btatusBarn        .DisplayStatusBar = bDisplayStatusBarn        .Calculation = vCalculationn        .EnableEvents = bEnableEventsn    End Withn    n    Set oRS = Nothingn    Set oCmd = Nothingn    Set adoCon = Nothingn    nEnd SubnnnPrivate Function check_monthly_cpn(strike As Double) As Booleannn    check_monthly_cpn = check_autocall(strike, -1)nnEnd FunctionnnPublic Function check_autocall(strike As Double, performance_type_on_call As Integer) As Booleannn    Dim i As Integern    Dim tmp_autocall As Booleann    n    Dim ref_spot As Doublen    Dim close_spot As Doublen    Dim idx As Integern    Dim ofs As Integern    n    Dim min_ As Doublen    Dim avg_ As Doublen    min_ = 2n    avg_ = 0n    n    For i = 1 To shtACPricer.Range("no_of_underlying")n    n        ref_spot = shtACPricer.Range("reference").Cells(1, i)n        n        'SX5E, SPX를 기초로 한 종목은 call date가 shift되어 있으므로 다른 기초자산 종가는 전 영업일 값을 참조한다.n        idx = WorksheetFunction.Match(shtACPricer.Range("ul_code").Cells(1, i), shtACPricer.Range("ul_code_list"), 0)n        If shtACPricer.Range("ul_code").Cells(1, i) = "SX5E" Or shtACPricer.Range("ul_code").Cells(1, i) = "SPX" Thenn            ofs = 0n        Elsen            ofs = 1n        End Ifn        close_spot = shtACPricer.Range("ua_close_spot").Cells(idx, 2 + ofs)n        n        min_ = WorksheetFunction.min(min_, close_spot / ref_spot)n        avg_ = avg_ + close_spot / ref_spotn    Next in    avg_ = avg_ / shtACPricer.Range("no_of_underlying")n    n    If performance_type_on_call = -1 Then 'worst performern    n        If min_ < strike Thenn            tmp_autocall = Falsen        Elsen            tmp_autocall = Truen        End Ifn    n    ElseIf performance_type_on_call = 0 Then 'averagen    n        If avg_ < strike Thenn            tmp_autocall = Falsen        Elsen            tmp_autocall = Truen        End Ifn            n    End Ifn    n    check_autocall = tmp_autocallnnEnd FunctionnnPrivate Function check_autocall_fail(strike As Double, performance_type_on_call As Integer) As Booleannn    Dim tmp_autocall_fail As Booleann    n    If performance_type_on_call = -1 Then 'worst performern    n        Dim i As Integern        Dim ref_spot As Doublen        Dim close_spot As Doublen        n        Dim idx As Integern        Dim min_ As Doublen        min_ = 2n        n        For i = 1 To shtACPricer.Range("no_of_underlying")n        n            idx = WorksheetFunction.Match(shtACPricer.Range("ul_code").Cells(1, i), shtACPricer.Range("ul_code_list"), 0)n            n            If shtACPricer.Range("ul_code").Cells(1, i) <> "SX5E" And shtACPricer.Range("ul_code").Cells(1, i) <> "SPX" Thenn                ref_spot = shtACPricer.Range("reference").Cells(1, i)n                close_spot = shtACPricer.Range("ua_close_spot").Cells(idx, 2)n                min_ = WorksheetFunction.min(min_, close_spot / ref_spot)n            End Ifn    n        Next in    n        If min_ < strike Thenn            tmp_autocall_fail = Truen        Elsen            tmp_autocall_fail = Falsen        End Ifn    n    ElseIf performance_type_on_call = 0 Then 'averagenn        tmp_autocall_fail = Falsen            n    End Ifn    n    check_autocall_fail = tmp_autocall_failnnEnd FunctionnnPrivate Function check_spot(ua_code As String, tdate As String, price As Double, oDB As adoDB.Connection) As Booleannn    Dim oCmd As New adoDB.Commandn    Dim oRS As New adoDB.Recordsetn    Dim sql As Stringn    n    sql = " select code, endprice from ras.if_stock_data where code= '" + ua_code + "' and tdate='" + tdate + "' "n    sql = sql & " union "n    sql = sql & " select code, price from ras.bl_quanto_base where code='" + ua_code + "' and tdate='" + tdate + "' "n    n    With oCmdn        .ActiveConnection = oDBn        .CommandType = adCmdTextn        .CommandText = sqln       n        oRS.Open .Executen    End Withnn    check_spot = Falsen    n    Do Until oRS.EOFn        If Abs(oRS(1) - price) < 0.0001 Thenn            check_spot = Truen        Elsen            check_spot = Falsen        End Ifn        oRS.MoveNextn    Loopn    oRS.Closen    n    Set oRS = Nothingn    Set oCmd = NothingnnEnd Function
+Option Explicit
+
+'Private Declare Function GetTickCount Lib "kernel32.dll" () As Long
+
+Public Sub checkboxQuote_Click()
+
+    If shtACPricer.Range("isQuote") = True Then
+        shtACPricer.Range("asset_code").Cells(1, 2).ClearContents
+        shtACPricer.Range("asset_code").ClearContents
+    Else
+        shtACPricer.Range("asset_code").Cells(1, 2).Formula = "=ELS!B6"
+        shtACPricer.Range("asset_code").Formula = "=VLOOKUP(ELS!B6,ELS!A10:AL1000,38,FALSE)"
+    End If
+    
+End Sub
+
+
+Public Sub checkboxOpenGreeks_Click()
+    
+    If shtACPricer.Range("chkOpenGreeks") = True Then
+        shtACPricer.Range("chkVega") = True
+        shtACPricer.Range("chkSkew") = False
+        shtACPricer.Range("chkConv") = False
+        shtACPricer.Range("chkCorr") = False
+        shtACPricer.Range("chkRho") = False
+        shtACPricer.Range("chkStickyStrikeDelta") = False
+        shtACPricer.Range("chkTermVega") = False
+        shtACPricer.Range("chkTermSkew") = False
+        shtACPricer.Range("chkTermConv") = False
+        shtACPricer.Range("chkDeltaGamma") = True
+        shtACPricer.Range("chkSnapshot") = False
+        shtACPricer.Range("chkDuration") = False
+        shtACPricer.Range("chkTheta") = False
+        shtACPricer.Range("chkVegaPL") = False
+    Else
+        shtACPricer.Range("chkVega") = False
+        shtACPricer.Range("chkSkew") = False
+        shtACPricer.Range("chkConv") = False
+        shtACPricer.Range("chkCorr") = False
+        shtACPricer.Range("chkRho") = False
+        shtACPricer.Range("chkStickyStrikeDelta") = False
+        shtACPricer.Range("chkTermVega") = False
+        shtACPricer.Range("chkTermSkew") = False
+        shtACPricer.Range("chkTermConv") = False
+        shtACPricer.Range("chkDeltaGamma") = False
+        shtACPricer.Range("chkSnapshot") = False
+        shtACPricer.Range("chkDuration") = False
+        shtACPricer.Range("chkTheta") = False
+        shtACPricer.Range("chkVegaPL") = False
+    End If
+    
+End Sub
+
+
+'----------------------------------------------
+' Sub: run
+' Called by User
+' Calculate price and greeks for the deal loaded on the screen.
+'-----------------------------------------------
+Public Sub cmdCalcPrice_Click()
+ 
+'Dim tick
+
+On Error GoTo ErrorHandler
+Call SET_GLOBAL
+    'Application.Calculation = xlCalculationManual
+    
+    'tick = GetTickCount
+    
+    Dim deal_ticket As clsACDealTicket
+    Set deal_ticket = read_ac_deal_ticket()
+
+    Dim market_set As clsMarketSet
+    Set market_set = read_market_set
+'    Select Case deal_ticket.CCY
+'    Case "KRW": Set market_set = read_market_set("KRW")
+'    Case "USD": Set market_set = read_market_set("USD")
+'    End Select
+    
+    'modify deal_ticket for leverage indices : 2018.7.9
+    'modify deal_ticket for the ejectable structure : 2021.11.12
+    Set deal_ticket = modify_ac_deal_ticket(deal_ticket, market_set)
+                       
+    'Call cmd_calc_ac_price(deal_ticket, market_set)
+    
+    Dim greeks As New clsGreeks
+        
+    run_ac_pricing_mc greeks, deal_ticket, market_set _
+                    , shtACPricer.Range("chkDeltaGamma").value _
+                    , shtACPricer.Range("chkStickyMoneynessDeltaGamma").value _
+                    , shtACPricer.Range("chkStickyStrikeDelta").value _
+                    , shtACPricer.Range("chkCrossGamma").value _
+                    , shtACPricer.Range("chkVega").value _
+                    , shtACPricer.Range("chkTermVega").value _
+                    , shtACPricer.Range("chkSkew").value _
+                    , shtACPricer.Range("chkCorr").value _
+                    , shtACPricer.Range("chkRho").value _
+                    , shtACPricer.Range("chkTheta").value _
+                    , shtACPricer.Range("chkLocalCorrelation").value
+                                
+    clear_ac_greeks
+        
+    display_greeks_nd greeks, deal_ticket.no_of_ul
+        
+    Set greeks = Nothing
+    
+    'tick = GetTickCount - tick
+    'Application.Range("A1").value = tick
+    
+    'Application.Calculation = xlCalculationAutomatic
+    
+    Exit Sub
+    
+ErrorHandler:
+    show_error
+    Application.Calculation = xlCalculationAutomatic
+
+End Sub
+
+Private Function find_ua(ary_ua() As String, str_ua As String) As Boolean
+    
+    Dim i As Integer
+    
+    For i = 1 To UBound(ary_ua)
+    
+        If ary_ua(i) = str_ua Then
+            find_ua = True
+            Exit For
+        End If
+        
+    Next i
+    
+    
+End Function
+
+'----------------------------------------------
+' Sub: run
+' Called by User
+' Calculate price and greeks for the deal loaded on the screen.
+'-----------------------------------------------
+'분산처리
+Sub cmdCalcPriceDist_Click()
+ 
+Dim tick
+
+On Error GoTo 0 'On Error GoTo ErrorHandler
+
+    Application.Calculation = xlCalculationManual
+    
+    Application.Range("A1").value = GetTickCount
+    
+    cmd_calc_ac_price_distributed
+    
+'    If Me.Range("chkDuration").value Then
+'        cmd_duration
+'    End If
+    
+
+    Application.Calculation = xlCalculationAutomatic
+    
+    Exit Sub
+    
+ErrorHandler:
+    show_error
+    Application.Calculation = xlCalculationAutomatic
+
+End Sub
+
+Public Sub cmdCallProbability_Click()
+
+On Error GoTo ErrorHandler
+
+    Application.Calculation = xlCalculationManual
+      
+    cmd_call_probability
+    
+    Application.Calculation = xlCalculationAutomatic
+    Exit Sub
+    
+ErrorHandler:
+    show_error
+    Application.Calculation = xlCalculationAutomatic
+
+
+
+End Sub
+
+Public Sub cmdDuration_Click()
+
+
+On Error GoTo ErrorHandler
+
+    Application.Calculation = xlCalculationManual
+
+    cmd_duration
+    
+    Application.Calculation = xlCalculationAutomatic
+    
+    Exit Sub
+    
+ErrorHandler:
+    show_error
+    Application.Calculation = xlCalculationAutomatic
+
+End Sub
+
+Public Sub cmdExpiry_Click()
+On Error GoTo ErrorHandler
+
+    Application.Calculation = xlCalculationManual
+
+    cmd_expiry_ac
+    
+    Application.Calculation = xlCalculationAutomatic
+    Exit Sub
+    
+ErrorHandler:
+    show_error
+    Application.Calculation = xlCalculationAutomatic
+End Sub
+Public Sub cmdChangeReference_Click()
+
+    Dim inx As Integer
+    Dim jnx As Integer
+    Dim Maturity As Double
+    Dim frequency As Integer
+    Dim coupon_pa As Double
+    Dim cpn_frequency As Integer
+    Dim no_of_ul As Integer
+    
+    Dim date_shift As Integer
+        
+On Error GoTo ErrorHandler
+
+    Application.Calculation = xlCalculationManual
+    
+'=====================================
+' Clear Schedule
+'=====================================
+'    If Me.Range("no_of_schedules").value > 0 Then
+'        Me.Range("schedule_start").Range("A1:F" & Me.Range("no_of_schedules").value).ClearContents
+'    End If
+'
+'    If Me.Range("cpn_schedule_start").value > 0 Then
+'        Me.Range("cpn_schedule_start").Range("A1:F" & Me.Range("no_of_coupon_schedule").value).ClearContents
+'    End If
+    
+    no_of_ul = Me.Range("No_of_Underlying").value
+
+''======================================
+'' KI Barrier
+''======================================
+'    Me.Range("ki_barrier").Cells(1, 2).value = "=" & Me.Range("ki_barrier").Cells(1, 1).Address
+'    Me.Range("ki_barrier").Cells(1, 3).value = "=" & Me.Range("ki_barrier").Cells(1, 1).Address
+    
+
+'======================================
+' Date
+'======================================
+
+'    date_shift = shtMarket.Range("market_date").value - Me.Range("value_date").value
+'    Me.Range("current_date").value = "=market_date"
+'    Me.Range("value_date").value = "=market_date"
+    
+    Me.Range("dummy").value = "=max(" & Me.Range("schedule_start").Cells(1, 2).Address & ":" & Me.Range("schedule_start").Cells(20, 2).Address & ")"
+    
+'======================================
+' Reference
+'======================================
+    For inx = 1 To no_of_ul
+        If Left(Me.Range("ul_code").Cells(1, inx), 6) = "KOSPI2" Then
+            Me.Range("reference").Cells(1, inx) = "=S"
+        Else
+            Me.Range("reference").Cells(1, inx) = "=S_" & Me.Range("ul_code").Cells(1, inx)
+        End If
+    Next inx
+    
+'======================================
+' Fill Schedule
+'======================================
+
+'
+'    For inx = 1 To Me.Range("no_of_schedules").value
+'
+'        Me.Range("schedule_start").Cells(inx, 0).value = inx
+'        Me.Range("schedule_start").Cells(inx, 1).value = Me.Range("schedule_start").Cells(inx, 1).value + date_shift
+'
+'        If Me.Range("Monthly_Coupon_Flag").Cells(1, 2) = 0 And Me.Range("Range_Accrual_Flag").Cells(1, 2) = 0 Then
+'
+'                Me.Range("schedule_start").Cells(inx, 2).value = "=Coupon_P.A./12*Frequency_M*" & Me.Range("schedule_start").Cells(inx, 0).Address
+'
+'        Else
+'
+'            Me.Range("schedule_start").Cells(inx, 2).value = 0
+'
+'        End If
+'
+'    Next inx
+'
+
+'======================================
+' Fill Coupon Schedule
+'======================================
+'    cpn_frequency = Me.Range("cpn_frequency").value
+'
+'    If Me.Range("Monthly_Coupon_Flag").Cells(1, 2) = 1 Then
+'
+'        For inx = 1 To Me.Range("no_of_coupon_schedule").value
+'
+'            Me.Range("cpn_schedule_start").Cells(inx, 1).value = Me.Range("cpn_schedule_start").Cells(inx, 1).value + date_shift
+'            Me.Range("cpn_schedule_start").Cells(inx, 3).value = "=Coupon_P.A./12*cpn_frequency"
+'
+'        Next inx
+'
+'    End If
+'
+'    Me.Range("mid_day_greek").value = "N"
+    
+    Application.Calculation = xlCalculationAutomatic
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    show_error
+    Application.Calculation = xlCalculationAutomatic
+    
+
+End Sub
+Public Sub cmdFillFormula_Click()
+
+    Dim inx As Integer
+    Dim jnx As Integer
+    Dim Maturity As Double
+    Dim frequency As Integer
+    Dim coupon_pa As Double
+    Dim cpn_frequency As Integer
+    Dim no_of_ul As Integer
+        
+On Error GoTo ErrorHandler
+
+    Application.Calculation = xlCalculationManual
+    
+'=====================================
+' Clear Schedule
+'=====================================
+    If Me.Range("no_of_schedules").value > 0 Then
+        Me.Range("schedule_start").Range("A1:F" & Me.Range("no_of_schedules").value).ClearContents
+    End If
+    
+    If Me.Range("cpn_schedule_start").value > 0 Then
+        Me.Range("cpn_schedule_start").Range("A1:F" & Me.Range("no_of_coupon_schedule").value).ClearContents
+    End If
+    
+    no_of_ul = Me.Range("No_of_Underlying").value
+
+'======================================
+' KI Barrier
+'======================================
+    Me.Range("ki_barrier").Cells(1, 2).value = "=" & Me.Range("ki_barrier").Cells(1, 1).Address
+    Me.Range("ki_barrier").Cells(1, 3).value = "=" & Me.Range("ki_barrier").Cells(1, 1).Address
+    
+    Me.Range("put_strike").value = 1
+    Me.Range("put_participation").value = 1
+    Me.Range("Put_Add_CPN").value = 0
+    Me.Range("ki_adj_pct").value = 1
+    Me.Range("Call_Strike").value = 1
+    Me.Range("Call_PR").value = 0
+    Me.Range("floor_value").value = 0
+    
+
+'======================================
+' Date
+'======================================
+    Me.Range("current_date").value = "=market_date"
+    Me.Range("value_date").value = "=market_date"
+    Me.Range("dummy").value = "=max(" & Me.Range("schedule_start").Cells(1, 2).Address & ":" & Me.Range("schedule_start").Cells(20, 2).Address & ")"
+    
+'======================================
+' Reference
+'======================================
+    For inx = 1 To no_of_ul
+        If Left(Me.Range("ul_code").Cells(1, inx), 6) = "KOSPI2" Then
+            Me.Range("reference").Cells(1, inx) = "=S"
+        Else
+            Me.Range("reference").Cells(1, inx) = "=S_" & Me.Range("ul_code").Cells(1, inx)
+        End If
+    Next inx
+    
+'======================================
+' Fill Schedule
+'======================================
+    Maturity = Me.Range("Maturity_y").value
+    frequency = Me.Range("Frequency_M").value
+    coupon_pa = Me.Range("Coupon_P.A.").value
+    
+    For inx = 1 To Int(Maturity * 12# / frequency)
+    
+        Me.Range("schedule_start").Cells(inx, 0).value = inx
+        Me.Range("schedule_start").Cells(inx, 1).value = "=add_month(value_date," & Me.Range("schedule_start").Cells(inx, 0).Address & "*Frequency_M)-3"
+        
+        If Me.Range("Monthly_Coupon_Flag").Cells(1, 2) = 0 And Me.Range("Range_Accrual_Flag").Cells(1, 2) = 0 Then
+            Me.Range("schedule_start").Cells(inx, 2).value = "=Coupon_P.A./12*Frequency_M*" & Me.Range("schedule_start").Cells(inx, 0).Address
+            Me.Range("schedule_start").Cells(inx, 3).value = "=Coupon_P.A./12*Frequency_M*" & Me.Range("schedule_start").Cells(inx, 0).Address
+            Me.Range("schedule_start").Cells(inx, 4).value = "=Coupon_P.A./12*Frequency_M*" & Me.Range("schedule_start").Cells(inx, 0).Address
+        Else
+            Me.Range("schedule_start").Cells(inx, 2).value = 0
+            Me.Range("schedule_start").Cells(inx, 3).value = 0
+            Me.Range("schedule_start").Cells(inx, 4).value = 0
+        End If
+    
+    Next inx
+    
+
+'======================================
+' Fill Coupon Schedule
+'======================================
+    cpn_frequency = Me.Range("cpn_frequency").value
+    
+    If Me.Range("Monthly_Coupon_Flag").Cells(1, 2) = 1 Then
+    
+        For inx = 1 To Int(Maturity * 12 / cpn_frequency)
+        
+            Me.Range("cpn_schedule_start").Cells(inx, 0).value = inx
+            Me.Range("cpn_schedule_start").Cells(inx, 1).value = "=add_month(value_date," & Me.Range("cpn_schedule_start").Cells(inx, 0).Address & "*cpn_frequency) - 3"
+            
+            Me.Range("cpn_schedule_start").Cells(inx, 2).value = "=Monthly_Cpn"
+            
+            Me.Range("cpn_schedule_start").Cells(inx, 3).value = "=Coupon_P.A./12*cpn_frequency"
+          
+            For jnx = 1 To no_of_ul
+            
+                Me.Range("cpn_schedule_start").Cells(inx, 3 + jnx).value = "=" & Me.Range("reference").Cells(1, jnx).Address & " * " & Me.Range("cpn_schedule_start").Cells(inx, 2).Address
+                
+            Next jnx
+        
+        Next inx
+        
+    End If
+    
+    
+    If Me.Range("Range_Accrual_Flag").Cells(1, 2) = 1 Then
+    
+        Me.Range("ra_cpn") = "=Coupon_P.A. / 12 * Frequency_M"
+    
+    End If
+    
+    Me.Range("mid_day_greek").value = "N"
+    
+    Application.Calculation = xlCalculationAutomatic
+    
+    Exit Sub
+    
+ErrorHandler:
+
+    show_error
+    Application.Calculation = xlCalculationAutomatic
+    
+
+End Sub
+
+Public Sub cmdLoadDeal_Click()
+
+
+On Error GoTo ErrorHandler
+
+    Application.Calculation = xlCalculationManual
+    
+    clear_ac_deal
+    
+    cmd_load_ac_deal
+    
+    Application.Calculation = xlCalculationAutomatic
+    
+    Exit Sub
+    
+ErrorHandler:
+    show_error
+    Application.Calculation = xlCalculationAutomatic
+
+
+End Sub
+
+'
+'Private Sub cmdExpiry_Click()
+'
+'On Error GoTo ErrorHandler
+'
+'    Application.Calculation = xlCalculationManual
+'
+'    cmd_expiry
+'
+'    Application.Calculation = xlCalculationAutomatic
+'
+'    Exit Sub
+'
+'ErrorHandler:
+'
+'    show_error
+'    Application.Calculation = xlCalculationAutomatic
+'
+'End Sub
+'
+'Private Sub cmdLoadDeal_Click()
+'
+'On Error GoTo ErrorHandler
+'
+'    Application.Calculation = xlCalculationManual
+'
+'    cmd_load_deal
+'
+'    Application.Calculation = xlCalculationAutomatic
+'
+'    Exit Sub
+'
+'ErrorHandler:
+'
+'    show_error
+'    Application.Calculation = xlCalculationAutomatic
+'
+'End Sub
+'
+'
+'
+'Private Sub cmdNewDeal_Click()
+'
+'On Error GoTo ErrorHandler
+'
+'    Application.Calculation = xlCalculationManual
+'
+'    cmd_new_deal
+'
+'    Application.Calculation = xlCalculationAutomatic
+'
+'    Exit Sub
+'
+'ErrorHandler:
+'
+'    show_error
+'    Application.Calculation = xlCalculationAutomatic
+'
+'End Sub
+'
+'
+'Private Sub cmdRunMultiDeal_Click()
+'
+'
+'On Error GoTo ErrorHandler
+'
+'    cmd_cal_price_multi_deals
+'
+'    Exit Sub
+'
+'ErrorHandler:
+'
+'    show_error
+'
+'End Sub
+'
+'Private Sub CommandButton1_Click()
+'
+'End Sub
+'
+'Private Sub cmdUnconfirm_Click()
+'
+'On Error GoTo ErrorHandler
+'
+'    cmd_unconfirm
+'
+'    Exit Sub
+'
+'ErrorHandler:
+'
+'    show_error
+'
+'
+'End Sub
+'
+'Private Sub cmdUpdateDeal_Click()
+'
+'On Error GoTo ErrorHandler
+'
+'    cmd_update_deal
+'
+'    Exit Sub
+'
+'ErrorHandler:
+'
+'    show_error
+'
+'
+'End Sub
+'
+'Private Sub Label1_Click()
+'
+'End Sub
+Public Sub cmdNewDeal_Click()
+
+
+On Error GoTo ErrorHandler
+
+    Application.Calculation = xlCalculationManual
+      
+    cmd_new_ac_deal
+    
+    Application.Calculation = xlCalculationAutomatic
+    
+    Exit Sub
+    
+ErrorHandler:
+    show_error
+    Application.Calculation = xlCalculationAutomatic
+
+End Sub
+
+Private Sub cmdShowFlushNode_Click()
+
+On Error GoTo ErrorHandler
+
+    Application.Calculation = xlCalculationManual
+
+   ' cmd_show_flush_node
+
+     Application.Calculation = xlCalculationAutomatic
+
+    Exit Sub
+    
+ErrorHandler:
+    show_error
+    Application.Calculation = xlCalculationAutomatic
+
+End Sub
+
+'Private Sub cmdSpotVol_Click()
+'
+'On Error GoTo ErrorHandler
+'
+'    Application.Calculation = xlCalculationManual
+'
+'    cmd_spot_vol_ac
+'
+'    Application.Calculation = xlCalculationAutomatic
+'    Exit Sub
+'
+'ErrorHandler:
+'    show_error
+'    Application.Calculation = xlCalculationAutomatic
+'
+'
+'End Sub
+
+Public Sub cmdUnconfirm_Click()
+
+On Error GoTo ErrorHandler
+
+    Application.Calculation = xlCalculationManual
+
+    cmd_unconfirm_ac
+    
+    Application.Calculation = xlCalculationAutomatic
+    Exit Sub
+    
+ErrorHandler:
+    show_error
+    Application.Calculation = xlCalculationAutomatic
+
+End Sub
+
+Public Sub cmdUpdateDeal_Click()
+
+On Error GoTo ErrorHandler
+
+    Application.Calculation = xlCalculationManual
+      
+    cmd_update_ac_deal
+    
+    Application.Calculation = xlCalculationAutomatic
+    
+    Exit Sub
+    
+ErrorHandler:
+    show_error
+    Application.Calculation = xlCalculationAutomatic
+
+End Sub
+'
+'Private Sub cmdLocalVega_Click()
+'
+'On Error GoTo ErrorHandler
+'
+'    Application.Calculation = xlCalculationManual
+'
+'    cmd_local_vega
+'
+'    Application.Calculation = xlCalculationAutomatic
+'
+'    Exit Sub
+'
+'ErrorHandler:
+'    show_error
+'    Application.Calculation = xlCalculationAutomatic
+'
+'End Sub
+
+Private Sub CommandButton1_Click()
+
+cmd_3d_closing_test
+
+End Sub
+
+Public Sub btnLoadDeal_Click()
+    
+    'Clear ranges : deal ticket
+    shtACPricer.Range("fund_code_m").ClearContents
+    shtACPricer.Range("fund_code_c").ClearContents
+    shtACPricer.Range("No_of_Underlying").ClearContents
+    shtACPricer.Range("ul_code").ClearContents
+    shtACPricer.Range("ejected_ul_flag").ClearContents
+    shtACPricer.Range("ejectable_flag").ClearContents
+    
+    shtACPricer.Range("value_date").ClearContents
+    shtACPricer.Range("maturity_date").ClearContents
+    shtACPricer.Range("settlement_date").ClearContents
+
+    shtACPricer.Range("dummy").ClearContents
+    
+    shtACPricer.Range("ki_flag").ClearContents
+    shtACPricer.Range("ki_touch_flag").ClearContents
+    shtACPricer.Range("ki_barrier").ClearContents
+    
+    shtACPricer.Range("KI_Monitoring_Freq").ClearContents
+    
+    shtACPricer.Range("monthly_coupon_flag").ClearContents
+    shtACPricer.Range("Early_Exit_Flag").ClearContents
+    'shtACPricer.Range("Early_Exit_Touched").ClearContents
+    
+    shtACPricer.Range("notional").ClearContents
+    shtACPricer.Range("CCY").ClearContents
+    shtACPricer.Range("reference").ClearContents
+    
+    shtACPricer.Range("issue_cost").ClearContents
+    shtACPricer.Range("strike_shift").ClearContents
+    shtACPricer.Range("KI_Barrier_Shift").ClearContents
+    
+    shtACPricer.Range("performance_type").ClearContents
+    shtACPricer.Range("ki_performance_type").ClearContents
+    
+    'Clear ranges: call schedule
+    shtACPricer.Range("schedule_start").Range(Cells(1, 1), Cells(36, 1)).ClearContents
+    shtACPricer.Range("cpn_on_call").Range(Cells(1, 1), Cells(36, 1)).ClearContents
+    shtACPricer.Range("strike_rate").Range(Cells(1, 1), Cells(36, 1)).ClearContents
+    shtACPricer.Range("performance_type_on_call").Range(Cells(1, 1), Cells(36, 1)).ClearContents
+    shtACPricer.Range("strike_smoothing_width").Range(Cells(1, 1), Cells(36, 1)).ClearContents
+    shtACPricer.Range("ejectable_order_on_call").Range(Cells(1, 1), Cells(36, 1)).ClearContents
+    
+    'Clear ranges: monthly coupon schedule
+    shtACPricer.Range("cpn_schedule_start").Range(Cells(1, 1), Cells(100, 3)).ClearContents
+    
+    'Clear ranges: early exit schedule
+    shtACPricer.Range("early_exit_schedule_start").Range(Cells(1, 1), Cells(22, 8)).ClearContents
+    
+    'Reset Autocall YN
+    shtACPricer.Range("Autocall_YN").ClearContents
+    With shtACPricer.Range("Autocall_YN").Interior
+        .Pattern = xlNone
+        .TintAndShade = 0
+        .PatternTintAndShade = 0
+    End With
+    
+    Dim bScreenUpdating As Boolean
+    Dim btatusBar As Boolean
+    Dim bDisplayStatusBar As Boolean
+    Dim vCalculation As Variant
+    Dim bEnableEvents As Boolean
+    
+    bScreenUpdating = Application.ScreenUpdating
+    btatusBar = Application.StatusBar
+    bDisplayStatusBar = Application.DisplayStatusBar
+    vCalculation = Application.Calculation
+    bEnableEvents = Application.EnableEvents
+    
+    With Application
+        .ScreenUpdating = False
+        .StatusBar = False
+        .DisplayStatusBar = False
+        .Calculation = xlCalculationManual
+        .EnableEvents = False
+    End With
+    
+    'Set defulat values
+    shtACPricer.Range("call_put") = "CALL"
+    shtACPricer.Range("put_strike") = 1
+    shtACPricer.Range("Put_Add_CPN") = 0
+    shtACPricer.Range("ki_adj_pct") = 1
+    shtACPricer.Range("Call_Strike") = 1
+    shtACPricer.Range("put_participation") = 1
+    'floor: 원금보장율
+    If shtACPricer.Range("asset_code").value = "IO322714A77T" Then
+        shtACPricer.Range("floor_value") = 1 'ELB
+    Else
+        shtACPricer.Range("floor_value") = 0
+    End If
+    shtACPricer.Range("Call_PR") = 0
+    shtACPricer.Range("Range_Accrual_Flag") = False
+    shtACPricer.Range("alive_yn") = "Y"
+    shtACPricer.Range("confirmed_yn") = "Y"
+    shtACPricer.Range("buy_sell") = "SELL"
+    '발행사 신용스프레드
+    shtACPricer.Range("Rate_Spread") = 0
+    shtACPricer.Range("Hedge_Cost") = 0
+    shtACPricer.Range("instrument_type") = "Note"
+    shtACPricer.Range("performance_type") = "Worst"
+    shtACPricer.Range("ki_performance_type") = "Worst"
+    
+    Dim scenario_test As Boolean
+    scenario_test = shtMarket.Range("SCENARIO_ENABLE")
+    
+    Dim isQuote As Boolean
+    isQuote = shtACPricer.Range("isQuote").value
+    
+    Dim i, j As Integer
+    
+    Dim sql As String
+    
+    Dim oCmd As New adoDB.Command
+    Dim oRS As New adoDB.Recordset
+    
+    Dim today As Date
+    today = shtACPricer.Range("current_date").value
+    
+    Dim tDayStr As String
+    tDayStr = date2str(today)
+
+    Dim adoCon As New adoDB.Connection
+    Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)
+    
+    Dim productCode As String
+    productCode = shtACPricer.Range("asset_code").value
+    
+    If productCode = "IO322720A08T" Then
+        productCode = "IO322720508T"
+    End If
+    Dim seq As Integer
+    seq = shtACPricer.Range("D4")
+        
+    '---------- From Front DB
+    sql = " select ASSET_CODE, ORIGIN_ASSET_CODE, FUND_CODE_M, FUND_CODE_C, NOTIONAL, CURRENT_NOTIONAL, VALUE_DATE, EXPIRY_DATE, SETTLEMENT_DATE, OPTION_TYPE, DUMMY_COUPON, KI_BARRIER_YN, KI_TOUCHED_YN, KI_BARRIER, KO_BARRIER_YN, KO_TOUCHED_YN, KO_BARRIER, PUT_STRIKE, PUT_PARTICIPATION, ISSUE_PRICE, RATE_SPREAD, STRIKE_SMOOTHING, KI_MONITORING_FREQ, ISSUE_COST, NOTE, LIVE_YN, CONFIRM_YN, UPDATE_DT, COST, KIBARRIER_SHIFT_SIZE, INSTRUMENT_TYPE, PERFORMANCE_TYPE, RA_YN, RA_CPN_PER_PERIOD, RA_TENOR, RA_MIN_PCT, RA_MAX_PCT, DEAD_DATE, ORIGIN_NOTIONAL, MINIMUM_PAYOFF, KI_PERFORMANCE_TYPE, NOTE_CURRENCY, COND_FEE, NOTE_CURVE, MAX_NOTIONAL from sps.ac_deal where asset_code = '" + productCode + "' "
+    
+    With oCmd
+        .ActiveConnection = adoCon
+        .CommandType = adCmdText
+        .CommandText = sql
+        
+        oRS.Open .Execute
+    End With
+        
+    i = 1
+    Dim value_date As Date
+    Dim maturity_date As Date
+    Dim settlement_date As Date
+    Dim dummy_coupon As Double
+    Dim ki_flag As Boolean
+    Dim ki_touch_flag As Boolean
+    Dim ki_monitoring_freq As Integer
+    Dim notional As Double
+    Dim issue_cost As Double
+    Dim strike_smoothing As Double
+    Dim ki_barrier_shift As Double
+    
+    Do Until oRS.EOF
+    
+        If isQuote = True Then
+            shtACPricer.Range("fund_code_m") = oRS("FUND_CODE_M")
+            shtACPricer.Range("fund_code_c") = oRS("FUND_CODE_C")
+            shtACPricer.Range("CCY") = oRS("NOTE_CURRENCY")
+        End If
+    
+        'value date
+        value_date = str2date(oRS("VALUE_DATE"))
+        shtACPricer.Range("value_date").Cells(1, i) = value_date
+        'maturity date
+        maturity_date = str2date(oRS("EXPIRY_DATE"))
+        shtACPricer.Range("maturity_date").Cells(1, i) = maturity_date
+        'issue date
+        settlement_date = str2date(oRS("SETTLEMENT_DATE"))
+        shtACPricer.Range("settlement_date").Cells(1, i) = settlement_date
+        
+        'dummy coupon
+        dummy_coupon = oRS("DUMMY_COUPON")
+        shtACPricer.Range("dummy").Cells(1, i) = dummy_coupon
+        
+        'KI barrier flag
+        If (oRS("KI_BARRIER_YN") = "Y") Then
+            ki_flag = True
+        Else
+            ki_flag = False
+        End If
+        shtACPricer.Range("ki_flag").Cells(1, i) = ki_flag
+            
+        'KI touched flag
+        If (oRS("KI_TOUCHED_YN") = "Y") Then
+            ki_touch_flag = True
+        Else
+            ki_touch_flag = False
+        End If
+        shtACPricer.Range("ki_touch_flag").Cells(1, i) = ki_touch_flag
+        
+        'KI monitoring freq.
+        ki_monitoring_freq = oRS("KI_MONITORING_FREQ")
+        shtACPricer.Range("KI_Monitoring_Freq").Cells(1, i) = ki_monitoring_freq
+        
+        'notional
+        If oRS("NOTIONAL") = 0 Then
+            notional = 1
+        Else
+            notional = Abs(oRS("NOTIONAL"))
+        End If
+        
+'        If productCode = "IO322720A08T" Or productCode = "IO322720508T" Then
+'            notional = -1 * shtELS.Range("eswap_qty_col").Cells(seq + 9, 1) * shtELS.Range("els_facevalue_col").Cells(seq + 9, 1)
+'        End If
+        
+        shtACPricer.Range("notional").Cells(1, i) = notional
+        
+        'issue cost
+        issue_cost = oRS("ISSUE_COST")
+        shtACPricer.Range("issue_cost").Cells(1, i) = issue_cost
+        
+        'strike smoothing
+        If shtACPricer.Range("chkStrikeSmoothing") = True Then
+            If IsNull(oRS("STRIKE_SMOOTHING")) Then
+                strike_smoothing = 0.02
+            Else
+                strike_smoothing = oRS("STRIKE_SMOOTHING")
+            End If
+            shtACPricer.Range("strike_shift").Cells(1, i) = strike_smoothing
+        Else
+            shtACPricer.Range("strike_shift").Cells(1, i) = 0
+        End If
+        
+        'KI barrier shift
+        ki_barrier_shift = oRS("KIBARRIER_SHIFT_SIZE")
+        shtACPricer.Range("KI_Barrier_Shift").Cells(1, i) = ki_barrier_shift
+        
+        i = i + 1
+        oRS.MoveNext
+    Loop
+    
+    oRS.Close
+    
+    '---------- From BizOne
+    '기초자산 코드, 최초기준가, KI수준
+    If isQuote = True Then
+        sql = " SELECT ASSET_CODE, UL_CODE, REFERENCE_PRICE, UPDATE_DT, KI_BARRIER, SORT_SEQ, UL_COST_YIELD from sps.ac_underlying where asset_code = '" + productCode + "' order by 6"
+    Else
+        sql = " SELECT indv_iscd, decode(unas_iscd,'NIKKEI225','NKY',unas_iscd), unas_intl_prc, clrd_sdrt/100, barr_val/100 from BSYS.TBSIMO202D00@GDW where indv_iscd = '" + productCode + "' order by 2"
+    End If
+        
+    With oCmd
+        .ActiveConnection = adoCon
+        .CommandType = adCmdText
+        .CommandText = sql
+       
+        oRS.Open .Execute
+    End With
+        
+    i = 1
+    Dim redeem_shift As Boolean
+    redeem_shift = False
+    
+    Dim ua_code As String
+    Dim ua_ref_spot() As Double
+    Dim ua_ki_barr() As Double
+    Dim ua_close_spot() As Double
+    ReDim ua_ref_spot(0) As Double
+    ReDim ua_ki_barr(0) As Double
+    ReDim ua_close_spot(0) As Double
+    
+    Do Until oRS.EOF
+    
+        '단축코드 -> KR코드 변환 2019.3.5
+        If isQuote = True Then
+            Select Case oRS(1)
+            Case "005380": ua_code = "KR7005380001" '현대차
+            Case "005930": ua_code = "KR7005930003" '삼성전자
+            Case "000030": ua_code = "KR7000030007" '우리은행
+            Case "028260": ua_code = "KR7028260008" '삼성물산
+            Case "105560": ua_code = "KR7105560007" 'KB금융
+            Case "035420": ua_code = "KR7035420009" 'NAVER
+            Case "018260": ua_code = "KR7018260000" '삼성SDS
+            Case "005490": ua_code = "KR7005490008" 'POSCO
+            Case "034220": ua_code = "KR7034220004" 'LG디스플레이
+            Case "D02002": ua_code = "KRD020021147" 'KOSPI200 레버리지
+            Case Else: ua_code = oRS(1)
+            End Select
+        Else
+            ua_code = oRS(1)
+        End If
+        
+        'underlying code
+        shtACPricer.Range("ul_code").Cells(1, i) = ua_code
+        'ejectable
+        shtACPricer.Range("ejected_ul_flag").Cells(1, i) = False '기본값. 실제 상품 발행시 수정 필요.
+        
+        ReDim Preserve ua_ref_spot(UBound(ua_ref_spot) + 1) As Double
+        ReDim Preserve ua_ki_barr(UBound(ua_ki_barr) + 1) As Double
+        ReDim Preserve ua_close_spot(UBound(ua_close_spot) + 1) As Double
+        
+        ua_close_spot(i) = WorksheetFunction.VLookup(ua_code, Range("ua_close_spot"), 2, False)
+        
+        'ref. spot: 신규발행종목 최초기준가 100으로 설정
+        '스트레스테스트 일 경우는 제외 2018.12.20
+        'If (scenario_test = False) And (today = value_date Or isQuote = True) Then '평가일이 초초기준가설정일일 때
+        If (scenario_test = False) And (today <= value_date Or isQuote = True) Then '평가일이 최초기준가설정일 이전일 때 포함(예. 발행풀가 기간을 피하기 위해 발행일 < 최초기준가평가일 인 경우)
+            ua_ref_spot(i) = ua_close_spot(i)
+        Else
+            ua_ref_spot(i) = oRS(2)
+            '최초기준가 검증(발행일에만)
+            If today = settlement_date And check_spot(oRS(1), date2str(value_date), oRS(2), adoCon) = False Then
+                MsgBox productCode & ": " & oRS(1) & " 기초자산최초기준가 오류"
+            End If
+        End If
+        shtACPricer.Range("reference").Cells(1, i) = ua_ref_spot(i)
+        
+        'KI barrier
+        ua_ki_barr(i) = oRS(4)
+        shtACPricer.Range("KI_barrier").Cells(1, i) = ua_ki_barr(i)
+        
+        If oRS(1) = "SX5E" Then redeem_shift = True
+        If oRS(1) = "SPX" Then redeem_shift = True
+        
+        i = i + 1
+        oRS.MoveNext
+    Loop
+    
+    'no of underlying
+    Dim no_of_underlying As Integer
+    no_of_underlying = i - 1
+    shtACPricer.Range("no_of_underlying") = no_of_underlying
+    
+    If redeem_shift Then
+        maturity_date = maturity_date + 1
+        shtACPricer.Range("maturity_date") = maturity_date
+    End If
+    
+    oRS.Close
+    
+    '----------------------------------------
+    'performance type, fund_code, ccy
+    
+    Dim early_exit_flag As Boolean
+    Dim isFiveWins As Boolean
+    Dim ejectable_flag As Boolean
+        
+    If isQuote = True Then
+    
+
+    Else
+        sql = " SELECT UNAS_CHOC_MTHD_CODE, CLRD_TYPE_CODE, substr(PROD_FNCD,1,2), PROD_FNCD, STLM_CRCD, DEAL_CLS_CODE " _
+            & " FROM    bsys.TBSIMO201M00@gdw " _
+            & " WHERE   INDV_ISCD = '" + productCode + "' "
+        
+        With oCmd
+            .ActiveConnection = adoCon
+            .CommandType = adCmdText
+            .CommandText = sql
+            
+            oRS.Open .Execute
+        End With
+
+        isFiveWins = False
+        
+        Do Until oRS.EOF
+            
+            Select Case oRS(0)
+            Case "1"
+                shtACPricer.Range("performance_type") = "Worst"
+                shtACPricer.Range("ki_performance_type") = "Worst"
+            Case "2"
+                shtACPricer.Range("performance_type") = "Best"
+                shtACPricer.Range("ki_performance_type") = "Best"
+            Case "4"
+                shtACPricer.Range("performance_type") = "Average"
+                shtACPricer.Range("ki_performance_type") = "Average"
+            Case "5"
+                shtACPricer.Range("performance_type") = "Average"
+                shtACPricer.Range("ki_performance_type") = "Worst"
+            End Select
+            
+            If oRS(1) = "29" Then
+                early_exit_flag = True
+                shtACPricer.Range("early_exit_flag") = True
+            Else
+                early_exit_flag = False
+                shtACPricer.Range("early_exit_flag") = False
+            End If
+            
+            If oRS(1) = "38" Then
+                isFiveWins = True
+            Else
+                isFiveWins = False
+            End If
+            
+            If False Then '기본값. 실제 상품 발생시 수정 필요.
+                ejectable_flag = True
+                shtACPricer.Range("ejectable_flag") = True
+            Else
+                ejectable_flag = False
+                shtACPricer.Range("ejectable_flag") = False
+            End If
+            
+            shtACPricer.Range("fund_code_m") = oRS(2)
+            shtACPricer.Range("fund_code_c") = oRS(3)
+            shtACPricer.Range("CCY") = oRS(4)
+            If oRS(5) = "2" Then
+                shtACPricer.Range("buy_sell") = "BUY"
+            Else
+                shtACPricer.Range("buy_sell") = "SELL"
+            End If
+            
+            oRS.MoveNext
+        Loop
+        
+        oRS.Close
+    End If
+        
+    '----------------------------------------
+    'Call schedule
+    Dim no_of_ac_schedule As Integer
+    Dim call_date() As Date
+    Dim coupon_on_call() As Double
+    Dim barr_strike() As Double
+    Dim barr_perform_type() As Integer
+    ReDim call_date(0) As Date
+    ReDim coupon_on_call(0) As Double
+    ReDim barr_strike(0) As Double
+    ReDim barr_perform_type(0) As Integer
+        
+    If isQuote = True Then
+        sql = " SELECT  CALL_DATE   " _
+            & "        ,null        " _
+            & "    ,NVL(coupon_on_call,0)  " _
+            & "    ,NVL(strike,0)      " _
+            & "    ,NVL(performance_type,-1)      " _
+            & "    ,NVL(strike_smoothing_width,0) " _
+            & "FROM    sps.ac_schedule " _
+            & "WHERE   asset_code = '" + productCode + "'" _
+            & "ORDER BY 2 "
+            
+        With oCmd
+            .ActiveConnection = adoCon
+            .CommandType = adCmdText
+            .CommandText = sql
+            
+            oRS.Open .Execute
+        End With
+        
+        i = 1
+        Do Until oRS.EOF
+            
+            ReDim Preserve call_date(UBound(call_date) + 1) As Date
+            ReDim Preserve coupon_on_call(UBound(coupon_on_call) + 1) As Double
+            ReDim Preserve barr_strike(UBound(barr_strike) + 1) As Double
+            ReDim Preserve barr_perform_type(UBound(barr_perform_type) + 1) As Integer
+            
+            If redeem_shift Then
+                '기초자산 지역에 따라 상환스케줄 1차 조정: 실제 평가일 + 1달력일
+                call_date(i) = str2date(oRS(0)) + 1
+            Else
+                call_date(i) = str2date(oRS(0))
+            End If
+            shtACPricer.Range("schedule_start").Cells(i, 1) = call_date(i)
+            
+            coupon_on_call(i) = oRS(2)
+            barr_strike(i) = oRS(3)
+            
+            shtACPricer.Range("cpn_on_call").Cells(i, 1) = coupon_on_call(i)
+            shtACPricer.Range("strike_rate").Cells(i, 1) = barr_strike(i)
+            
+            'performance_type_on_call
+            barr_perform_type(i) = oRS(4)
+            shtACPricer.Range("performance_type_on_call").Cells(i, 1) = barr_perform_type(i)
+            
+            'strike smoothing
+            If shtACPricer.Range("chkStrikeSmoothing") = True Then
+                shtACPricer.Range("strike_smoothing_width").Cells(i, 1) = oRS(5)
+            Else
+                shtACPricer.Range("strike_smoothing_width").Cells(i, 1) = 0
+            End If
+            
+            'ejectable
+            If shtACPricer.Range("ejectable_flag") = True Then
+                shtACPricer.Range("ejectable_order_on_call").Cells(i, 1) = 0 '기본값. 실제 상품 발행시 수정 필요.
+            Else
+                shtACPricer.Range("ejectable_order_on_call").Cells(i, 1) = 0
+            End If
+            
+            i = i + 1
+            oRS.MoveNext
+        Loop
+        
+        oRS.Close
+            
+    Else
+    
+        If isFiveWins Then
+            sql = " SELECT CLRD_DTRM_DATE, null, "
+            sql = sql & "                 NVL(CLRD_INRT,0)/100 CLRD_ERT,"
+            sql = sql & "                 NVL(CLRD_BARR_VAL,0)/100 UNAS_SDRT,"
+            sql = sql & "                'N' AVRG_APLY_YN"
+            sql = sql & "         FROM   BSYS.TBSIMO227L00@GDW"
+            sql = sql & "         WHERE  INDV_ISCD = '" + productCode + "'"
+            sql = sql & " ORDER BY CLRD_DTRM_DATE"
+    '        SQL = " SELECT CLRD_DTRM_DATE, null, "
+    '        SQL = SQL & "                NVL(CLRD_INRT,0)/100 CLRD_ERT, "
+    '        SQL = SQL & "                NVL(CLRD_BARR_VAL,0)/100 UNAS_SDRT, "
+    '        SQL = SQL & "                'N' AVRG_APLY_YN, "
+    '        SQL = SQL & "                NVL(b.strike_smoothing_width,0) "
+    '        SQL = SQL & "         FROM   BSYS.TBSIMO227L00@GDW a, sps.ac_schedule b "
+    '        SQL = SQL & "         WHERE  a.INDV_ISCD = '" + productCode + "' and a.INDV_ISCD = b.ASSET_CODE(+) "
+    '        SQL = SQL & " and a.CLRD_DTRM_DATE = b.call_date(+) "
+    '        SQL = SQL & " ORDER BY 1 "
+        Else
+            sql = " SELECT  TRTH_CLRD_DTRM_DATE   DT  " _
+                & "        ,RMS.GET_WORKDATE(TRTH_CLRD_DTRM_DATE,1)   BFRPY_BASE_DT " _
+                & "    ,NVL(CLRD_ERT,0) / 100       BFRPY_BASE_RT " _
+                & "    ,NVL(UNAS_SDRT1,0)/100     BASERT1 " _
+                & "    ,NVL(AVRG_APLY_YN,'N')     AVRG_APLY_YN " _
+                & "FROM    BSYS.TBSIMO203D00@gdw " _
+                & "WHERE   INDV_ISCD = '" + productCode + "' " _
+                & "ORDER BY CLRD_DTRM_DATE "
+    '        SQL = " SELECT  TRTH_CLRD_DTRM_DATE   DT  " _
+    '            & "        ,RMS.GET_WORKDATE(TRTH_CLRD_DTRM_DATE,1)   BFRPY_BASE_DT " _
+    '            & "    ,NVL(CLRD_ERT,0) / 100       BFRPY_BASE_RT " _
+    '            & "    ,NVL(UNAS_SDRT1,0)/100     BASERT1 " _
+    '            & "    ,NVL(AVRG_APLY_YN,'N')     AVRG_APLY_YN " _
+    '            & "    ,NVL(b.strike_smoothing_width,0) " _
+    '            & "FROM    bsys.TBSIMO203d00@gdw a, sps.ac_schedule b " _
+    '            & "WHERE   a.INDV_ISCD = '" + productCode + "' and a.INDV_ISCD = b.ASSET_CODE(+) " _
+    '            & "and TRTH_CLRD_DTRM_DATE = b.call_date(+) " _
+    '            & "ORDER BY 1 "
+        End If
+    
+        With oCmd
+            .ActiveConnection = adoCon
+            .CommandType = adCmdText
+            .CommandText = sql
+            
+            oRS.Open .Execute
+        End With
+        
+        i = 1
+        Do Until oRS.EOF
+            
+            ReDim Preserve call_date(UBound(call_date) + 1) As Date
+            ReDim Preserve coupon_on_call(UBound(coupon_on_call) + 1) As Double
+            ReDim Preserve barr_strike(UBound(barr_strike) + 1) As Double
+            ReDim Preserve barr_perform_type(UBound(barr_perform_type) + 1) As Integer
+            
+            If redeem_shift Then
+                '2019.4.18
+                '오늘이 실제 조기상환평가일 후 첫 영업일이면 call date를 오늘로 설정: 상환여부 판단 때문
+                If today = WorksheetFunction.WorkDay(str2date(oRS(0)), 1, shtHolidays.Range("Holidays")) Then
+                    call_date(i) = today
+                Else
+                    '기초자산 지역에 따라 상환스케줄 1차 조정: 실제 평가일 + 1달력일
+                    call_date(i) = str2date(oRS(0)) + 1
+                End If
+            Else
+                call_date(i) = str2date(oRS(0))
+            End If
+            shtACPricer.Range("schedule_start").Cells(i, 1) = call_date(i)
+            coupon_on_call(i) = oRS(2)
+            barr_strike(i) = oRS(3)
+            shtACPricer.Range("cpn_on_call").Cells(i, 1) = coupon_on_call(i)
+            shtACPricer.Range("strike_rate").Cells(i, 1) = barr_strike(i)
+            
+            'performance_type_on_call
+            If oRS(4) = "Y" Then
+                barr_perform_type(i) = 0
+            Else
+                barr_perform_type(i) = -1
+            End If
+            shtACPricer.Range("performance_type_on_call").Cells(i, 1) = barr_perform_type(i)
+            
+            ''strike smoothing
+            'shtACPricer.Range("strike_smoothing_width").Cells(i, 1) = oRS(5)
+                        
+            'ejectable
+            If shtACPricer.Range("ejectable_flag") = True Then
+                shtACPricer.Range("ejectable_order_on_call").Cells(i, 1) = 0 '기본값. 실제 상품 발행시 수정 필요.
+            Else
+                shtACPricer.Range("ejectable_order_on_call").Cells(i, 1) = 0
+            End If
+            
+            i = i + 1
+            oRS.MoveNext
+        Loop
+        
+        oRS.Close
+    
+        '----------------------------------------
+        'Strike smoothing factor: sps DB의 call date를 shift할 경우 비즈원 call date와 join되지 않는 문제가 있어 부득이 독립적으로 입수함
+        sql = "SELECT call_date, strike_smoothing_width from sps.ac_schedule where ASSET_CODE = '" + productCode + "' and call_date >='" + date2str(call_date(1) - 1) + "' ORDER BY 1 "
+            
+        With oCmd
+            .ActiveConnection = adoCon
+            .CommandType = adCmdText
+            .CommandText = sql
+            
+            oRS.Open .Execute
+        End With
+        
+        i = 1
+        Do Until oRS.EOF
+            
+            'strike smoothing
+            If shtACPricer.Range("chkStrikeSmoothing") = True Then
+                shtACPricer.Range("strike_smoothing_width").Cells(i, 1) = oRS(1)
+            Else
+                shtACPricer.Range("strike_smoothing_width").Cells(i, 1) = 0
+            End If
+            
+            i = i + 1
+            oRS.MoveNext
+        Loop
+        
+        oRS.Close
+    
+    End If
+    no_of_ac_schedule = i - 1
+    
+    '----------------------------------------
+    'Monthly coupon schedule
+    Dim monthly_coupon_flag As Boolean
+    monthly_coupon_flag = False
+    
+    Dim coupon_date() As Date
+    Dim montly_coupon() As Double
+    Dim coupon_barr() As Double
+    ReDim coupon_date(0) As Date
+    ReDim montly_coupon(0) As Double
+    ReDim coupon_barr(0) As Double
+    
+    Dim no_of_monthly_coupon_schedule As Integer
+    
+    If isQuote = True Then
+    
+    Else
+        
+        '쿠폰구간관리
+        sql = " SELECT NVL(BONS_CUPN_STA_SDRT/100, 0) CouponBarrier, " _
+            & "         NVL(BONS_CUPN_FIN_SDRT/100, 100) CouponUpperBarrier, " _
+            & "         NVL(BONS_CUPN_INRT/100, 0) CouponRate, SCTN_STA_CTNU, SCTN_FIN_CTNU " _
+            & " FROM    bsys.TBSIMO210L00@gdw " _
+            & " WHERE   INDV_ISCD = '" + productCode + "' ORDER BY SCTN_STA_CTNU ASC"
+        
+        With oCmd
+            .ActiveConnection = adoCon
+            .CommandType = adCmdText
+            .CommandText = sql
+            
+            oRS.Open .Execute
+        End With
+            
+        i = 1
+        Do Until oRS.EOF
+
+'            ReDim Preserve coupon_barr(UBound(coupon_barr) + 1) As Double
+'            ReDim Preserve montly_coupon(UBound(montly_coupon) + 1) As Double
+            
+            For i = oRS(3) To oRS(4)
+                        ReDim Preserve coupon_barr(UBound(coupon_barr) + 1) As Double
+            ReDim Preserve montly_coupon(UBound(montly_coupon) + 1) As Double
+                'coupon barrier
+                coupon_barr(i) = oRS(0)
+                shtACPricer.Range("cpn_schedule_start").Cells(i, 2) = coupon_barr(i)
+                'coupon on call
+                montly_coupon(i) = oRS(2)
+                shtACPricer.Range("cpn_schedule_start").Cells(i, 3) = montly_coupon(i)
+            Next i
+            
+            oRS.MoveNext
+        
+        Loop
+        
+        oRS.Close
+        
+        '쿠폰지급일관리
+        sql = " SELECT TRTH_CUPN_VLTN_DATE COUPON_DATE " _
+            & " FROM    BSYS.TBSIMO213L00@GDW   " _
+            & " WHERE   INDV_ISCD = '" + productCode + "' ORDER BY 1 ASC"
+            
+        With oCmd
+            .ActiveConnection = adoCon
+            .CommandType = adCmdText
+            .CommandText = sql
+            
+            oRS.Open .Execute
+        End With
+            
+        i = 1
+        'coupon date
+        Do Until oRS.EOF
+            monthly_coupon_flag = True
+            ReDim coupon_date(UBound(coupon_date) + 1) As Date
+            
+            If redeem_shift Then
+                '2019.4.18
+                '오늘이 실제 조기상환평가일 후 첫 영업일이면 call date를 오늘로 설정: 상환여부 판단 때문
+                If today = WorksheetFunction.WorkDay(str2date(oRS(0)), 1, shtHolidays.Range("Holidays")) Then
+                    coupon_date(i) = today
+                Else
+                    '기초자산 지역에 따라 상환스케줄 1차 조정: 실제 평가일 + 1달력일
+                    coupon_date(i) = str2date(oRS(0)) + 1
+                End If
+            Else
+                coupon_date(i) = str2date(oRS(0))
+            End If
+            shtACPricer.Range("cpn_schedule_start").Cells(i, 1) = coupon_date(i)
+            
+            i = i + 1
+            oRS.MoveNext
+        
+        Loop
+        
+        oRS.Close
+    
+    End If
+    
+    'Monthly coupon flag
+    shtACPricer.Range("monthly_coupon_flag") = monthly_coupon_flag
+    no_of_monthly_coupon_schedule = i - 1
+
+    '----------------------------------------
+    'Early Exit(Lizard)
+'    Dim isEEchecked As Boolean
+'    isEEchecked = False
+
+    Dim no_of_ee_schedule As Integer
+    
+    Dim ee_call_date() As Date
+    Dim ee_coupon_on_call() As Double
+    Dim ee_barr_strike() As Double
+    Dim ee_barr_perform_type() As Integer
+    Dim ee_barr_type() As Integer
+    Dim ee_barr_touched() As Boolean
+    ReDim ee_call_date(0) As Date
+    ReDim ee_coupon_on_call(0) As Double
+    ReDim ee_barr_strike(0) As Double
+    ReDim ee_barr_perform_type(0) As Integer
+    ReDim ee_barr_type(0) As Integer
+    ReDim ee_barr_touched(0) As Boolean
+    
+    If isQuote = True Then
+    
+        early_exit_flag = False
+    
+        sql = " SELECT * FROM ("
+        sql = sql & " SELECT CALL_DATE,"
+        sql = sql & "        COUPON_ON_CALL,"
+        sql = sql & "        STRIKE,"
+        sql = sql & "        STRIKE_SMOOTHING_WIDTH,"
+        sql = sql & "        EE_TOUCHED_YN,"
+        sql = sql & "        PERFORMANCE_TYPE,"
+        sql = sql & "        BARRIER_TYPE,"
+        sql = sql & "        ROW_NUMBER() OVER(PARTITION BY CALL_DATE ORDER BY UL_CODE) RNUM"
+        sql = sql & " FROM SPS.AC_EE_SCHEDULE"
+        sql = sql & " WHERE  ASSET_CODE='" + productCode + "')"
+        sql = sql & " WHERE RNUM=1 "
+        
+        With oCmd
+            .ActiveConnection = adoCon
+            .CommandType = adCmdText
+            .CommandText = sql
+            
+            oRS.Open .Execute
+        End With
+        
+        i = 1
+        Do Until oRS.EOF
+        
+            early_exit_flag = True
+            ReDim Preserve ee_call_date(UBound(ee_call_date) + 1) As Date
+            ReDim Preserve ee_coupon_on_call(UBound(ee_coupon_on_call) + 1) As Double
+            ReDim Preserve ee_barr_strike(UBound(ee_barr_strike) + 1) As Double
+            ReDim Preserve ee_barr_perform_type(UBound(ee_barr_perform_type) + 1) As Integer
+            ReDim Preserve ee_barr_type(UBound(ee_barr_type) + 1) As Integer
+            ReDim Preserve ee_barr_touched(UBound(ee_barr_touched) + 1) As Boolean
+            
+            'early exit schedule: call date, end date
+            If redeem_shift Then
+               '2019.4.18
+                '오늘이 실제 조기상환평가일 후 첫 영업일이면 call date를 오늘로 설정: 상환여부 판단 때문
+                If today = WorksheetFunction.WorkDay(str2date(oRS(0)), 1, shtHolidays.Range("Holidays")) Then
+                    ee_call_date(i) = today
+                Else
+                    '기초자산 지역에 따라 상환스케줄 1차 조정: 실제 평가일 + 1달력일
+                    ee_call_date(i) = str2date(oRS(0)) + 1
+                End If
+            Else
+                ee_call_date(i) = str2date(oRS(0))
+            End If
+            shtACPricer.Range("early_exit_schedule_start").Cells(i, 1) = ee_call_date(i)
+            shtACPricer.Range("early_exit_schedule_start").Cells(i, 4) = ee_call_date(i)
+                
+            'early exit schedule: coupon on call
+            ee_coupon_on_call(i) = oRS(1)
+            shtACPricer.Range("early_exit_schedule_start").Cells(i, 2) = ee_coupon_on_call(i)
+            'early exit schedule: early exit barrier
+            ee_barr_strike(i) = oRS(2)
+            shtACPricer.Range("early_exit_schedule_start").Cells(i, 5) = ee_barr_strike(i)
+            'early exit schedule: start date
+            shtACPricer.Range("early_exit_schedule_start").Cells(i, 3) = settlement_date
+            
+            'early exit schedule: early exit touched
+            If oRS(4) = 0 Then
+                ee_barr_touched(i) = False
+                shtACPricer.Range("early_exit_schedule_start").Cells(i, 6) = "N"
+            Else
+                ee_barr_touched(i) = True
+                shtACPricer.Range("early_exit_schedule_start").Cells(i, 6) = "Y"
+            End If
+            ee_barr_perform_type(i) = oRS(5)
+            ee_barr_type(i) = oRS(6)
+            shtACPricer.Range("early_exit_schedule_start").Cells(i, 7) = ee_barr_perform_type(i)
+            shtACPricer.Range("early_exit_schedule_start").Cells(i, 8) = ee_barr_type(i)
+
+            '다음 early exit barrier touch 여부: BizOne 입력값 기준
+'            If isEEchecked = False And today <= shtACPricer.Range("early_exit_schedule_start").Cells(i, 1) Then
+'
+'                For j = 1 To shtACPricer.Range("no_of_underlying")
+'                    shtACPricer.Range("EE_Barrier").Cells(1, j) = oRS(2)
+'                Next j
+'
+'                If oRS(4) = 0 Then
+'                    shtACPricer.Range("Early_Exit_Touched") = False
+'                Else
+'                    shtACPricer.Range("Early_Exit_Touched") = True
+'                End If
+'
+'                isEEchecked = True
+'            End If
+            
+            i = i + 1
+            oRS.MoveNext
+        Loop
+        
+        oRS.Close
+        
+        shtACPricer.Range("early_exit_flag") = early_exit_flag
+        
+    Else
+        
+        'Early Exit Touched
+        If early_exit_flag = True Then
+            sql = " SELECT CALC_FIN_DATE EarlyExitDate, " _
+                & "         CLRD_INRT/100 EarlyExitCouponRate, " _
+                & "         CLRD_BARR_VAL/100 EarlyExitBarrier, " _
+                & "         CALC_STA_DATE, " _
+                & "         CALC_FIN_DATE, " _
+                & "         CLRD_BARR_HIT_YN " _
+                & " FROM    bsys.TBSIMO227L00@gdw " _
+                & " WHERE   INDV_ISCD = '" + productCode + "' "
+            
+            With oCmd
+                .ActiveConnection = adoCon
+                .CommandType = adCmdText
+                .CommandText = sql
+                
+                oRS.Open .Execute
+            End With
+            
+            i = 1
+            Do Until oRS.EOF
+                
+                ReDim Preserve ee_call_date(UBound(ee_call_date) + 1) As Date
+                ReDim Preserve ee_coupon_on_call(UBound(ee_coupon_on_call) + 1) As Double
+                ReDim Preserve ee_barr_strike(UBound(ee_barr_strike) + 1) As Double
+                ReDim Preserve ee_barr_perform_type(UBound(ee_barr_perform_type) + 1) As Integer
+                ReDim Preserve ee_barr_type(UBound(ee_barr_type) + 1) As Integer
+                ReDim Preserve ee_barr_touched(UBound(ee_barr_touched) + 1) As Boolean
+                'early exit schedule: call date, end date
+                If redeem_shift Then
+                    '2019.4.18
+                    '오늘이 실제 조기상환평가일 후 첫 영업일이면 call date를 오늘로 설정: 상환여부 판단 때문
+                    If today = WorksheetFunction.WorkDay(str2date(oRS(0)), 1, shtHolidays.Range("Holidays")) Then
+                        ee_call_date(i) = today
+                    Else
+                        '기초자산 지역에 따라 상환스케줄 1차 조정: 실제 평가일 + 1달력일
+                        ee_call_date(i) = str2date(oRS(0)) + 1
+                    End If
+                Else
+                    ee_call_date(i) = str2date(oRS(0))
+                End If
+                shtACPricer.Range("early_exit_schedule_start").Cells(i, 1) = ee_call_date(i)
+                shtACPricer.Range("early_exit_schedule_start").Cells(i, 4) = ee_call_date(i)
+            
+                'early exit schedule: coupon on call
+                ee_coupon_on_call(i) = oRS(1)
+                shtACPricer.Range("early_exit_schedule_start").Cells(i, 2) = ee_coupon_on_call(i)
+                'early exit schedule: early exit barrier
+                ee_barr_strike(i) = oRS(2)
+                shtACPricer.Range("early_exit_schedule_start").Cells(i, 5) = ee_barr_strike(i)
+                'early exit schedule: start date
+                shtACPricer.Range("early_exit_schedule_start").Cells(i, 3) = str2date(oRS(3))
+                'early exit schedule: early exit touched
+                If oRS(5) = "N" Then
+                    ee_barr_touched(i) = False
+                Else
+                    ee_barr_touched(i) = True
+                End If
+                shtACPricer.Range("early_exit_schedule_start").Cells(i, 6) = oRS(5)
+                
+                'Hero 구조 원장 완성 전까지 기존 Early-exit구조 처리를 위한 임시 하드 코딩: dll(2018.8.8)
+                ee_barr_perform_type(i) = -1
+                ee_barr_type(i) = -1
+                shtACPricer.Range("early_exit_schedule_start").Cells(i, 7) = ee_barr_perform_type(i)
+                shtACPricer.Range("early_exit_schedule_start").Cells(i, 8) = ee_barr_type(i)
+    
+                '다음 early exit barrier touch 여부: BizOne 입력값 기준
+'                If isEEchecked = False And today <= shtACPricer.Range("early_exit_schedule_start").Cells(i, 1) Then
+'
+'                    For j = 1 To shtACPricer.Range("no_of_underlying")
+'                        shtACPricer.Range("EE_Barrier").Cells(1, j) = oRS(2)
+'                    Next j
+'
+'                    If oRS(5) = "N" Then
+'                        shtACPricer.Range("Early_Exit_Touched") = False
+'                    Else
+'                        shtACPricer.Range("Early_Exit_Touched") = True
+'                    End If
+'
+'                    isEEchecked = True
+'                End If
+                
+                i = i + 1
+                oRS.MoveNext
+            Loop
+            
+            oRS.Close
+            
+        End If
+    
+    End If
+
+    no_of_ee_schedule = i - 1
+            
+    Call disconnectDB(adoCon)
+    
+    'Clear results
+    clear_ac_greeks
+    shtACPricer.Range("price").Cells(2, 1) = 0
+    
+    '----------------------------------------
+    'Check KI for today
+    If ki_flag = True Then
+        For j = 1 To no_of_underlying
+            If ua_close_spot(j) / ua_ref_spot(j) < ua_ki_barr(j) Then
+            
+                If ki_touch_flag = False Then
+                    If scenario_test = False Then
+                        MsgBox productCode & ": " & "당일 KI 터지했으나 원장에 반영 안됨"
+                    Else
+                        ki_touch_flag = True
+                        shtACPricer.Range("ki_touch_flag") = True
+                    End If
+                End If
+        
+                Exit For
+            End If
+        Next j
+    End If
+    
+    'Check EE KI for today
+    If early_exit_flag = True Then
+        For i = 1 To no_of_ee_schedule
+            If today <= ee_call_date(i) Then
+                For j = 1 To no_of_underlying
+                    
+                    If ua_close_spot(j) / ua_ref_spot(j) < ee_barr_strike(i) Then
+                    
+                        If ee_barr_touched(i) = False Then
+                            If scenario_test = False Then
+                                MsgBox productCode & ": " & "당일 early exit barrer 터지했으나 원장에 반영 안됨"
+                            Else
+                                ee_barr_touched(i) = True
+                                shtACPricer.Range("early_exit_schedule_start").Cells(i, 6) = "Y"
+                            End If
+                        End If
+    
+                        Exit For
+                    End If
+                Next j
+            End If
+        Next i
+    End If
+    
+    Dim redeem_rate As Double
+    redeem_rate = 0
+    
+    'Check monthly coupon
+    Dim monthly_cpn As Double
+    monthly_cpn = 0
+    If monthly_coupon_flag = True Then
+        For i = 1 To no_of_monthly_coupon_schedule
+            If today = coupon_date(i) Then
+            
+                If check_monthly_cpn(coupon_barr(i)) = True Then
+                    monthly_cpn = montly_coupon(i)
+                End If
+                
+            End If
+        Next i
+    End If
+      
+    'Check early-exit coupon
+    Dim ee_success As Boolean
+    ee_success = False
+    Dim ee_cpn As Double
+    ee_cpn = 0
+    If early_exit_flag = True Then
+        For i = 1 To no_of_ee_schedule
+            If today = ee_call_date(i) And ee_barr_touched(i) = False Then
+                ee_success = True
+                ee_cpn = ee_coupon_on_call(i)
+                Exit For
+            End If
+        Next i
+    End If
+
+    'Check autocall dates for today
+    Dim ac_success As Boolean
+    ac_success = False
+    For i = 1 To no_of_ac_schedule
+            
+        If today = call_date(i) Then
+            
+            ac_success = check_autocall(barr_strike(i), barr_perform_type(i))
+            
+            If ac_success = True Then
+                'autocall condition
+                redeem_rate = monthly_cpn + coupon_on_call(i)
+                Exit For
+            Else
+                'early-exit condition
+                If ee_success = True Then
+                    ac_success = True
+                    redeem_rate = monthly_cpn + ee_cpn
+                    Exit For
+                End If
+            
+                'dummy coupon condition
+                If ki_touch_flag = False And today = maturity_date Then
+                    ac_success = True
+                    redeem_rate = dummy_coupon
+                    Exit For
+                End If
+            End If
+
+        End If
+
+    Next i
+           
+    If redeem_shift Then
+    
+        Dim ac_fail_confirm As Boolean
+        ac_fail_confirm = False
+        Dim ee_fail_confirm As Boolean
+        ee_fail_confirm = False
+        
+        'call schedule
+        For i = 1 To no_of_ac_schedule
+            If today = call_date(i) - 1 Then
+            
+                ac_fail_confirm = check_autocall_fail(barr_strike(i), barr_perform_type(i))
+
+                Exit For
+            End If
+        Next i
+        
+        'early-exit schedule
+        If early_exit_flag = True Then
+            Dim isEEdate As Boolean
+            isEEdate = False
+        
+            For i = 1 To no_of_ee_schedule
+                If today = ee_call_date(i) - 1 Then
+                
+                    isEEdate = True
+                    ee_fail_confirm = ee_barr_touched(i) = True Or _
+                                      check_autocall_fail(ee_barr_strike(i), ee_barr_perform_type(i))
+                    Exit For
+                End If
+            Next i
+            If isEEdate = False Then
+                ee_fail_confirm = True
+            End If
+        Else
+            ee_fail_confirm = True
+        End If
+        
+       
+        '당일 redeem_shift 취소
+        If ac_fail_confirm = True And ee_fail_confirm = True Then
+            'call schedule
+            For i = 1 To no_of_ac_schedule
+                If today = call_date(i) - 1 Then
+                    call_date(i) = today
+                    shtACPricer.Range("schedule_start").Cells(i, 1) = today
+                    Exit For
+                End If
+            Next i
+        
+            'early-exit schedule
+            For i = 1 To no_of_ee_schedule
+                If today = ee_call_date(i) - 1 Then
+                    ee_call_date(i) = today
+                    shtACPricer.Range("early_exit_schedule_start").Cells(i, 1) = today
+                    shtACPricer.Range("early_exit_schedule_start").Cells(i, 4) = today
+                    Exit For
+                End If
+            Next i
+            'monthly coupon schedule
+            For i = 1 To no_of_monthly_coupon_schedule
+                If today = coupon_date(i) - 1 Then
+                    coupon_date(i) = today
+                    shtACPricer.Range("cpn_schedule_start").Cells(i, 1) = today
+                    Exit For
+                End If
+            Next i
+            'maturity date
+            If today = maturity_date - 1 Then
+                maturity_date = today
+                shtACPricer.Range("maturity_date") = today
+            End If
+        End If
+    End If
+    
+    shtACPricer.Range("Autocall_YN") = ac_success
+    If ac_success = True Then
+        shtACPricer.Range("price").Cells(2, 1) = (1 + redeem_rate) * notional
+    End If
+
+    If ac_success = True Then
+        With shtACPricer.Range("Autocall_YN").Interior
+            .Pattern = xlSolid
+            .PatternColorIndex = xlAutomatic
+            .Color = 255
+            .TintAndShade = 0
+            .PatternTintAndShade = 0
+        End With
+    Else
+        With shtACPricer.Range("Autocall_YN").Interior
+            .Pattern = xlNone
+            .TintAndShade = 0
+            .PatternTintAndShade = 0
+        End With
+    End If
+    
+    With Application
+        .ScreenUpdating = bScreenUpdating
+        .StatusBar = btatusBar
+        .DisplayStatusBar = bDisplayStatusBar
+        .Calculation = vCalculation
+        .EnableEvents = bEnableEvents
+    End With
+    
+    Set oRS = Nothing
+    Set oCmd = Nothing
+    Set adoCon = Nothing
+    
+End Sub
+
+
+Private Function check_monthly_cpn(strike As Double) As Boolean
+
+    check_monthly_cpn = check_autocall(strike, -1)
+
+End Function
+
+Public Function check_autocall(strike As Double, performance_type_on_call As Integer) As Boolean
+
+    Dim i As Integer
+    Dim tmp_autocall As Boolean
+    
+    Dim ref_spot As Double
+    Dim close_spot As Double
+    Dim idx As Integer
+    Dim ofs As Integer
+    
+    Dim min_ As Double
+    Dim avg_ As Double
+    min_ = 2
+    avg_ = 0
+    
+    For i = 1 To shtACPricer.Range("no_of_underlying")
+    
+        ref_spot = shtACPricer.Range("reference").Cells(1, i)
+        
+        'SX5E, SPX를 기초로 한 종목은 call date가 shift되어 있으므로 다른 기초자산 종가는 전 영업일 값을 참조한다.
+        idx = WorksheetFunction.Match(shtACPricer.Range("ul_code").Cells(1, i), shtACPricer.Range("ul_code_list"), 0)
+        If shtACPricer.Range("ul_code").Cells(1, i) = "SX5E" Or shtACPricer.Range("ul_code").Cells(1, i) = "SPX" Then
+            ofs = 0
+        Else
+            ofs = 1
+        End If
+        close_spot = shtACPricer.Range("ua_close_spot").Cells(idx, 2 + ofs)
+        
+        min_ = WorksheetFunction.min(min_, close_spot / ref_spot)
+        avg_ = avg_ + close_spot / ref_spot
+    Next i
+    avg_ = avg_ / shtACPricer.Range("no_of_underlying")
+    
+    If performance_type_on_call = -1 Then 'worst performer
+    
+        If min_ < strike Then
+            tmp_autocall = False
+        Else
+            tmp_autocall = True
+        End If
+    
+    ElseIf performance_type_on_call = 0 Then 'average
+    
+        If avg_ < strike Then
+            tmp_autocall = False
+        Else
+            tmp_autocall = True
+        End If
+            
+    End If
+    
+    check_autocall = tmp_autocall
+
+End Function
+
+Private Function check_autocall_fail(strike As Double, performance_type_on_call As Integer) As Boolean
+
+    Dim tmp_autocall_fail As Boolean
+    
+    If performance_type_on_call = -1 Then 'worst performer
+    
+        Dim i As Integer
+        Dim ref_spot As Double
+        Dim close_spot As Double
+        
+        Dim idx As Integer
+        Dim min_ As Double
+        min_ = 2
+        
+        For i = 1 To shtACPricer.Range("no_of_underlying")
+        
+            idx = WorksheetFunction.Match(shtACPricer.Range("ul_code").Cells(1, i), shtACPricer.Range("ul_code_list"), 0)
+            
+            If shtACPricer.Range("ul_code").Cells(1, i) <> "SX5E" And shtACPricer.Range("ul_code").Cells(1, i) <> "SPX" Then
+                ref_spot = shtACPricer.Range("reference").Cells(1, i)
+                close_spot = shtACPricer.Range("ua_close_spot").Cells(idx, 2)
+                min_ = WorksheetFunction.min(min_, close_spot / ref_spot)
+            End If
+    
+        Next i
+    
+        If min_ < strike Then
+            tmp_autocall_fail = True
+        Else
+            tmp_autocall_fail = False
+        End If
+    
+    ElseIf performance_type_on_call = 0 Then 'average
+
+        tmp_autocall_fail = False
+            
+    End If
+    
+    check_autocall_fail = tmp_autocall_fail
+
+End Function
+
+Private Function check_spot(ua_code As String, tdate As String, price As Double, oDB As adoDB.Connection) As Boolean
+
+    Dim oCmd As New adoDB.Command
+    Dim oRS As New adoDB.Recordset
+    Dim sql As String
+    
+    sql = " select code, endprice from ras.if_stock_data where code= '" + ua_code + "' and tdate='" + tdate + "' "
+    sql = sql & " union "
+    sql = sql & " select code, price from ras.bl_quanto_base where code='" + ua_code + "' and tdate='" + tdate + "' "
+    
+    With oCmd
+        .ActiveConnection = oDB
+        .CommandType = adCmdText
+        .CommandText = sql
+       
+        oRS.Open .Execute
+    End With
+
+    check_spot = False
+    
+    Do Until oRS.EOF
+        If Abs(oRS(1) - price) < 0.0001 Then
+            check_spot = True
+        Else
+            check_spot = False
+        End If
+        oRS.MoveNext
+    Loop
+    oRS.Close
+    
+    Set oRS = Nothing
+    Set oCmd = Nothing
+
+End Function

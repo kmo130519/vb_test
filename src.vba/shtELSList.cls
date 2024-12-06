@@ -1,1 +1,113 @@
-Option ExplicitnOption Base 0nnPrivate Enum HEDG_TR_TYPE_CODEn    SELF = 1n    BTB = 2n    all = 3nEnd EnumnnPublic Sub btnReadELSList_Click()nn    Dim target_date As Daten    target_date = Range("target_date").valuen    n    Dim tdate_str As Stringn    tdate_str = date2str(target_date)n   n    Dim selected_hedge_type_code As Stringn    Select Case Range("hedge_type").valuen    Case "자체": selected_hedge_type_code = HEDG_TR_TYPE_CODE.SELFn    Case "BTB": selected_hedge_type_code = HEDG_TR_TYPE_CODE.BTBn    Case "전체": selected_hedge_type_code = HEDG_TR_TYPE_CODE.alln    End Selectn    n    Dim rng As Rangen    Set rng = Range("TBL_ELS_LIST")n    rng.ClearContentsn    n    Dim els_list As Variantn    els_list = rng.valuenn    Dim adoCon As New adoDB.Connectionn    Dim oCmd As New adoDB.Commandn    Dim oRS As New adoDB.Recordsetn    n    Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)n    n    Dim bind_variable() As Stringn    Dim bind_value() As Variantn    ReDim bind_variable(1) As Stringn    ReDim bind_value(1) As Variantn    bind_variable(1) = ":tdate"n    bind_value(1) = tdate_strn    n    Dim sql As Stringn    sql = getSQL(SQL_PATH_ELS, bind_variable, bind_value)n    n    If Range("including_ids_yn").value = True Thenn        sql = getSQL(SQL_PATH_IDS, bind_variable, bind_value) + " union all " + sqln    End Ifn    n    With oCmdnn        .ActiveConnection = adoConn        .CommandType = adCmdTextn        .CommandText = sqlnn        oRS.Open .Executenn    End Withnn    Application.Calculation = xlCalculationManualn    Application.ScreenUpdating = Falsenn    Dim i As Integern    Dim j As Integern    i = 1nn    Do Until oRS.EOFn        n        If selected_hedge_type_code = HEDG_TR_TYPE_CODE.all Or selected_hedge_type_code = oRS(0) Thenn    n            els_list(i, 1) = in            n            For j = 0 To oRS.Fields.count - 1n                els_list(i, j + 2) = oRS(j)n            Next jn            n            i = i + 1n        End Ifnn        oRS.MoveNextnn    Loopn    n    With rng.Interiorn        .Pattern = xlNonen        .TintAndShade = 0n        .PatternTintAndShade = 0n    End Withn    n    For i = 1 To rng.Rows.countn        If i Mod 2 = 0 Thenn            With rng.Rows(i).Interiorn                .Pattern = xlSolidn                .PatternColorIndex = xlAutomaticn                .ThemeColor = xlThemeColorAccent3n                .TintAndShade = 0.799981688894314n                .PatternTintAndShade = 0n            End Withn        End Ifn    Next in    n    rng.value = els_listn    n    Application.ScreenUpdating = Truen    Application.Calculation = xlCalculationAutomaticn    n    oRS.Closen    n    Call disconnectDB(adoCon)n    nEnd Sub
+Option Explicit
+Option Base 0
+
+Private Enum HEDG_TR_TYPE_CODE
+    SELF = 1
+    BTB = 2
+    all = 3
+End Enum
+
+Public Sub btnReadELSList_Click()
+
+    Dim target_date As Date
+    target_date = Range("target_date").value
+    
+    Dim tdate_str As String
+    tdate_str = date2str(target_date)
+   
+    Dim selected_hedge_type_code As String
+    Select Case Range("hedge_type").value
+    Case "자체": selected_hedge_type_code = HEDG_TR_TYPE_CODE.SELF
+    Case "BTB": selected_hedge_type_code = HEDG_TR_TYPE_CODE.BTB
+    Case "전체": selected_hedge_type_code = HEDG_TR_TYPE_CODE.all
+    End Select
+    
+    Dim rng As Range
+    Set rng = Range("TBL_ELS_LIST")
+    rng.ClearContents
+    
+    Dim els_list As Variant
+    els_list = rng.value
+
+    Dim adoCon As New adoDB.Connection
+    Dim oCmd As New adoDB.Command
+    Dim oRS As New adoDB.Recordset
+    
+    Call connectDB(adoCon, TNS_SERVICE_NAME, USER_ID, PASSWORD)
+    
+    Dim bind_variable() As String
+    Dim bind_value() As Variant
+    ReDim bind_variable(1) As String
+    ReDim bind_value(1) As Variant
+    bind_variable(1) = ":tdate"
+    bind_value(1) = tdate_str
+    
+    Dim sql As String
+    sql = getSQL(SQL_PATH_ELS, bind_variable, bind_value)
+    
+    If Range("including_ids_yn").value = True Then
+        sql = getSQL(SQL_PATH_IDS, bind_variable, bind_value) + " union all " + sql
+    End If
+    
+    With oCmd
+
+        .ActiveConnection = adoCon
+        .CommandType = adCmdText
+        .CommandText = sql
+
+        oRS.Open .Execute
+
+    End With
+
+    Application.Calculation = xlCalculationManual
+    Application.ScreenUpdating = False
+
+    Dim i As Integer
+    Dim j As Integer
+    i = 1
+
+    Do Until oRS.EOF
+        
+        If selected_hedge_type_code = HEDG_TR_TYPE_CODE.all Or selected_hedge_type_code = oRS(0) Then
+    
+            els_list(i, 1) = i
+            
+            For j = 0 To oRS.Fields.count - 1
+                els_list(i, j + 2) = oRS(j)
+            Next j
+            
+            i = i + 1
+        End If
+
+        oRS.MoveNext
+
+    Loop
+    
+    With rng.Interior
+        .Pattern = xlNone
+        .TintAndShade = 0
+        .PatternTintAndShade = 0
+    End With
+    
+    For i = 1 To rng.Rows.count
+        If i Mod 2 = 0 Then
+            With rng.Rows(i).Interior
+                .Pattern = xlSolid
+                .PatternColorIndex = xlAutomatic
+                .ThemeColor = xlThemeColorAccent3
+                .TintAndShade = 0.799981688894314
+                .PatternTintAndShade = 0
+            End With
+        End If
+    Next i
+    
+    rng.value = els_list
+    
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+    
+    oRS.Close
+    
+    Call disconnectDB(adoCon)
+    
+End Sub

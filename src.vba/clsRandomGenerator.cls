@@ -1,1 +1,208 @@
-Option ExplicitnnPrivate distribution_helper_ As New Distributions 'Helper class. Written by Jeon, YK.nnPrivate Const tiny As Double = 0.0000000001nPrivate Const one As Double = 0.9999999999n'----------------------------------------------n' This class utilizes qunatlib xl addinn'----------------------------------------------nnn'----------------------------------------------n' This function utilizes qunatlib xl addinn' Function : sobol_numbers_2dn' DESC: generates sobol sequence with dimension of 2 * steps, size of no_of_pathsn'       The array returns have dimension ( 1 to no_of_paths, 1 to steps, 1 to 2 )n'----------------------------------------------nnPublic Function sobol_numbers_2d(no_of_paths As Integer, steps As Long) As Double()nn    Dim obj_id As Stringn    Dim numbers_variant As Variant '() As Variantn    Dim numbers() As Doublen    Dim inx As Longn    Dim jnx As Integern    nOn Error GoTo ErrorHandlernn    ReDim numbers(1 To no_of_paths, 1 To steps, 1 To 2) As Doublen    n    '-----------------------------------------------------------------n    ' Dimension should be 2 times the number of time steps.n    '------------------------------------------------------------------n    n    obj_id = Application.run("qlSobolRsg", "_sobol_", steps * 2, 11, False, , True)n    n    numbers_variant = Application.run("qlVariates", obj_id, no_of_paths)n    n    For inx = 1 To no_of_pathsn        n        For jnx = 1 To stepsn        n            numbers(inx, jnx, 1) = numbers_variant(inx, 1 + (jnx - 1) * 2)n            numbers(inx, jnx, 2) = numbers_variant(inx, jnx * 2)n            n        Next jnxn        n    Next inxn    n    sobol_numbers_2d = numbersn    n    Exit Functionn    nErrorHandler:nn    Err.Raise vbObjectError + 1003, "clsRandomGenerator.sobol_numbers_2d :" & Chr(13) & Err.source, Err.description '1003 <-- initialization errorn    Exit FunctionnnEnd Functionnnn'----------------------------------------------n' This function utilizes qunatlib xl addinn' Function : sobol_numbers_1dn' DESC: generates sobol sequence with dimension of  steps, size of no_of_pathsn'       The array returns have dimension ( 1 to no_of_paths, 1 to steps )n'----------------------------------------------nPublic Function sobol_numbers_1d(no_of_paths As Integer, steps As Long) As Double()nn    Dim obj_id As Stringn    Dim numbers_variant As Variant '() As Variantn    Dim numbers() As Doublen    Dim inx As Longn    Dim jnx As Integern    nOn Error GoTo ErrorHandlernn    ReDim numbers(1 To no_of_paths, 1 To steps) As Doublen    n    '-----------------------------------------------------------------n    ' Dimension should be 2 times the number of time steps.n    '------------------------------------------------------------------n    n    obj_id = Application.run("qlSobolRsg", "_sobol_", steps, 1, False, , True)n    n    numbers_variant = Application.run("qlVariates", obj_id, no_of_paths)n    n    For inx = 1 To no_of_pathsn        n        For jnx = 1 To stepsn        n            numbers(inx, jnx) = numbers_variant(inx, jnx)n            n        Next jnxn        n    Next inxn    n    sobol_numbers_1d = numbersn    n    n    Exit Functionn    nErrorHandler:nn    Err.Raise vbObjectError + 1003, "clsRandomGenerator.sobol_numbers_1d :" & Chr(13) & Err.source, Err.description '1003 <-- initialization errorn    Exit FunctionnnEnd Functionnn'----------------------------------------------n' This function utilizes qunatlib xl addinn' Function : norm_sobol_2dn' DESC: Generates quasi random numbers following normal distribution and correlation of corr.n'       Calls sobol_numbers_2dn'       The array returns have dimension ( 1 to no_of_paths, 1 to steps, 1 to 2 )n'----------------------------------------------nnPublic Function norm_sobol_2d(no_of_paths As Integer, steps As Long, Optional corr As Double = 0) As Double()nn    Dim numbers() As Doublen    Dim norm_numbers() As Doublen    n    Dim temp_number1 As Doublen    Dim temp_number2 As Doublen    n    Dim inx As Integern    Dim jnx As Integern    nOn Error GoTo ErrorHandlern    n    numbers = sobol_numbers_2d(no_of_paths, steps)n    n    ReDim norm_numbers(LBound(numbers, 1) To UBound(numbers, 2), LBound(numbers, 2) To UBound(numbers, 2), LBound(numbers, 3) To UBound(numbers, 3)) As Doublen    n    For inx = LBound(numbers, 1) To UBound(numbers, 1)n    n        For jnx = LBound(numbers, 2) To UBound(numbers, 2)n    n            norm_numbers(inx, jnx, 1) = distribution_helper_.NormInv(numbers(inx, jnx, 1))n            norm_numbers(inx, jnx, 2) = corr * norm_numbers(inx, jnx, 1) + Sqr(1 - corr ^ 2) * distribution_helper_.NormInv(numbers(inx, jnx, 2))n                                    n        Next jnxn    n    Next inxn    n    norm_sobol_2d = norm_numbersnn    Exit Functionn    nErrorHandler:nn    Err.Raise vbObjectError + 1003, "clsRandomGenerator.norm_sobol_2d :" & Chr(13) & Err.source, Err.description '1003 <-- initialization errorn    Exit FunctionnnnEnd Functionnnn' OBSOLETEnPublic Function uniform_numbers_2d(no_of_paths As Long, steps As Integer) As Double()nn    Dim random_numbers() As Doublen    Dim inx As Longn    Dim jnx As Integernn    n    ReDim random_numbers(1 To no_of_paths, 1 To steps, 1 To 2) As Doublen    n    For inx = 1 To no_of_pathsn    n        For jnx = 1 To stepsn        n            n            random_numbers(inx, jnx, 1) = rndn            random_numbers(inx, jnx, 2) = rndn            n            If random_numbers(inx, jnx, 1) = 0 Thenn            n                random_numbers(inx, jnx, 1) = tinyn                n            End Ifn            n            If random_numbers(inx, jnx, 2) = 0 Thenn            n                random_numbers(inx, jnx, 2) = tinyn                n            End Ifn            n            If random_numbers(inx, jnx, 1) = 1 Thenn            n                random_numbers(inx, jnx, 1) = onen                n            End Ifn            n            If random_numbers(inx, jnx, 2) = 1 Thenn            n                random_numbers(inx, jnx, 2) = onen                n            End Ifn                n      n        Next jnxn        n    Next inxn    n    uniform_numbers_2d = random_numbersn    nEnd Function
+Option Explicit
+
+Private distribution_helper_ As New Distributions 'Helper class. Written by Jeon, YK.
+
+Private Const tiny As Double = 0.0000000001
+Private Const one As Double = 0.9999999999
+'----------------------------------------------
+' This class utilizes qunatlib xl addin
+'----------------------------------------------
+
+
+'----------------------------------------------
+' This function utilizes qunatlib xl addin
+' Function : sobol_numbers_2d
+' DESC: generates sobol sequence with dimension of 2 * steps, size of no_of_paths
+'       The array returns have dimension ( 1 to no_of_paths, 1 to steps, 1 to 2 )
+'----------------------------------------------
+
+Public Function sobol_numbers_2d(no_of_paths As Integer, steps As Long) As Double()
+
+    Dim obj_id As String
+    Dim numbers_variant As Variant '() As Variant
+    Dim numbers() As Double
+    Dim inx As Long
+    Dim jnx As Integer
+    
+On Error GoTo ErrorHandler
+
+    ReDim numbers(1 To no_of_paths, 1 To steps, 1 To 2) As Double
+    
+    '-----------------------------------------------------------------
+    ' Dimension should be 2 times the number of time steps.
+    '------------------------------------------------------------------
+    
+    obj_id = Application.run("qlSobolRsg", "_sobol_", steps * 2, 11, False, , True)
+    
+    numbers_variant = Application.run("qlVariates", obj_id, no_of_paths)
+    
+    For inx = 1 To no_of_paths
+        
+        For jnx = 1 To steps
+        
+            numbers(inx, jnx, 1) = numbers_variant(inx, 1 + (jnx - 1) * 2)
+            numbers(inx, jnx, 2) = numbers_variant(inx, jnx * 2)
+            
+        Next jnx
+        
+    Next inx
+    
+    sobol_numbers_2d = numbers
+    
+    Exit Function
+    
+ErrorHandler:
+
+    Err.Raise vbObjectError + 1003, "clsRandomGenerator.sobol_numbers_2d :" & Chr(13) & Err.source, Err.description '1003 <-- initialization error
+    Exit Function
+
+End Function
+
+
+'----------------------------------------------
+' This function utilizes qunatlib xl addin
+' Function : sobol_numbers_1d
+' DESC: generates sobol sequence with dimension of  steps, size of no_of_paths
+'       The array returns have dimension ( 1 to no_of_paths, 1 to steps )
+'----------------------------------------------
+Public Function sobol_numbers_1d(no_of_paths As Integer, steps As Long) As Double()
+
+    Dim obj_id As String
+    Dim numbers_variant As Variant '() As Variant
+    Dim numbers() As Double
+    Dim inx As Long
+    Dim jnx As Integer
+    
+On Error GoTo ErrorHandler
+
+    ReDim numbers(1 To no_of_paths, 1 To steps) As Double
+    
+    '-----------------------------------------------------------------
+    ' Dimension should be 2 times the number of time steps.
+    '------------------------------------------------------------------
+    
+    obj_id = Application.run("qlSobolRsg", "_sobol_", steps, 1, False, , True)
+    
+    numbers_variant = Application.run("qlVariates", obj_id, no_of_paths)
+    
+    For inx = 1 To no_of_paths
+        
+        For jnx = 1 To steps
+        
+            numbers(inx, jnx) = numbers_variant(inx, jnx)
+            
+        Next jnx
+        
+    Next inx
+    
+    sobol_numbers_1d = numbers
+    
+    
+    Exit Function
+    
+ErrorHandler:
+
+    Err.Raise vbObjectError + 1003, "clsRandomGenerator.sobol_numbers_1d :" & Chr(13) & Err.source, Err.description '1003 <-- initialization error
+    Exit Function
+
+End Function
+
+'----------------------------------------------
+' This function utilizes qunatlib xl addin
+' Function : norm_sobol_2d
+' DESC: Generates quasi random numbers following normal distribution and correlation of corr.
+'       Calls sobol_numbers_2d
+'       The array returns have dimension ( 1 to no_of_paths, 1 to steps, 1 to 2 )
+'----------------------------------------------
+
+Public Function norm_sobol_2d(no_of_paths As Integer, steps As Long, Optional corr As Double = 0) As Double()
+
+    Dim numbers() As Double
+    Dim norm_numbers() As Double
+    
+    Dim temp_number1 As Double
+    Dim temp_number2 As Double
+    
+    Dim inx As Integer
+    Dim jnx As Integer
+    
+On Error GoTo ErrorHandler
+    
+    numbers = sobol_numbers_2d(no_of_paths, steps)
+    
+    ReDim norm_numbers(LBound(numbers, 1) To UBound(numbers, 2), LBound(numbers, 2) To UBound(numbers, 2), LBound(numbers, 3) To UBound(numbers, 3)) As Double
+    
+    For inx = LBound(numbers, 1) To UBound(numbers, 1)
+    
+        For jnx = LBound(numbers, 2) To UBound(numbers, 2)
+    
+            norm_numbers(inx, jnx, 1) = distribution_helper_.NormInv(numbers(inx, jnx, 1))
+            norm_numbers(inx, jnx, 2) = corr * norm_numbers(inx, jnx, 1) + Sqr(1 - corr ^ 2) * distribution_helper_.NormInv(numbers(inx, jnx, 2))
+                                    
+        Next jnx
+    
+    Next inx
+    
+    norm_sobol_2d = norm_numbers
+
+    Exit Function
+    
+ErrorHandler:
+
+    Err.Raise vbObjectError + 1003, "clsRandomGenerator.norm_sobol_2d :" & Chr(13) & Err.source, Err.description '1003 <-- initialization error
+    Exit Function
+
+
+End Function
+
+
+' OBSOLETE
+Public Function uniform_numbers_2d(no_of_paths As Long, steps As Integer) As Double()
+
+    Dim random_numbers() As Double
+    Dim inx As Long
+    Dim jnx As Integer
+
+    
+    ReDim random_numbers(1 To no_of_paths, 1 To steps, 1 To 2) As Double
+    
+    For inx = 1 To no_of_paths
+    
+        For jnx = 1 To steps
+        
+            
+            random_numbers(inx, jnx, 1) = rnd
+            random_numbers(inx, jnx, 2) = rnd
+            
+            If random_numbers(inx, jnx, 1) = 0 Then
+            
+                random_numbers(inx, jnx, 1) = tiny
+                
+            End If
+            
+            If random_numbers(inx, jnx, 2) = 0 Then
+            
+                random_numbers(inx, jnx, 2) = tiny
+                
+            End If
+            
+            If random_numbers(inx, jnx, 1) = 1 Then
+            
+                random_numbers(inx, jnx, 1) = one
+                
+            End If
+            
+            If random_numbers(inx, jnx, 2) = 1 Then
+            
+                random_numbers(inx, jnx, 2) = one
+                
+            End If
+                
+      
+        Next jnx
+        
+    Next inx
+    
+    uniform_numbers_2d = random_numbers
+    
+End Function
